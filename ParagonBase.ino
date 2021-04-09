@@ -376,6 +376,27 @@ void ShowBonusOnTree(byte bonus, byte dim=0) {
   }    
 } // END: ShowBonusOnTree()
 
+byte LastBonusShown = 0;
+void ShowBonusLamps() {
+/*  - no game modes yet  
+  if (GameMode==GAME_MODE_MINI_GAME_QUALIFIED) {
+    byte lightPhase = ((CurrentTime-GameModeStartTime)/100)%15;
+    for (byte count=0; count<10; count++) {
+      BSOS_SetLampState(BONUS_1+count, (lightPhase==count)||((lightPhase-1)==count), ((lightPhase-1)==count));
+    }
+  } else 
+    */
+    if (Bonus!=LastBonusShown) {
+    LastBonusShown = Bonus;
+    ShowBonusOnTree(Bonus);
+  }
+}
+
+
+
+
+
+
 ////////////////////////////////////////////////////////////////////////////
 //
 //  Machine State Helper functions
