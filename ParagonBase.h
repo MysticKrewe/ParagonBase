@@ -51,7 +51,7 @@
 
 #define SW_RIGHT_OUTLANE      22   // 1000 points
 #define SW_RIGHT_INLANE       23   // 1000 points
-#define SW_PARAGON_SAUCER     24   // paragon saucer - 1 bonus + light letter
+#define SW_PARAGON_SAUCER     24   // paragon saucer - 1 bonus + light letter, spell paragon+hit=50k + special
 
 #define SW_TOP_ROLLOVER       26   // top center star rollover (500 points + advance bonus)
 #define SW_500_REBOUND        27   // 500 point rebound (both left and right)

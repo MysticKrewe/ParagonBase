@@ -19,7 +19,7 @@
 #define MAJOR_VERSION  2021  // update TRIDENT2020_MAJOR_VERSION references to just this
 #define MINOR_VERSION  1
 
-#define DEBUG_MESSAGES  1
+#define DEBUG_MESSAGES  1    // enable serial debug logging
 
 // Wav Trigger defines have been moved to BSOS_Config.h
 #if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
@@ -128,7 +128,7 @@ boolean SamePlayerShootsAgain = false;
 unsigned long CurrentPlayerCurrentScore = 0;
 byte Bonus;
 byte BonusX;
-byte StandupsHit[4];
+byte StandupsHit[4];  // # of standups hit per player
 byte CurrentStandupsHit = 0;
 
 unsigned long AwardScores[3];
@@ -234,102 +234,7 @@ void ReadStoredParameters() {
 }
 
 
-// ----------------------------------------------------------------
 
-void setup() {
-  if (DEBUG_MESSAGES) {
-    Serial.begin(115200);
-  }
-
-  // Start out with everything tri-state, in case the original
-  // CPU is running
-  // Set data pins to input
-  // Make pins 2-7 input
-  DDRD = DDRD & 0x03;
-  // Make pins 8-13 input
-  DDRB = DDRB & 0xC0;
-  // Set up the address lines A0-A5 as input (for now)
-  DDRC = DDRC & 0xC0;
-
-  unsigned long startTime = millis();
-  boolean sawHigh = false;
-  boolean sawLow = false;
-  // for three seconds, look for activity on the VMA line (A5)
-  // If we see anything, then the MPU is active so we shouldn't run
-  while ((millis()-startTime)<1200) {
-    if (digitalRead(A5)) sawHigh = true;
-    else sawLow = true;
-  }
-  // If we saw both a high and low signal, then someone is toggling the 
-  // VMA line, so we should hang here forever (until reset)
-  if (sawHigh && sawLow) {
-    while (1);
-  }
-    
-  // Tell the OS about game-specific lights and switches
-  BSOS_SetupGameSwitches(NUM_SWITCHES_WITH_TRIGGERS, NUM_PRIORITY_SWITCHES_WITH_TRIGGERS, TriggeredSwitches);
-
-  if (DEBUG_MESSAGES) {
-    Serial.write("Attempting to initialize the MPU\n");
-  }
- 
-  // Set up the chips and interrupts
-  BSOS_InitializeMPU();
-  BSOS_DisableSolenoidStack();
-  BSOS_SetDisableFlippers(true);
-  
-/*
-  // method 1 - use dip switches
-  byte dipBank = BSOS_GetDipSwitches(0);
-  // Use dip switches to set up game variables
-  if (DEBUG_MESSAGES) {
-    char buf[32];
-    sprintf(buf, "DipBank 0 = 0x%02X\n", dipBank);
-    Serial.write(buf);
-  }
-  HighScore = BSOS_ReadULFromEEProm(BSOS_HIGHSCORE_EEPROM_START_BYTE, 10000);
-  Credits = BSOS_ReadByteFromEEProm(BSOS_CREDITS_EEPROM_BYTE);
-  if (Credits>MaximumCredits) Credits = MaximumCredits;
-*/
-
-  // method 2 - read from arduino eeprom
-  // Read parameters from EEProm
-  ReadStoredParameters();
-  CurrentScores[0] = MAJOR_VERSION;
-  CurrentPlayerCurrentScore = MAJOR_VERSION;
-  CurrentScores[1] = MINOR_VERSION;
-  CurrentScores[2] = BALLY_STERN_OS_MAJOR_VERSION;
-  CurrentScores[3] = BALLY_STERN_OS_MINOR_VERSION;
-  ResetScoresToClearVersion = true;
-
-  
-  
-#if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
-  // WAV Trigger startup at 57600
-  wTrig.start();
-  wTrig.masterGain(0);
-  wTrig.setAmpPwr(false);
-  delay(10);
-
-  // Send a stop-all command and reset the sample-rate offset, in case we have
-  //  reset while the WAV Trigger was already playing.
-  wTrig.stopAllTracks();
-  wTrig.samplerateOffset(0);
-#endif  
-  
-  
-  
-  
-  BallsPerGame = 3;
-
-  CurrentTime = millis();
-  PlaySoundEffect(SFX_GAME_INTRO);  
-  
-  if (DEBUG_MESSAGES) {
-    Serial.write("Done with setup\n");
-  }
-
-} // END: setup()
 
 //===============================================================================
 ////////////////////////////////////////////////////////////////////////////
@@ -1088,8 +993,6 @@ byte CountBits(byte byteToBeCounted) {  // copied from Trident2020 not sure if n
 
 */
 
-// zz
-
 void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
   
 // Needs to be optimized 
@@ -1137,10 +1040,10 @@ Drop target assignments:
   if (BSOS_ReadSingleSwitchState(SW_DROP_BOTTOM) && BSOS_ReadSingleSwitchState(SW_DROP_MIDDLE) && BSOS_ReadSingleSwitchState(SW_DROP_TOP)) {
     if (DropSequence==3) { // were they done in squence?
 
-//   PlaySoundEffect(SOUND_EFFECT_DT_SKILL_SHOT);
+//   PlaySoundEffect();
       CurrentPlayerCurrentScore+=2*DropsRightDownScore[CurrentPlayer];
     } else { // check to see if all down
-//   PlaySoundEffect(SOUND_EFFECT_DT_SKILL_SHOT);    
+//   PlaySoundEffect();    
       CurrentPlayerCurrentScore+=DropsRightDownScore[CurrentPlayer];    
     }
     // reset drops
@@ -1156,150 +1059,131 @@ Drop target assignments:
 } // end: HandleRightDropTargetHit()
 
 //-----------------------------------------------------------------
-//-----------------------------------------------------------------
-//-----------------------------------------------------------------
-//-----------------------------------------------------------------
-//-----------------------------------------------------------------
-//-----------------------------------------------------------------
 
+void setup() {
+  if (DEBUG_MESSAGES) {
+    Serial.begin(115200);
+  }
 
+  // Start out with everything tri-state, in case the original
+  // CPU is running
+  // Set data pins to input
+  // Make pins 2-7 input
+  DDRD = DDRD & 0x03;
+  // Make pins 8-13 input
+  DDRB = DDRB & 0xC0;
+  // Set up the address lines A0-A5 as input (for now)
+  DDRC = DDRC & 0xC0;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-int InitNewBall(bool curStateChanged, byte playerNum, int ballNum) {  
-
-  if (curStateChanged) {
-    BallFirstSwitchHitTime = 0;
-    SamePlayerShootsAgain = false;
-
-    BSOS_SetDisableFlippers(false);
-    BSOS_EnableSolenoidStack(); 
-    BSOS_SetDisplayCredits(Credits, true);
-//    SetPlayerLamps(playerNum+1, 500);
+  unsigned long startTime = millis();
+  boolean sawHigh = false;
+  boolean sawLow = false;
+  // for three seconds, look for activity on the VMA line (A5)
+  // If we see anything, then the MPU is active so we shouldn't run
+  while ((millis()-startTime)<1200) {
+    if (digitalRead(A5)) sawHigh = true;
+    else sawLow = true;
+  }
+  // If we saw both a high and low signal, then someone is toggling the 
+  // VMA line, so we should hang here forever (until reset)
+  if (sawHigh && sawLow) {
+    while (1);
+  }
     
-    if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) {
-      BSOS_PushToTimedSolenoidStack(SOL_OUTHOLE, 4, CurrentTime + 100);
-    }
+  // Tell the OS about game-specific lights and switches
+  BSOS_SetupGameSwitches(NUM_SWITCHES_WITH_TRIGGERS, NUM_PRIORITY_SWITCHES_WITH_TRIGGERS, TriggeredSwitches);
 
-    for (int count=0; count<CurrentNumPlayers; count++) {
-      BSOS_SetDisplay(count, CurrentScores[count], true, 2);
-    }
+  if (DEBUG_MESSAGES) {
+    Serial.write("Attempting to initialize the MPU\n");
+  }
+ 
+  // Set up the chips and interrupts
+  BSOS_InitializeMPU();
+  BSOS_DisableSolenoidStack();
+  BSOS_SetDisableFlippers(true);
+  
+/*
+  // method 1 - use dip switches
+  byte dipBank = BSOS_GetDipSwitches(0);
+  // Use dip switches to set up game variables
+  if (DEBUG_MESSAGES) {
+    char buf[32];
+    sprintf(buf, "DipBank 0 = 0x%02X\n", dipBank);
+    Serial.write(buf);
+  }
+  HighScore = BSOS_ReadULFromEEProm(BSOS_HIGHSCORE_EEPROM_START_BYTE, 10000);
+  Credits = BSOS_ReadByteFromEEProm(BSOS_CREDITS_EEPROM_BYTE);
+  if (Credits>MaximumCredits) Credits = MaximumCredits;
+*/
 
-    BSOS_SetDisplayBallInPlay(ballNum);
-    BSOS_SetLampState(BALL_IN_PLAY, 1);
-    BSOS_SetLampState(TILT, 0);
-
-    if (BallSaveNumSeconds>0) {
-      BSOS_SetLampState(SAME_PLAYER, 1, 0, 500);
-//      BSOS_SetLampState(HEAD_SAME_PLAYER, 1, 0, 500);
-    }
-    
-    // Initialize game-specific start-of-ball lights & variables  - yy    
-    CurrentDropTargetsValid = 0x7F;    // 01111111 = 127  bits 1-3=right drops, 4-7=inline
+  // method 2 - read from arduino eeprom
+  // Read parameters from EEProm
+  ReadStoredParameters();
+  CurrentScores[0] = MAJOR_VERSION;
+  CurrentPlayerCurrentScore = MAJOR_VERSION;
+  CurrentScores[1] = MINOR_VERSION;
+  CurrentScores[2] = BALLY_STERN_OS_MAJOR_VERSION;
+  CurrentScores[3] = BALLY_STERN_OS_MINOR_VERSION;
+  ResetScoresToClearVersion = true;
 
   
-    
-    
-  }
+  
+#if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
+  // WAV Trigger startup at 57600
+  wTrig.start();
+  wTrig.masterGain(0);
+  wTrig.setAmpPwr(false);
+  delay(10);
 
-  // reset drop targets if needed
-  if (BSOS_ReadSingleSwitchState(SW_DROP_BOTTOM) || BSOS_ReadSingleSwitchState(SW_DROP_MIDDLE) ||BSOS_ReadSingleSwitchState(SW_DROP_TOP)) {
-    BSOS_PushToTimedSolenoidStack(SOL_DROP_RIGHT, 12, CurrentTime+200);
-  }
-
-  if (BSOS_ReadSingleSwitchState(SW_DROP_INLINE_A) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_B) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_C) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_D)) {
-    BSOS_PushToTimedSolenoidStack(SOL_DROP_INLINE, 12, CurrentTime+300);
-  }
+  // Send a stop-all command and reset the sample-rate offset, in case we have
+  //  reset while the WAV Trigger was already playing.
+  wTrig.stopAllTracks();
+  wTrig.samplerateOffset(0);
+#endif  
   
   
-
   
-  // We should only consider the ball initialized when 
-  // the ball is no longer triggering the SW_OUTHOLE
-  if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) {
-    return MACHINE_STATE_INIT_NEW_BALL;
-  } else {
-    return MACHINE_STATE_NORMAL_GAMEPLAY;
-  }
   
-}
+  BallsPerGame = 3;
 
-
-
-
-
-boolean PlayerUpLightBlinking = false;
-
-int NormalGamePlay() {
-  int returnState = MACHINE_STATE_NORMAL_GAMEPLAY;
-
-
-  // If the playfield hasn't been validated yet, flash score and player up num
-  if (BallFirstSwitchHitTime==0) {
-    BSOS_SetDisplayFlash(CurrentPlayer, CurrentScores[CurrentPlayer], CurrentTime, 500, 2);
-    if (!PlayerUpLightBlinking) {
-//      SetPlayerLamps((CurrentPlayer+1), 500);
-      PlayerUpLightBlinking = true;
-    }
-  } else {
-    if (PlayerUpLightBlinking) {
-//      SetPlayerLamps((CurrentPlayer+1));
-      PlayerUpLightBlinking = false;
-    }
+  CurrentTime = millis();
+  PlaySoundEffect(SFX_GAME_INTRO);  
+  
+  if (DEBUG_MESSAGES) {
+    Serial.write("Done with setup\n");
   }
 
-  
-  // Check to see if ball is in the outhole
-  if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) {
-    if (BallTimeInTrough==0) {
-      BallTimeInTrough = CurrentTime;
-    } else {
-      // Make sure the ball stays on the sensor for at least 
-      // 0.5 seconds to be sure that it's not bouncing
-      if ((CurrentTime-BallTimeInTrough)>500) {
+} // END: setup()   Next runs loop()
 
-        if (BallFirstSwitchHitTime==0) BallFirstSwitchHitTime = CurrentTime;
-        
-        // if we haven't used the ball save, and we're under the time limit, then save the ball
-        if (  !BallSaveUsed && 
-              ((CurrentTime-BallFirstSwitchHitTime)/1000)<((unsigned long)BallSaveNumSeconds) ) {
-        
-          BSOS_PushToTimedSolenoidStack(SOL_OUTHOLE, 4, CurrentTime + 100);
-          if (BallFirstSwitchHitTime>0) {
-            BallSaveUsed = true;
-            BSOS_SetLampState(SAME_PLAYER, 0);
-//            BSOS_SetLampState(HEAD_SAME_PLAYER, 0);
-          }
-          BallTimeInTrough = CurrentTime;
+//-----------------------------------------------------------------
+//-----------------------------------------------------------------
+//-----------------------------------------------------------------
+//-----------------------------------------------------------------
+//-----------------------------------------------------------------
+// zz
 
-          returnState = MACHINE_STATE_NORMAL_GAMEPLAY;          
-        } else {
-          returnState = MACHINE_STATE_COUNTDOWN_BONUS;
-        }
-      }
-    }
-  } else {
-    BallTimeInTrough = 0;
-  }
 
-  return returnState;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 unsigned long InitGameStartTime = 0;
+// ----------------------------------------------------------------
 
 int InitGamePlay(boolean curStateChanged) {
   int returnState = MACHINE_STATE_INIT_GAMEPLAY;
@@ -1367,9 +1251,141 @@ int InitGamePlay(boolean curStateChanged) {
   return returnState;  
 }
 
+//====================================================
+//
+int InitNewBall(bool curStateChanged, byte playerNum, int ballNum) {  
+
+  if (curStateChanged) {
+    BallFirstSwitchHitTime = 0;
+    SamePlayerShootsAgain = false;
+
+    BSOS_SetDisableFlippers(false);
+    BSOS_EnableSolenoidStack(); 
+    BSOS_SetDisplayCredits(Credits, true);
+//    SetPlayerLamps(playerNum+1, 500);
+    
+    if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) {
+      BSOS_PushToTimedSolenoidStack(SOL_OUTHOLE, 4, CurrentTime + 100);
+    }
+
+    for (int count=0; count<CurrentNumPlayers; count++) {
+      BSOS_SetDisplay(count, CurrentScores[count], true, 2);
+    }
+
+    BSOS_SetDisplayBallInPlay(ballNum);
+    BSOS_SetLampState(BALL_IN_PLAY, 1);
+    BSOS_SetLampState(TILT, 0);
+
+    if (BallSaveNumSeconds>0) {
+      BSOS_SetLampState(SAME_PLAYER, 1, 0, 500);
+//      BSOS_SetLampState(HEAD_SAME_PLAYER, 1, 0, 500);
+    }
+    
+    // Initialize game-specific start-of-ball lights & variables  - yy    
+    CurrentDropTargetsValid = 0x7F;    // 01111111 = 127  bits 1-3=right drops, 4-7=inline
+
+    
+    
+    
+    
+  }
+
+  // reset drop targets if needed
+  if (BSOS_ReadSingleSwitchState(SW_DROP_BOTTOM) || BSOS_ReadSingleSwitchState(SW_DROP_MIDDLE) ||BSOS_ReadSingleSwitchState(SW_DROP_TOP)) {
+    BSOS_PushToTimedSolenoidStack(SOL_DROP_RIGHT, 12, CurrentTime+200);
+  }
+
+  if (BSOS_ReadSingleSwitchState(SW_DROP_INLINE_A) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_B) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_C) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_D)) {
+    BSOS_PushToTimedSolenoidStack(SOL_DROP_INLINE, 12, CurrentTime+300);
+  }
+  
+  
+
+  
+  // We should only consider the ball initialized when 
+  // the ball is no longer triggering the SW_OUTHOLE
+  if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) {
+    return MACHINE_STATE_INIT_NEW_BALL;
+  } else {
+    return MACHINE_STATE_NORMAL_GAMEPLAY;
+  }
+  
+}
+
+
+//====================================================
+
+boolean PlayerUpLightBlinking = false;
+
+int NormalGamePlay() {
+  int returnState = MACHINE_STATE_NORMAL_GAMEPLAY;
+
+
+  // If the playfield hasn't been validated yet, flash score and player up num
+  if (BallFirstSwitchHitTime==0) {
+    BSOS_SetDisplayFlash(CurrentPlayer, CurrentScores[CurrentPlayer], CurrentTime, 500, 2);
+    if (!PlayerUpLightBlinking) {
+//      SetPlayerLamps((CurrentPlayer+1), 500);
+      PlayerUpLightBlinking = true;
+    }
+  } else {
+    if (PlayerUpLightBlinking) {
+//      SetPlayerLamps((CurrentPlayer+1));
+      PlayerUpLightBlinking = false;
+    }
+  }
+
+  
+  // Check to see if ball is in the outhole
+  if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) {
+    if (BallTimeInTrough==0) {
+      BallTimeInTrough = CurrentTime;
+    } else {
+      // Make sure the ball stays on the sensor for at least 
+      // 0.5 seconds to be sure that it's not bouncing
+      if ((CurrentTime-BallTimeInTrough)>500) {
+
+        if (BallFirstSwitchHitTime==0) BallFirstSwitchHitTime = CurrentTime;
+        
+        // if we haven't used the ball save, and we're under the time limit, then save the ball
+        if (  !BallSaveUsed && 
+              ((CurrentTime-BallFirstSwitchHitTime)/1000)<((unsigned long)BallSaveNumSeconds) ) {
+        
+          BSOS_PushToTimedSolenoidStack(SOL_OUTHOLE, 4, CurrentTime + 100);
+          if (BallFirstSwitchHitTime>0) {
+            BallSaveUsed = true;
+            BSOS_SetLampState(SAME_PLAYER, 0);
+//            BSOS_SetLampState(HEAD_SAME_PLAYER, 0);
+          }
+          BallTimeInTrough = CurrentTime;
+
+          returnState = MACHINE_STATE_NORMAL_GAMEPLAY;          
+        } else {
+          returnState = MACHINE_STATE_COUNTDOWN_BONUS;
+        }
+      }
+    }
+  } else {
+    BallTimeInTrough = 0;
+  }
+
+  return returnState;
+}
+
+//====================================================
+//====================================================
+//====================================================
+//====================================================
+
 int RunGamePlayMode(int curState, boolean curStateChanged) {
   int returnState = curState;
   unsigned long scoreAtTop = CurrentScores[CurrentPlayer];
+  // unsigned long scoreAtTop = CurrentPlayerCurrentScore;
+  
+  byte bonusAtTop = Bonus;
+
+  unsigned long scoreMultiplier = 1;  // currently not implemented
+  
   
   // Very first time into gameplay loop
   if (curState==MACHINE_STATE_INIT_GAMEPLAY) {
@@ -1382,6 +1398,11 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
 //    returnState = CountdownBonus(curStateChanged);
     returnState = MACHINE_STATE_BALL_OVER;
   } else if (curState==MACHINE_STATE_BALL_OVER) {    
+  
+    // copied from Trident2020
+    CurrentScores[ CurrentPlayer] = CurrentPlayerCurrentScore;
+    //
+  
     if (SamePlayerShootsAgain) {
       returnState = MACHINE_STATE_INIT_NEW_BALL;
     } else {
@@ -1390,7 +1411,14 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
         CurrentPlayer = 0;
         CurrentBallInPlay+=1;
       }
-        
+
+// new ball setups
+      // Reset score at top since player changed
+      CurrentPlayerCurrentScore = CurrentScores[CurrentPlayer];
+      CurrentStandupsHit = StandupsHit[CurrentPlayer];
+      scoreAtTop = CurrentPlayerCurrentScore;
+
+      
       if (CurrentBallInPlay>BallsPerGame) {
 //        CheckHighScores();
 //        PlaySoundEffect(SOUND_EFFECT_GAME_OVER);
@@ -1434,7 +1462,21 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
         if (DEBUG_MESSAGES) {
           Serial.write("Start game button pressed\n\r");
         }
-        break;        
+        break;   
+
+      // game-specific switch action
+//zz      
+        case SW_DROP_TOP:
+        case SW_DROP_MIDDLE:
+        case SW_DROP_BOTTOM:        
+          HandleRightDropTargetHit(switchHit,scoreMultiplier);
+          if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;
+          break;      
+
+
+
+
+        
     }
   }
 
@@ -1444,6 +1486,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
   return returnState;
 }
 
+//====================================================
 
 void loop() {
   // This line has to be in the main loop
