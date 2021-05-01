@@ -39,15 +39,15 @@
 
 // Playfield Switches
 
-#define SW_DROP_INLINE_D      1   // 1000 + 3x bonus multiplier
-#define SW_DROP_INLINE_C      2   // 1000 + 2x bonus multiplier
-#define SW_DROP_INLINE_B      3   // 1000 + bonus advance
-#define SW_DROP_INLINE_A      4   // 1000 + bonus advance
+#define SW_DROP_INLINE_D      1   // 1000 + 3x bonus multiplier     CurrentDropTargetsValid && 0x40 (64)
+#define SW_DROP_INLINE_C      2   // 1000 + 2x bonus multiplier     CurrentDropTargetsValid && 0x20 (32)
+#define SW_DROP_INLINE_B      3   // 1000 + bonus advance           CurrentDropTargetsValid && 0x10 (16)
+#define SW_DROP_INLINE_A      4   // 1000 + bonus advance           CurrentDropTargetsValid && 0x08 (8)
 #define SW_TREASURE_SAUCER    31  // 5000 + 5x bonus multiplier, lites extra ball, then special - treasure chamber saucer (behind inline drops)
 
-#define SW_DROP_TOP           19   // 500 points
-#define SW_DROP_MIDDLE        18   // 500 points
-#define SW_DROP_BOTTOM        17   // 500 points - all three down awards 10k, 15k, 20k, 25k, special
+#define SW_DROP_TOP           19   // 500 points                                                     CurrentDropTargetsValid && 0x04
+#define SW_DROP_MIDDLE        18   // 500 points                                                     CurrentDropTargetsValid && 0x02
+#define SW_DROP_BOTTOM        17   // 500 points - all three down awards 10k, 15k, 20k, 25k, special CurrentDropTargetsValid && 0x01
 
 #define SW_RIGHT_OUTLANE      22   // 1000 points
 #define SW_RIGHT_INLANE       23   // 1000 points

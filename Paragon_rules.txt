@@ -4,3 +4,13 @@ Side Drop Targets - 1,2,3 from bottom to top.  Score 500 points per target, all 
 
 Secret Score: If you drop the three targets in order from bottom to top, score is doubled (i.e. 20k, 30k, etc.)
 
+SKILL SHOT:  Alternate between golden cliffs and Paragon, but also add special on paragon side (hit when lit = 5k bonus, 20k golden rewards 20k when lit, or 10k with longer on time.
+
+
+
+Questions:
+
+1.  Does it matter if I add different int types together, like unsigned long= unsigned long + unsigned int?
+
+2.  Is there any provision to deal with a broken drop target?  If it's detected down will it keep re-firing the reset?
+

@@ -1,11 +1,12 @@
 /*
 
   Paragon 2021 - by Mike from PinballHelp.com
+
+  code/bsos/work/ParagonBase.ino
   
   working code file
   
   0.0.1 - 4-7-21 - Slightly modified version of bsos/pinballbase.ino that compiles with Paragon definitions
-  
   
 
 */
@@ -25,9 +26,6 @@
 #include "SendOnlyWavTrigger.h"
 SendOnlyWavTrigger wTrig;             // Our WAV Trigger object
 #endif
-
-
-
 
 
 // MachineState
@@ -162,6 +160,16 @@ boolean BallSaveUsed = false;
 byte BallSaveNumSeconds = 0;
 byte BallsPerGame = 3;
 
+// game specific
+
+// Written in by Mike - yy
+byte CurrentDropTargetsValid = 0;         // bitmask showing which drop targets up right:b,m,t, inline 1-4 1-64 bits
+byte DropSequence=0;                      // 1-3 # right drops hit in sequence
+
+// values that carry over from ball-to-ball
+unsigned int DropsRightDownScore[4];      // reward for all right drops down
+byte BonusHeld[4];                        // bits: 1=20k, 2=30k, 4=40k
+
 // ----------------------------------------------------------------
 
 // copied from Trident
@@ -224,9 +232,6 @@ void ReadStoredParameters() {
   AwardScores[2] = BSOS_ReadULFromEEProm(BSOS_AWARD_SCORE_3_EEPROM_START_BYTE);
 
 }
-
-
-
 
 
 // ----------------------------------------------------------------
@@ -382,7 +387,7 @@ void ShowBonusLamps() {
   if (GameMode==GAME_MODE_MINI_GAME_QUALIFIED) {
     byte lightPhase = ((CurrentTime-GameModeStartTime)/100)%15;
     for (byte count=0; count<10; count++) {
-      BSOS_SetLampState(BONUS_1+count, (lightPhase==count)||((lightPhase-1)==count), ((lightPhase-1)==count));
+      BSOS_SetLampState(L_1K_BONUS+count, (lightPhase==count)||((lightPhase-1)==count), ((lightPhase-1)==count));
     }
   } else 
     */
@@ -393,9 +398,185 @@ void ShowBonusLamps() {
 }
 
 
+// copied from Trident
+
+////////////////////////////////////////////////////////////////////////////
+//
+//  Display Management functions
+//
+////////////////////////////////////////////////////////////////////////////
+unsigned long LastTimeScoreChanged = 0;
+unsigned long LastTimeOverrideAnimated = 0;
+unsigned long LastFlashOrDash = 0;
+unsigned long ScoreOverrideValue[4]= {0, 0, 0, 0};
+byte ScoreOverrideStatus = 0;
+byte LastScrollPhase = 0;
+
+byte MagnitudeOfScore(unsigned long score) {
+  if (score == 0) return 0;
+
+  byte retval = 0;
+  while (score > 0) {
+    score = score / 10;
+    retval += 1;
+  }
+  return retval;
+}
+
+void OverrideScoreDisplay(byte displayNum, unsigned long value, boolean animate) {
+  if (displayNum>3) return;
+  ScoreOverrideStatus |= (0x10<<displayNum);
+  if (animate) ScoreOverrideStatus |= (0x01<<displayNum);
+  else ScoreOverrideStatus &= ~(0x01<<displayNum);
+  ScoreOverrideValue[displayNum] = value;
+}
+
+byte GetDisplayMask(byte numDigits) {
+  byte displayMask = 0;
+  for (byte digitCount=0; digitCount<numDigits; digitCount++) {
+    displayMask |= (0x20>>digitCount);
+  }  
+  return displayMask;
+}
 
 
+void ShowPlayerScores(byte displayToUpdate, boolean flashCurrent, boolean dashCurrent, unsigned long allScoresShowValue=0) {
 
+  if (displayToUpdate==0xFF) ScoreOverrideStatus = 0;
+
+  byte displayMask = 0x3F;
+  unsigned long displayScore = 0;
+  unsigned long overrideAnimationSeed = CurrentTime/250;
+  byte scrollPhaseChanged = false;
+
+  byte scrollPhase = ((CurrentTime-LastTimeScoreChanged)/250)%16;
+  if (scrollPhase!=LastScrollPhase) {
+    LastScrollPhase = scrollPhase;
+    scrollPhaseChanged = true;
+  }
+
+  boolean updateLastTimeAnimated = false;
+
+  for (byte scoreCount=0; scoreCount<4; scoreCount++) {
+    // If this display is currently being overriden, then we should update it
+    if (allScoresShowValue==0 && (ScoreOverrideStatus & (0x10<<scoreCount))) {
+      displayScore = ScoreOverrideValue[scoreCount];
+      byte numDigits = MagnitudeOfScore(displayScore);
+      if (numDigits==0) numDigits = 1;
+      if (numDigits<(BALLY_STERN_OS_NUM_DIGITS-1) && (ScoreOverrideStatus & (0x01<<scoreCount))) {
+        if (overrideAnimationSeed!=LastTimeOverrideAnimated) {
+          updateLastTimeAnimated = true;
+          byte shiftDigits = (overrideAnimationSeed)%(((BALLY_STERN_OS_NUM_DIGITS+1)-numDigits)+((BALLY_STERN_OS_NUM_DIGITS-1)-numDigits));
+          if (shiftDigits>=((BALLY_STERN_OS_NUM_DIGITS+1)-numDigits)) shiftDigits = (BALLY_STERN_OS_NUM_DIGITS-numDigits)*2-shiftDigits;
+          byte digitCount;
+          displayMask = GetDisplayMask(numDigits);
+          for (digitCount=0; digitCount<shiftDigits; digitCount++) {
+            displayScore *= 10;
+            displayMask = displayMask>>1;
+          }
+          BSOS_SetDisplayBlank(scoreCount, 0x00);
+          BSOS_SetDisplay(scoreCount, displayScore, false);
+          BSOS_SetDisplayBlank(scoreCount, displayMask);
+        }
+      } else {
+        BSOS_SetDisplay(scoreCount, displayScore, true);
+      }
+      
+    } else {
+      // No override, update scores designated by displayToUpdate
+      if (allScoresShowValue==0) displayScore = (scoreCount==CurrentPlayer)?CurrentPlayerCurrentScore:CurrentScores[scoreCount];
+      else displayScore = allScoresShowValue;
+
+      // If we're updating all displays, or the one currently matching the loop, or if we have to scroll
+      if (displayToUpdate==0xFF || displayToUpdate==scoreCount || displayScore>BALLY_STERN_OS_MAX_DISPLAY_SCORE) {
+
+        // Don't show this score if it's not a current player score (even if it's scrollable)
+        if (displayToUpdate==0xFF && (scoreCount>=CurrentNumPlayers&&CurrentNumPlayers!=0) && allScoresShowValue==0) {
+          BSOS_SetDisplayBlank(scoreCount, 0x00);
+          continue;
+        }
+
+        if (displayScore>BALLY_STERN_OS_MAX_DISPLAY_SCORE) {
+          // Score needs to be scrolled
+          if ((CurrentTime-LastTimeScoreChanged)<4000) {
+            BSOS_SetDisplay(scoreCount, displayScore%(BALLY_STERN_OS_MAX_DISPLAY_SCORE+1), false);  
+            BSOS_SetDisplayBlank(scoreCount, BALLY_STERN_OS_ALL_DIGITS_MASK);
+          } else {
+
+            // Scores are scrolled 10 digits and then we wait for 6
+            if (scrollPhase<11 && scrollPhaseChanged) {
+              byte numDigits = MagnitudeOfScore(displayScore);
+              
+              // Figure out top part of score
+              unsigned long tempScore = displayScore;
+              if (scrollPhase<BALLY_STERN_OS_NUM_DIGITS) {
+                displayMask = BALLY_STERN_OS_ALL_DIGITS_MASK;
+                for (byte scrollCount=0; scrollCount<scrollPhase; scrollCount++) {
+                  displayScore = (displayScore % (BALLY_STERN_OS_MAX_DISPLAY_SCORE+1)) * 10;
+                  displayMask = displayMask >> 1;
+                }
+              } else {
+                displayScore = 0; 
+                displayMask = 0x00;
+              }
+
+              // Add in lower part of score
+              if ((numDigits+scrollPhase)>10) {
+                byte numDigitsNeeded = (numDigits+scrollPhase)-10;
+                for (byte scrollCount=0; scrollCount<(numDigits-numDigitsNeeded); scrollCount++) {
+                  tempScore /= 10;
+                }
+                displayMask |= GetDisplayMask(MagnitudeOfScore(tempScore));
+                displayScore += tempScore;
+              }
+              BSOS_SetDisplayBlank(scoreCount, displayMask);
+              BSOS_SetDisplay(scoreCount, displayScore);
+            }
+          }          
+        } else {
+          if (flashCurrent) {
+            unsigned long flashSeed = CurrentTime/250;
+            if (flashSeed != LastFlashOrDash) {
+              LastFlashOrDash = flashSeed;
+              if (((CurrentTime/250)%2)==0) BSOS_SetDisplayBlank(scoreCount, 0x00);
+              else BSOS_SetDisplay(scoreCount, displayScore, true, 2);
+            }
+          } else if (dashCurrent) {
+            unsigned long dashSeed = CurrentTime/50;
+            if (dashSeed != LastFlashOrDash) {
+              LastFlashOrDash = dashSeed;
+              byte dashPhase = (CurrentTime/60)%36;
+              byte numDigits = MagnitudeOfScore(displayScore);
+              if (dashPhase<12) { 
+                displayMask = GetDisplayMask((numDigits==0)?2:numDigits);
+                if (dashPhase<7) {
+                  for (byte maskCount=0; maskCount<dashPhase; maskCount++) {
+                    displayMask &= ~(0x01<<maskCount);
+                  }
+                } else {
+                  for (byte maskCount=12; maskCount>dashPhase; maskCount--) {
+                    displayMask &= ~(0x20>>(maskCount-dashPhase-1));
+                  }
+                }
+                BSOS_SetDisplay(scoreCount, displayScore);
+                BSOS_SetDisplayBlank(scoreCount, displayMask);
+              } else {
+                BSOS_SetDisplay(scoreCount, displayScore, true, 2);
+              }
+            }
+          } else {
+            BSOS_SetDisplay(scoreCount, displayScore, true, 2);          
+          }
+        }
+      } // End if this display should be updated
+    } // End on non-overridden
+  } // End loop on scores
+
+  if (updateLastTimeAnimated) {
+    LastTimeOverrideAnimated = overrideAnimationSeed;
+  }
+
+}
 
 ////////////////////////////////////////////////////////////////////////////
 //
@@ -414,6 +595,26 @@ void AddCredit() {
   BSOS_SetCoinLockout((Credits<MaximumCredits)?false:true);
 }
 */
+
+/*  might possibly want to add later
+void AddCoinToAudit(byte switchHit) {
+
+  unsigned short coinAuditStartByte = 0;
+
+  switch (switchHit) {
+    case SW_COIN_3: coinAuditStartByte = BSOS_CHUTE_3_COINS_START_BYTE; break;
+    case SW_COIN_2: coinAuditStartByte = BSOS_CHUTE_2_COINS_START_BYTE; break;
+    case SW_COIN_1: coinAuditStartByte = BSOS_CHUTE_1_COINS_START_BYTE; break;
+  }
+
+  if (coinAuditStartByte) {
+    BSOS_WriteULToEEProm(coinAuditStartByte, BSOS_ReadULFromEEProm(coinAuditStartByte) + 1);
+  }
+
+}
+*/
+
+
 // Trident version
 void AddCredit(boolean playSound = false, byte numToAdd = 1) {
   if (Credits < MaximumCredits) {
@@ -428,13 +629,14 @@ void AddCredit(boolean playSound = false, byte numToAdd = 1) {
     BSOS_SetCoinLockout(true);
   }
 }
+//-----------------------------------------------------------------
 
 void AddSpecialCredit() {
   AddCredit(false, 1);
   BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true);
   BSOS_WriteULToEEProm(BSOS_TOTAL_REPLAYS_EEPROM_START_BYTE, BSOS_ReadULFromEEProm(BSOS_TOTAL_REPLAYS_EEPROM_START_BYTE) + 1);  
 }
-
+//-----------------------------------------------------------------
 boolean AddPlayer() {
 
   if (Credits<1 && !FreePlayMode) return false;
@@ -447,14 +649,536 @@ boolean AddPlayer() {
   if (!FreePlayMode) {
     Credits -= 1;
     BSOS_WriteByteToEEProm(BSOS_CREDITS_EEPROM_BYTE, Credits);
+//    BSOS_SetCoinLockout(false); // needed?    
   }
 
   BSOS_SetDisplayCredits(Credits);
 
+//    PlaySoundEffect(SOUND_EFFECT_ADD_PLAYER_1 + (CurrentNumPlayers - 1));
+  
   return true;
 }
+//-----------------------------------------------------------------
+
+////////////////////////////////////////////////////////////////////////////
+//
+//  Diagnostics
+//
+////////////////////////////////////////////////////////////////////////////
 
 
+/* original base version
+
+int RunSelfTest(int curState, boolean curStateChanged) {
+  int returnState = curState;
+  CurrentNumPlayers = 0;
+
+  // Any state that's greater than CHUTE_3 is handled by the Base Self-test code
+  // Any that's less, is machine specific, so we handle it here.
+  if (curState>=MACHINE_STATE_TEST_CHUTE_3_COINS) {
+    returnState = RunBaseSelfTest(returnState, curStateChanged, CurrentTime, SW_CREDIT_RESET);  
+  } else {
+    returnState = MACHINE_STATE_ATTRACT;
+  }
+
+  return returnState;
+}
+*/
+
+#define ADJ_TYPE_LIST                 1
+#define ADJ_TYPE_MIN_MAX              2
+#define ADJ_TYPE_MIN_MAX_DEFAULT      3
+#define ADJ_TYPE_SCORE                4
+#define ADJ_TYPE_SCORE_WITH_DEFAULT   5
+#define ADJ_TYPE_SCORE_NO_DEFAULT     6
+byte AdjustmentType = 0;
+byte NumAdjustmentValues = 0;
+byte AdjustmentValues[8];
+unsigned long AdjustmentScore;
+byte *CurrentAdjustmentByte = NULL;
+unsigned long *CurrentAdjustmentUL = NULL;
+byte CurrentAdjustmentStorageByte = 0;
+byte TempValue = 0;
+
+
+int RunSelfTest(int curState, boolean curStateChanged) {
+  int returnState = curState;
+  CurrentNumPlayers = 0;
+
+#if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
+  if (curStateChanged) {
+    // Send a stop-all command and reset the sample-rate offset, in case we have
+    //  reset while the WAV Trigger was already playing.
+    wTrig.stopAllTracks();
+    wTrig.samplerateOffset(0);
+  }
+#endif
+
+  // Any state that's greater than CHUTE_3 is handled by the Base Self-test code
+  // Any that's less, is machine specific, so we handle it here.
+  if (curState >= MACHINE_STATE_TEST_CHUTE_3_COINS) {
+    returnState = RunBaseSelfTest(returnState, curStateChanged, CurrentTime, SW_CREDIT_RESET, SW_SLAM);
+  } else {
+    byte curSwitch = BSOS_PullFirstFromSwitchStack();
+
+    if (curSwitch == SW_SELF_TEST_SWITCH && (CurrentTime - GetLastSelfTestChangedTime()) > 250) {
+      SetLastSelfTestChangedTime(CurrentTime);
+      returnState -= 1;
+    }
+
+    if (curSwitch == SW_SLAM) {
+      returnState = MACHINE_STATE_ATTRACT;
+    }
+
+    if (curStateChanged) {
+      for (int count = 0; count < 4; count++) {
+        BSOS_SetDisplay(count, 0);
+        BSOS_SetDisplayBlank(count, 0x00);
+      }
+      BSOS_SetDisplayCredits(MACHINE_STATE_TEST_SOUNDS - curState);
+      BSOS_SetDisplayBallInPlay(0, false);
+      CurrentAdjustmentByte = NULL;
+      CurrentAdjustmentUL = NULL;
+      CurrentAdjustmentStorageByte = 0;
+
+      AdjustmentType = ADJ_TYPE_MIN_MAX;
+      AdjustmentValues[0] = 0;
+      AdjustmentValues[1] = 1;
+      TempValue = 0;
+
+      switch (curState) {
+        case MACHINE_STATE_ADJUST_FREEPLAY:
+          CurrentAdjustmentByte = (byte *)&FreePlayMode;
+          CurrentAdjustmentStorageByte = EEPROM_FREE_PLAY_BYTE;
+          break;
+        case MACHINE_STATE_ADJUST_BALL_SAVE:
+          AdjustmentType = ADJ_TYPE_LIST;
+          NumAdjustmentValues = 5;
+          AdjustmentValues[1] = 5;
+          AdjustmentValues[2] = 10;
+          AdjustmentValues[3] = 15;
+          AdjustmentValues[4] = 20;
+          CurrentAdjustmentByte = &BallSaveNumSeconds;
+          CurrentAdjustmentStorageByte = EEPROM_BALL_SAVE_BYTE;
+          break;
+        case MACHINE_STATE_ADJUST_MUSIC_LEVEL:
+          AdjustmentType = ADJ_TYPE_MIN_MAX_DEFAULT;
+          AdjustmentValues[1] = 3;
+          CurrentAdjustmentByte = &MusicLevel;
+          CurrentAdjustmentStorageByte = EEPROM_MUSIC_LEVEL_BYTE;
+          break;
+        case MACHINE_STATE_ADJUST_TOURNAMENT_SCORING:
+          CurrentAdjustmentByte = (byte *)&TournamentScoring;
+          CurrentAdjustmentStorageByte = EEPROM_TOURNAMENT_SCORING_BYTE;
+          break;
+        case MACHINE_STATE_ADJUST_TILT_WARNING:
+          AdjustmentValues[1] = 2;
+          CurrentAdjustmentByte = &MaxTiltWarnings;
+          CurrentAdjustmentStorageByte = EEPROM_TILT_WARNING_BYTE;
+          break;
+        case MACHINE_STATE_ADJUST_AWARD_OVERRIDE:
+          AdjustmentType = ADJ_TYPE_MIN_MAX_DEFAULT;
+          AdjustmentValues[1] = 7;
+          CurrentAdjustmentByte = &ScoreAwardReplay;
+          CurrentAdjustmentStorageByte = EEPROM_AWARD_OVERRIDE_BYTE;
+          break;
+        case MACHINE_STATE_ADJUST_BALLS_OVERRIDE:
+          AdjustmentType = ADJ_TYPE_LIST;
+          NumAdjustmentValues = 3;
+          AdjustmentValues[0] = 3;
+          AdjustmentValues[1] = 5;
+          AdjustmentValues[2] = 99;
+          CurrentAdjustmentByte = &BallsPerGame;
+          CurrentAdjustmentStorageByte = EEPROM_BALLS_OVERRIDE_BYTE;
+          break;
+        case MACHINE_STATE_ADJUST_SCROLLING_SCORES:
+          CurrentAdjustmentByte = (byte *)&ScrollingScores;
+          CurrentAdjustmentStorageByte = EEPROM_SCROLLING_SCORES_BYTE;
+          break;
+
+        case MACHINE_STATE_ADJUST_EXTRA_BALL_AWARD:
+          AdjustmentType = ADJ_TYPE_SCORE_WITH_DEFAULT;
+          CurrentAdjustmentUL = &ExtraBallValue;
+          CurrentAdjustmentStorageByte = EEPROM_EXTRA_BALL_SCORE_BYTE;
+          break;
+
+        case MACHINE_STATE_ADJUST_SPECIAL_AWARD:
+          AdjustmentType = ADJ_TYPE_SCORE_WITH_DEFAULT;
+          CurrentAdjustmentUL = &SpecialValue;
+          CurrentAdjustmentStorageByte = EEPROM_SPECIAL_SCORE_BYTE;
+          break;
+
+        case MACHINE_STATE_ADJUST_DIM_LEVEL:
+          AdjustmentType = ADJ_TYPE_LIST;
+          NumAdjustmentValues = 2;
+          AdjustmentValues[0] = 2;
+          AdjustmentValues[1] = 3;
+          CurrentAdjustmentByte = &DimLevel;
+          CurrentAdjustmentStorageByte = EEPROM_DIM_LEVEL_BYTE;
+          for (int count = 0; count < 10; count++) BSOS_SetLampState(L_1K_BONUS + count, 1, 1);
+          break;
+
+        case MACHINE_STATE_ADJUST_DONE:
+          returnState = MACHINE_STATE_ATTRACT;
+          break;
+      }
+
+    }
+
+    // Change value, if the switch is hit
+    if (curSwitch == SW_CREDIT_RESET) {
+
+      if (CurrentAdjustmentByte && (AdjustmentType == ADJ_TYPE_MIN_MAX || AdjustmentType == ADJ_TYPE_MIN_MAX_DEFAULT)) {
+        byte curVal = *CurrentAdjustmentByte;
+        curVal += 1;
+        if (curVal > AdjustmentValues[1]) {
+          if (AdjustmentType == ADJ_TYPE_MIN_MAX) curVal = AdjustmentValues[0];
+          else {
+            if (curVal > 99) curVal = AdjustmentValues[0];
+            else curVal = 99;
+          }
+        }
+        *CurrentAdjustmentByte = curVal;
+        if (CurrentAdjustmentStorageByte) EEPROM.write(CurrentAdjustmentStorageByte, curVal);
+      } else if (CurrentAdjustmentByte && AdjustmentType == ADJ_TYPE_LIST) {
+        byte valCount = 0;
+        byte curVal = *CurrentAdjustmentByte;
+        byte newIndex = 0;
+        for (valCount = 0; valCount < (NumAdjustmentValues - 1); valCount++) {
+          if (curVal == AdjustmentValues[valCount]) newIndex = valCount + 1;
+        }
+        *CurrentAdjustmentByte = AdjustmentValues[newIndex];
+        if (CurrentAdjustmentStorageByte) EEPROM.write(CurrentAdjustmentStorageByte, AdjustmentValues[newIndex]);
+      } else if (CurrentAdjustmentUL && (AdjustmentType == ADJ_TYPE_SCORE_WITH_DEFAULT || AdjustmentType == ADJ_TYPE_SCORE_NO_DEFAULT)) {
+        unsigned long curVal = *CurrentAdjustmentUL;
+        curVal += 5000;
+        if (curVal > 100000) curVal = 0;
+        if (AdjustmentType == ADJ_TYPE_SCORE_NO_DEFAULT && curVal == 0) curVal = 5000;
+        *CurrentAdjustmentUL = curVal;
+        if (CurrentAdjustmentStorageByte) BSOS_WriteULToEEProm(CurrentAdjustmentStorageByte, curVal);
+      }
+
+      if (curState == MACHINE_STATE_ADJUST_DIM_LEVEL) {
+        BSOS_SetDimDivisor(1, DimLevel);
+      }
+    }
+
+    // Show current value
+    if (CurrentAdjustmentByte != NULL) {
+      BSOS_SetDisplay(0, (unsigned long)(*CurrentAdjustmentByte), true);
+    } else if (CurrentAdjustmentUL != NULL) {
+      BSOS_SetDisplay(0, (*CurrentAdjustmentUL), true);
+    }
+
+  }
+
+  if (curState == MACHINE_STATE_ADJUST_DIM_LEVEL) {
+    for (int count = 0; count < 10; count++) BSOS_SetLampState(L_1K_BONUS + count, 1, (CurrentTime / 1000) % 2);
+  }
+
+  if (returnState == MACHINE_STATE_ATTRACT) {
+    // If any variables have been set to non-override (99), return
+    // them to dip switch settings
+    // Balls Per Game, Player Loses On Ties, Novelty Scoring, Award Score
+//    DecodeDIPSwitchParameters();
+    ReadStoredParameters();
+  }
+
+  return returnState;
+}
+//-----------------------------------------------------------------
+
+
+////////////////////////////////////////////////////////////////////////////
+//
+//  Audio Output functions
+//
+////////////////////////////////////////////////////////////////////////////
+#if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
+byte CurrentBackgroundSong = SOUND_EFFECT_NONE;
+#endif
+
+
+void PlayBackgroundSong(byte songNum) {
+
+#if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
+  if (MusicLevel > 1) {
+    if (CurrentBackgroundSong != songNum) {
+      if (CurrentBackgroundSong != SOUND_EFFECT_NONE) wTrig.trackStop(CurrentBackgroundSong);
+      if (songNum != SOUND_EFFECT_NONE) {
+#ifdef USE_WAV_TRIGGER_1p3
+        wTrig.trackPlayPoly(songNum, true);
+#else
+        wTrig.trackPlayPoly(songNum);
+#endif
+        wTrig.trackLoop(songNum, true);
+        wTrig.trackGain(songNum, -4);
+      }
+      CurrentBackgroundSong = songNum;
+    }
+  }
+#else
+  byte test = songNum;
+  songNum = test;
+#endif
+
+}
+
+//-----------------------------------------------------------------
+
+unsigned long NextSoundEffectTime = 0;
+
+void PlaySoundEffect(byte soundEffectNum) {
+
+  if (MusicLevel == 0) return;
+
+#if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
+
+#ifndef USE_WAV_TRIGGER_1p3
+  if (  soundEffectNum == SFX_SPINNER ) wTrig.trackStop(soundEffectNum);
+#endif
+  wTrig.trackPlayPoly(soundEffectNum);
+#endif
+
+}
+//-----------------------------------------------------------------
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////
+//
+//  Attract Mode
+//
+////////////////////////////////////////////////////////////////////////////
+
+
+byte AttractLastHeadMode = 255;
+byte AttractLastPlayfieldMode = 255;
+
+int RunAttractMode(int curState, boolean curStateChanged) {
+
+  int returnState = curState;
+
+  // If this is the first time in the attract mode loop
+  if (curStateChanged) {
+    BSOS_DisableSolenoidStack();
+    BSOS_TurnOffAllLamps();
+    BSOS_SetDisableFlippers(true);
+    if (DEBUG_MESSAGES) {
+      Serial.write("Entering Attract Mode\n\r");
+    }
+    for (int count=0; count<4; count++) {  // blank out displays?
+      BSOS_SetDisplayBlank(count, 0x00);     
+    }
+    BSOS_SetDisplayCredits(Credits);
+    BSOS_SetDisplayBallInPlay(0);
+    AttractLastHeadMode = 255;
+    AttractLastPlayfieldMode = 255;
+  }
+
+  // Alternate displays between high score and blank
+  if ((CurrentTime/6000)%2==0) {  // 6 seconds change time?
+
+    if (AttractLastHeadMode!=1) {   // show high scores
+      // NOTE: Trident2020 has new code that does scrolling scores here, also increases display time to allow time for scrolling high scores - not copied yet
+      BSOS_SetLampState(HIGH_SCORE, 1, 0, 250);   // turn on high score light
+      BSOS_SetLampState(GAME_OVER, 0);            // turn off game over light?
+//      SetPlayerLamps(0);
+  
+      for (int count=0; count<4; count++) {
+        BSOS_SetDisplay(count, HighScore, true, 2);
+      }
+      BSOS_SetDisplayCredits(Credits, true);
+      BSOS_SetDisplayBallInPlay(0, true);
+    }
+    AttractLastHeadMode = 1;
+    
+  } else {  // blank high scores and show last game(s) played
+    if (AttractLastHeadMode!=2) {
+      BSOS_SetLampState(HIGH_SCORE, 0);
+      BSOS_SetLampState(GAME_OVER, 1);
+      BSOS_SetDisplayCredits(Credits, true);
+      BSOS_SetDisplayBallInPlay(0, true);
+      for (int count=0; count<4; count++) {
+        if (CurrentNumPlayers>0) {
+          if (count<CurrentNumPlayers) {
+            BSOS_SetDisplay(count, CurrentScores[count], true, 2); 
+          } else {
+            BSOS_SetDisplayBlank(count, 0x00);
+            BSOS_SetDisplay(count, 0);          
+          }          
+        } else {
+          BSOS_SetDisplayBlank(count, 0x30);
+          BSOS_SetDisplay(count, 0);          
+        }
+      }
+    }
+//    SetPlayerLamps(((CurrentTime/250)%4) + 1);
+    AttractLastHeadMode = 2;
+  }
+
+  if ((CurrentTime/10000)%3==0) {   // every 30s turn off all playfield lamps?
+    if (AttractLastPlayfieldMode!=1) {
+      BSOS_TurnOffAllLamps();
+    }
+    
+    AttractLastPlayfieldMode = 1;
+  } else { 
+    if (AttractLastPlayfieldMode!=2) {
+      BSOS_TurnOffAllLamps();
+    }
+
+    AttractLastPlayfieldMode = 2;
+  }
+
+  // check for certain switches during attract mode: coins, start game, setup
+  // any other switch will be displayed in console if debug enabled
+  byte switchHit;
+  while ( (switchHit=BSOS_PullFirstFromSwitchStack())!=SWITCH_STACK_EMPTY ) {
+    if (switchHit==SW_CREDIT_RESET) {
+      if (AddPlayer()) returnState = MACHINE_STATE_INIT_GAMEPLAY;
+    } else if (switchHit==SW_COIN_1 || switchHit==SW_COIN_2 || switchHit==SW_COIN_3) {
+      AddCredit();
+// add audits here if you want - or is that done in AddCredit() yes it is but not coinslot specific      
+      BSOS_SetDisplayCredits(Credits, true);
+    } else if (switchHit==SW_SELF_TEST_SWITCH && (CurrentTime-GetLastSelfTestChangedTime())>500) {  // 1/2 switch debounce?
+      returnState = MACHINE_STATE_TEST_LIGHTS;  // enter diagnostic mode
+      SetLastSelfTestChangedTime(CurrentTime);
+    } else {
+#ifdef DEBUG_MESSAGES
+      char buf[128];
+      sprintf(buf, "Switch 0x%02X\n", switchHit);
+      Serial.write(buf);
+#endif      
+    }
+  }
+
+  return returnState;
+}
+//-----------------------------------------------------------------
+
+////////////////////////////////////////////////////////////////////////////
+//
+//  Game Play functions
+//
+////////////////////////////////////////////////////////////////////////////
+
+byte CountBits(byte byteToBeCounted) {  // copied from Trident2020 not sure if needed yet
+  byte numBits = 0;
+  for (byte count=0; count<8; count++) {
+    numBits += (byteToBeCounted&0x01);
+    byteToBeCounted = byteToBeCounted>>1;
+  }
+  return numBits;
+}
+//-----------------------------------------------------------------
+
+/* scratch pad
+
+// reset drop targets:
+
+  BSOS_PushToTimedSolenoidStack(SOL_DROP_INLINE, 12, CurrentTime + 400);  // also SOL_DROP_RIGHT
+  DropTargetClearTime = CurrentTime;  // this might be used to do timed modes where we keep track of how much time has elapsed since drops were reset
+
+
+*/
+
+// zz
+
+void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
+  
+// Needs to be optimized 
+
+/*
+
+Drop target assignments:
+
+#define SW_DROP_INLINE_D      1   // 1000 + 3x bonus multiplier     CurrentDropTargetsValid && 0x40 (64)
+#define SW_DROP_INLINE_C      2   // 1000 + 2x bonus multiplier     CurrentDropTargetsValid && 0x20 (32)
+#define SW_DROP_INLINE_B      3   // 1000 + bonus advance           CurrentDropTargetsValid && 0x10 (16)
+#define SW_DROP_INLINE_A      4   // 1000 + bonus advance           CurrentDropTargetsValid && 0x08 (8)
+#define SW_TREASURE_SAUCER    31  // 5000 + 5x bonus multiplier, lites extra ball, then special - treasure chamber saucer (behind inline drops)
+
+#define SW_DROP_TOP           19   // 500 points                                                     CurrentDropTargetsValid && 0x04
+#define SW_DROP_MIDDLE        18   // 500 points                                                     CurrentDropTargetsValid && 0x02
+#define SW_DROP_BOTTOM        17   // 500 points - all three down awards 10k, 15k, 20k, 25k, special CurrentDropTargetsValid && 0x01
+
+*/
+
+// more efficient?  byte switchMask = 1<<(SW_DROP_TARGET_1-switchHit);
+
+//   PlaySoundEffect(SOUND_EFFECT_DT_SKILL_SHOT);
+
+  // checking in reverse order in case 2+ hit at same time, so can't get sequential credit
+  if (BSOS_ReadSingleSwitchState(SW_DROP_TOP) && (CurrentDropTargetsValid & 4)) {
+    CurrentPlayerCurrentScore += 500;
+    if ((CurrentDropTargetsValid & 7)==4) { DropSequence++; } // sequence working if only top up
+    CurrentDropTargetsValid = CurrentDropTargetsValid & 123; // 127-bit value: turn off bit position value 4
+  }  
+  if (BSOS_ReadSingleSwitchState(SW_DROP_MIDDLE) && (CurrentDropTargetsValid & 2)) {
+    CurrentPlayerCurrentScore += 500;
+    CurrentDropTargetsValid = CurrentDropTargetsValid & 125; // 127-bit value: turn off bit 2
+    if ((CurrentDropTargetsValid & 5)==4) { DropSequence=2; } // sequence working if only top still up
+    else { DropSequence=0; }
+  }
+  if (BSOS_ReadSingleSwitchState(SW_DROP_BOTTOM) && (CurrentDropTargetsValid & 1)) {
+    CurrentPlayerCurrentScore += 500;
+    CurrentDropTargetsValid = CurrentDropTargetsValid & 126; // turn off bit 1
+    if ((CurrentDropTargetsValid & 6)==6) { DropSequence=1; } // sequence working
+    else { DropSequence=0; }
+  }
+
+  // check to see if all drops down
+  if (BSOS_ReadSingleSwitchState(SW_DROP_BOTTOM) && BSOS_ReadSingleSwitchState(SW_DROP_MIDDLE) && BSOS_ReadSingleSwitchState(SW_DROP_TOP)) {
+    if (DropSequence==3) { // were they done in squence?
+
+//   PlaySoundEffect(SOUND_EFFECT_DT_SKILL_SHOT);
+      CurrentPlayerCurrentScore+=2*DropsRightDownScore[CurrentPlayer];
+    } else { // check to see if all down
+//   PlaySoundEffect(SOUND_EFFECT_DT_SKILL_SHOT);    
+      CurrentPlayerCurrentScore+=DropsRightDownScore[CurrentPlayer];    
+    }
+    // reset drops
+
+    BSOS_PushToTimedSolenoidStack(SOL_DROP_RIGHT, 12, CurrentTime + 400);  
+//  DropTargetClearTime = CurrentTime;  // if we want to keep track of time
+  
+    DropsRightDownScore[CurrentPlayer]+=5000; // need to activate special & check boundaries
+    CurrentDropTargetsValid = CurrentDropTargetsValid | 7; // turn on bits 1-3
+    DropSequence=0; 
+  }
+  
+} // end: HandleRightDropTargetHit()
+
+//-----------------------------------------------------------------
+//-----------------------------------------------------------------
+//-----------------------------------------------------------------
+//-----------------------------------------------------------------
+//-----------------------------------------------------------------
+//-----------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//
 int InitNewBall(bool curStateChanged, byte playerNum, int ballNum) {  
 
   if (curStateChanged) {
@@ -482,7 +1206,26 @@ int InitNewBall(bool curStateChanged, byte playerNum, int ballNum) {
       BSOS_SetLampState(SAME_PLAYER, 1, 0, 500);
 //      BSOS_SetLampState(HEAD_SAME_PLAYER, 1, 0, 500);
     }
+    
+    // Initialize game-specific start-of-ball lights & variables  - yy    
+    CurrentDropTargetsValid = 0x7F;    // 01111111 = 127  bits 1-3=right drops, 4-7=inline
+
+  
+    
+    
   }
+
+  // reset drop targets if needed
+  if (BSOS_ReadSingleSwitchState(SW_DROP_BOTTOM) || BSOS_ReadSingleSwitchState(SW_DROP_MIDDLE) ||BSOS_ReadSingleSwitchState(SW_DROP_TOP)) {
+    BSOS_PushToTimedSolenoidStack(SOL_DROP_RIGHT, 12, CurrentTime+200);
+  }
+
+  if (BSOS_ReadSingleSwitchState(SW_DROP_INLINE_A) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_B) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_C) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_D)) {
+    BSOS_PushToTimedSolenoidStack(SOL_DROP_INLINE, 12, CurrentTime+300);
+  }
+  
+  
+
   
   // We should only consider the ball initialized when 
   // the ball is no longer triggering the SW_OUTHOLE
@@ -495,123 +1238,6 @@ int InitNewBall(bool curStateChanged, byte playerNum, int ballNum) {
 }
 
 
-
-int RunSelfTest(int curState, boolean curStateChanged) {
-  int returnState = curState;
-  CurrentNumPlayers = 0;
-
-  // Any state that's greater than CHUTE_3 is handled by the Base Self-test code
-  // Any that's less, is machine specific, so we handle it here.
-  if (curState>=MACHINE_STATE_TEST_CHUTE_3_COINS) {
-    returnState = RunBaseSelfTest(returnState, curStateChanged, CurrentTime, SW_CREDIT_RESET);  
-  } else {
-    returnState = MACHINE_STATE_ATTRACT;
-  }
-
-  return returnState;
-}
-
-
-
-byte AttractLastHeadMode = 255;
-byte AttractLastPlayfieldMode = 255;
-
-int RunAttractMode(int curState, boolean curStateChanged) {
-
-  int returnState = curState;
-
-  // If this is the first time in the attract mode loop
-  if (curStateChanged) {
-    BSOS_DisableSolenoidStack();
-    BSOS_TurnOffAllLamps();
-    BSOS_SetDisableFlippers(true);
-    if (DEBUG_MESSAGES) {
-      Serial.write("Entering Attract Mode\n\r");
-    }
-    for (int count=0; count<4; count++) {
-      BSOS_SetDisplayBlank(count, 0x00);     
-    }
-    BSOS_SetDisplayCredits(Credits);
-    BSOS_SetDisplayBallInPlay(0);
-    AttractLastHeadMode = 255;
-    AttractLastPlayfieldMode = 255;
-  }
-
-  // Alternate displays between high score and blank
-  if ((CurrentTime/6000)%2==0) {
-
-    if (AttractLastHeadMode!=1) {
-      BSOS_SetLampState(HIGH_SCORE, 1, 0, 250);
-      BSOS_SetLampState(GAME_OVER, 0);
-//      SetPlayerLamps(0);
-  
-      for (int count=0; count<4; count++) {
-        BSOS_SetDisplay(count, HighScore, true, 2);
-      }
-      BSOS_SetDisplayCredits(Credits, true);
-      BSOS_SetDisplayBallInPlay(0, true);
-    }
-    AttractLastHeadMode = 1;
-    
-  } else {
-    if (AttractLastHeadMode!=2) {
-      BSOS_SetLampState(HIGH_SCORE, 0);
-      BSOS_SetLampState(GAME_OVER, 1);
-      BSOS_SetDisplayCredits(Credits, true);
-      BSOS_SetDisplayBallInPlay(0, true);
-      for (int count=0; count<4; count++) {
-        if (CurrentNumPlayers>0) {
-          if (count<CurrentNumPlayers) {
-            BSOS_SetDisplay(count, CurrentScores[count], true, 2); 
-          } else {
-            BSOS_SetDisplayBlank(count, 0x00);
-            BSOS_SetDisplay(count, 0);          
-          }          
-        } else {
-          BSOS_SetDisplayBlank(count, 0x30);
-          BSOS_SetDisplay(count, 0);          
-        }
-      }
-    }
-//    SetPlayerLamps(((CurrentTime/250)%4) + 1);
-    AttractLastHeadMode = 2;
-  }
-
-  if ((CurrentTime/10000)%3==0) {  
-    if (AttractLastPlayfieldMode!=1) {
-      BSOS_TurnOffAllLamps();
-    }
-    
-    AttractLastPlayfieldMode = 1;
-  } else {
-    if (AttractLastPlayfieldMode!=2) {
-      BSOS_TurnOffAllLamps();
-    }
-
-    AttractLastPlayfieldMode = 2;
-  }
-
-  byte switchHit;
-  while ( (switchHit=BSOS_PullFirstFromSwitchStack())!=SWITCH_STACK_EMPTY ) {
-    if (switchHit==SW_CREDIT_RESET) {
-      if (AddPlayer()) returnState = MACHINE_STATE_INIT_GAMEPLAY;
-    } else if (switchHit==SW_COIN_1 || switchHit==SW_COIN_2 || switchHit==SW_COIN_3) {
-      AddCredit();
-      BSOS_SetDisplayCredits(Credits, true);
-    } else if (switchHit==SW_SELF_TEST_SWITCH && (CurrentTime-GetLastSelfTestChangedTime())>500) {
-      returnState = MACHINE_STATE_TEST_LIGHTS;
-      SetLastSelfTestChangedTime(CurrentTime);
-    } else {
-#ifdef DEBUG_MESSAGES
-      char buf[128];
-      sprintf(buf, "Switch 0x%02X\n", switchHit);
-      Serial.write(buf);
-#endif      
-    }
-  }
-
-  return returnState;
-}
 
 
 
@@ -689,7 +1315,17 @@ int InitGamePlay(boolean curStateChanged) {
     // Set up general game variables
     CurrentPlayer = 0;
     CurrentBallInPlay = 1;
-    for (int count=0; count<4; count++) CurrentScores[count] = 0;
+    
+    for (int count=0; count<4; count++) {
+      // init game play variables
+      CurrentScores[count] = 0;
+      
+      // game specific values that carry over from ball-to-ball - xx
+      
+      DropsRightDownScore[count]=10000;  // reset right drops value tree
+      BonusHeld[count]=0;                 // any 20k+ bonus 
+          
+    }
 
     // if the ball is in the outhole, then we can move on
     if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) {
@@ -837,54 +1473,3 @@ void loop() {
 }
 
 //====================================================
-////////////////////////////////////////////////////////////////////////////
-//
-//  Audio Output functions
-//
-////////////////////////////////////////////////////////////////////////////
-#if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
-byte CurrentBackgroundSong = SOUND_EFFECT_NONE;
-#endif
-
-
-void PlayBackgroundSong(byte songNum) {
-
-#if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
-  if (MusicLevel > 1) {
-    if (CurrentBackgroundSong != songNum) {
-      if (CurrentBackgroundSong != SOUND_EFFECT_NONE) wTrig.trackStop(CurrentBackgroundSong);
-      if (songNum != SOUND_EFFECT_NONE) {
-#ifdef USE_WAV_TRIGGER_1p3
-        wTrig.trackPlayPoly(songNum, true);
-#else
-        wTrig.trackPlayPoly(songNum);
-#endif
-        wTrig.trackLoop(songNum, true);
-        wTrig.trackGain(songNum, -4);
-      }
-      CurrentBackgroundSong = songNum;
-    }
-  }
-#else
-  byte test = songNum;
-  songNum = test;
-#endif
-
-}
-
-
-unsigned long NextSoundEffectTime = 0;
-
-void PlaySoundEffect(byte soundEffectNum) {
-
-  if (MusicLevel == 0) return;
-
-#if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
-
-#ifndef USE_WAV_TRIGGER_1p3
-  if (  soundEffectNum == SFX_SPINNER ) wTrig.trackStop(soundEffectNum);
-#endif
-  wTrig.trackPlayPoly(soundEffectNum);
-#endif
-
-}
