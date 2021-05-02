@@ -12,21 +12,21 @@
 
 // original code started at 0, not  sure if we should start at 1?
 
-#define SOL_OUTHOLE           1
-#define SOL_KNOCKER           2
-#define SOL_SAUCER_TREASURE   3  // saucer behind inline drops 5x
-#define SOL_SAUCER_PARAGON    4  // paragon saucer
-#define SOL_SAUCER_GOLDEN     5  // golden cliffs saucer
-#define SOL_LEFT_SLING        6
-#define SOL_RIGHT_SLING       7
-#define SOL_LEFT_BUMPER       8
-#define SOL_RIGHT_BUMPER      9
-#define SOL_BEAST_BUMPER      10 // bottom left pop bumper in beast area
-#define SOL_CENTER_BUMPER     11
-#define SOL_DROP_INLINE       12
-#define SOL_DROP_RIGHT        13
-#define SOL_COIN_LOCKOUT      14
-#define SOL_FLIPPER_ENABLE    15
+#define SOL_OUTHOLE           0
+#define SOL_KNOCKER           1
+#define SOL_SAUCER_TREASURE   2  // saucer behind inline drops 5x
+#define SOL_SAUCER_PARAGON    3  // paragon saucer
+#define SOL_SAUCER_GOLDEN     4  // golden cliffs saucer
+#define SOL_LEFT_SLING        5
+#define SOL_RIGHT_SLING       6
+#define SOL_LEFT_BUMPER       7
+#define SOL_RIGHT_BUMPER      8
+#define SOL_BEAST_BUMPER      9  // bottom left pop bumper in beast area
+#define SOL_CENTER_BUMPER     10
+#define SOL_DROP_INLINE       11
+#define SOL_DROP_RIGHT        12
+#define SOL_COIN_LOCKOUT      13
+#define SOL_FLIPPER_ENABLE    14
 
 // Cabinet Switches
 #define SW_CREDIT_RESET       5  //6
