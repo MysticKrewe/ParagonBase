@@ -29,46 +29,46 @@
 #define SOL_FLIPPER_ENABLE    15
 
 // Cabinet Switches
-#define SW_CREDIT_RESET       6
-#define SW_TILT               7
-#define SW_OUTHOLE            8
-#define SW_COIN_1             9
-#define SW_COIN_2             10
-#define SW_COIN_3             11
-#define SW_SLAM               16
+#define SW_CREDIT_RESET       5  //6
+#define SW_TILT               6  //7
+#define SW_OUTHOLE            7  //8
+#define SW_COIN_1             8  //9
+#define SW_COIN_2             9  //10
+#define SW_COIN_3             10 //11
+#define SW_SLAM               15 // 
 
 // Playfield Switches
 
-#define SW_DROP_INLINE_D      1   // 1000 + 3x bonus multiplier     CurrentDropTargetsValid && 0x40 (64)
-#define SW_DROP_INLINE_C      2   // 1000 + 2x bonus multiplier     CurrentDropTargetsValid && 0x20 (32)
-#define SW_DROP_INLINE_B      3   // 1000 + bonus advance           CurrentDropTargetsValid && 0x10 (16)
-#define SW_DROP_INLINE_A      4   // 1000 + bonus advance           CurrentDropTargetsValid && 0x08 (8)
-#define SW_TREASURE_SAUCER    31  // 5000 + 5x bonus multiplier, lites extra ball, then special - treasure chamber saucer (behind inline drops)
+#define SW_DROP_INLINE_D      0   // 1000 + 3x bonus multiplier     CurrentDropTargetsValid && 0x40 (64)
+#define SW_DROP_INLINE_C      1   // 1000 + 2x bonus multiplier     CurrentDropTargetsValid && 0x20 (32)
+#define SW_DROP_INLINE_B      2   // 1000 + bonus advance           CurrentDropTargetsValid && 0x10 (16)
+#define SW_DROP_INLINE_A      3   // 1000 + bonus advance           CurrentDropTargetsValid && 0x08 (8)
+#define SW_TREASURE_SAUCER    30  // 5000 + 5x bonus multiplier, lites extra ball, then special - treasure chamber saucer (behind inline drops)
 
-#define SW_DROP_TOP           19   // 500 points                                                     CurrentDropTargetsValid && 0x04
-#define SW_DROP_MIDDLE        18   // 500 points                                                     CurrentDropTargetsValid && 0x02
-#define SW_DROP_BOTTOM        17   // 500 points - all three down awards 10k, 15k, 20k, 25k, special CurrentDropTargetsValid && 0x01
+#define SW_DROP_TOP           18   // 500 points                                                     CurrentDropTargetsValid && 0x04
+#define SW_DROP_MIDDLE        17   // 500 points                                                     CurrentDropTargetsValid && 0x02
+#define SW_DROP_BOTTOM        16   // 500 points - all three down awards 10k, 15k, 20k, 25k, special CurrentDropTargetsValid && 0x01
 
-#define SW_RIGHT_OUTLANE      22   // 1000 points
-#define SW_RIGHT_INLANE       23   // 1000 points
-#define SW_PARAGON_SAUCER     24   // paragon saucer - 1 bonus + light letter, spell paragon+hit=50k + special
+#define SW_RIGHT_OUTLANE      21   // 1000 points
+#define SW_RIGHT_INLANE       22   // 1000 points
+#define SW_PARAGON_SAUCER     23   // paragon saucer - 1 bonus + light letter, spell paragon+hit=50k + special
 
-#define SW_TOP_ROLLOVER       26   // top center star rollover (500 points + advance bonus)
-#define SW_500_REBOUND        27   // 500 point rebound (both left and right)
-#define SW_WATERFALL_ROLLOVER 28   // 1000 points + bonus advance, waterfall (right squigly star rollover)  all 3-bank drops down increase value from 1k, to 5k, 10k, special
-#define SW_UPPER_STANDUP      29   // 10 points + advance bonus, lower center target
-#define SW_TOP_STANDUP        30   // 10 points + advance bonus, top center standup target 
+#define SW_TOP_ROLLOVER       25   // top center star rollover (500 points + advance bonus)
+#define SW_500_REBOUND        26   // 500 point rebound (both left and right)
+#define SW_WATERFALL_ROLLOVER 27   // 1000 points + bonus advance, waterfall (right squigly star rollover)  all 3-bank drops down increase value from 1k, to 5k, 10k, special
+#define SW_UPPER_STANDUP      28   // 10 points + advance bonus, lower center target
+#define SW_TOP_STANDUP        29   // 10 points + advance bonus, top center standup target 
 
-#define SW_GOLDEN_SAUCER      32   // golden cliffs saucer (increasing award from 2k+ 2k each time)
-#define SW_SPINNER            33   // spinner (100 points, when hit 5x advances bonus)
-#define SW_STAR_ROLLOVER      34   // 50 points, top right, upper right star rollover, golden cliffs and drop target rebound switch (advance bonus?)
+#define SW_GOLDEN_SAUCER      31   // golden cliffs saucer (increasing award from 2k+ 2k each time)
+#define SW_SPINNER            32   // spinner (100 points, when hit 5x advances bonus)
+#define SW_STAR_ROLLOVER      33   // 50 points, top right, upper right star rollover, golden cliffs and drop target rebound switch (advance bonus?)
 
-#define SW_RIGHT_SLING        35   // 500 points - right slingshot
-#define SW_LEFT_SLING         36   // 500 points - left slingshot
-#define SW_BEAST_BUMPER       37   // 100 points - beast's lair pop bumper lower left
-#define SW_CENTER_BUMPER      38   // 100 points
-#define SW_RIGHT_BUMPER       39   // 100 points
-#define SW_LEFT_BUMPER        40   // 100 points
+#define SW_RIGHT_SLING        34   // 500 points - right slingshot
+#define SW_LEFT_SLING         35   // 500 points - left slingshot
+#define SW_BEAST_BUMPER       36   // 100 points - beast's lair pop bumper lower left
+#define SW_CENTER_BUMPER      37   // 100 points
+#define SW_RIGHT_BUMPER       38   // 100 points
+#define SW_LEFT_BUMPER        39   // 100 points
 
 // Lamp Definitions
 
