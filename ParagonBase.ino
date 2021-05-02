@@ -107,7 +107,7 @@ byte DropsHit = 0;              // holds mask value indicating which of drops ha
 void fire_3bank() {
 
   BSOS_SetCoinLockout(true, 0x10);
-  delayMicroseconds(125);
+  delay(125);
   BSOS_SetCoinLockout(false, 0x10);
 
 }
