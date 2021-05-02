@@ -13,8 +13,7 @@
 // original code started at 0, not  sure if we should start at 1?
 
 #define SOL_OUTHOLE           6
-#define SOL_KNOCKER           5
-
+#define SOL_KNOCKER           5  // 2 in Bally
 #define SOL_SAUCER_TREASURE   7  // saucer behind inline drops 5x
 #define SOL_SAUCER_PARAGON    9  // paragon saucer
 #define SOL_SAUCER_GOLDEN     8  // golden cliffs saucer
@@ -24,9 +23,9 @@
 #define SOL_RIGHT_BUMPER      11
 #define SOL_BEAST_BUMPER       0 // bottom left pop bumper in beast area
 #define SOL_CENTER_BUMPER     12
-#define SOL_DROP_INLINE       1
+#define SOL_DROP_INLINE       1   // 13 on bally
 
-#define SOL_DROP_RIGHT        2  // unknown
+#define SOL_DROP_RIGHT        2  // unknown  // 12 in Bally
 #define SOL_COIN_LOCKOUT      3
 #define SOL_FLIPPER_ENABLE    4
 
