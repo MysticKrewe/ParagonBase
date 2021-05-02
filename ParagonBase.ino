@@ -104,6 +104,13 @@ byte DropsHit = 0;              // holds mask value indicating which of drops ha
 
 
 // ----------------------------------------------------------------
+void fire_3bank() {
+
+  BSOS_SetCoinLockout(true, 0x10);
+  delayMicroseconds(125);
+  BSOS_SetCoinLockout(false, 0x10);
+
+}
 
 /*********************************************************************
 
@@ -1191,6 +1198,10 @@ int InitGamePlay(boolean curStateChanged) {
   if (curStateChanged) {
     InitGameStartTime = CurrentTime;
     BSOS_SetCoinLockout((Credits>=MaximumCredits)?true:false);
+
+// test here
+fire_3bank();
+    
     BSOS_SetDisableFlippers(true);
     BSOS_DisableSolenoidStack();
     BSOS_TurnOffAllLamps();
