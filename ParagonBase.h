@@ -195,7 +195,6 @@ struct PlayfieldAndCabinetSwitch TriggeredSwitches[] = {
 #define SFX_TOP_BUMPER_HIT           10
 #define SFX_BOTTOM_BUMPER_HIT        11
 #define SFX_DROP_TARGET              12
-#define SFX_ADD_CREDIT               13
 #define SFX_RESCUE_FROM_THE_DEEP     14
 #define SFX_SHOOT_AGAIN              15
 #define SFX_FEEDING_FRENZY           16
