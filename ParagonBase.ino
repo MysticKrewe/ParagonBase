@@ -191,8 +191,30 @@ void reset_3bank() {
   CurrentDropTargetsValid = CurrentDropTargetsValid | 7; // turn on bits 1-3
   DropSequence=0;  
 }
+// ----------------------------------------------------------------
+/* trick to print binary of byte
 
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY(byte)  \
+  (byte & 0x80 ? '1' : '0'), \
+  (byte & 0x40 ? '1' : '0'), \
+  (byte & 0x20 ? '1' : '0'), \
+  (byte & 0x10 ? '1' : '0'), \
+  (byte & 0x08 ? '1' : '0'), \
+  (byte & 0x04 ? '1' : '0'), \
+  (byte & 0x02 ? '1' : '0'), \
+  (byte & 0x01 ? '1' : '0') 
 
+  printf("Leading text "BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(byte));
+*/
+// ----------------------------------------------------------------
+void reset_inline() {
+  
+  if (BSOS_ReadSingleSwitchState(SW_DROP_INLINE_A) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_B) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_C) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_D)) {
+    BSOS_PushToTimedSolenoidStack(SOL_DROP_INLINE, 12, CurrentTime+300);
+  }
+  CurrentDropTargetsValid = CurrentDropTargetsValid | 120; // turn on bits 4-7 
+}
 // ----------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////
 //
@@ -566,9 +588,10 @@ void AddSpecialCredit() {
   BSOS_WriteULToEEProm(BSOS_TOTAL_REPLAYS_EEPROM_START_BYTE, BSOS_ReadULFromEEProm(BSOS_TOTAL_REPLAYS_EEPROM_START_BYTE) + 1);  
 } // end: AddSpecialCredit()
 //-----------------------------------------------------------------
-boolean AddPlayer() {
+boolean AddPlayer(boolean resetNumPlayers=false) {
 
   if (Credits<1 && !FreePlayMode) return false;
+  if (resetNumPlayers) CurrentNumPlayers = 0;  
   if (CurrentNumPlayers>=4) return false;
 
   CurrentNumPlayers += 1;
@@ -979,7 +1002,7 @@ int RunAttractMode(int curState, boolean curStateChanged) {
   byte switchHit;
   while ( (switchHit=BSOS_PullFirstFromSwitchStack())!=SWITCH_STACK_EMPTY ) {
     if (switchHit==SW_CREDIT_RESET) {
-      if (AddPlayer()) returnState = MACHINE_STATE_INIT_GAMEPLAY;
+      if (AddPlayer(true)) returnState = MACHINE_STATE_INIT_GAMEPLAY;
     } else if (switchHit==SW_COIN_1 || switchHit==SW_COIN_2 || switchHit==SW_COIN_3) {
 //      AddCoinToAudit(switchHit);      
 //      AddCredit(true, 1);  // is this a newer version that incorporates bsos_setdisplaycredits?
@@ -1218,6 +1241,10 @@ int InitGamePlay(boolean curStateChanged) {
   
   if (curStateChanged) { // run once/first-time    
 
+  if (DEBUG_MESSAGES) {
+    Serial.write("InitGamePlay - state changed, runonce\n\r");
+  }    
+  
 #if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
     wTrig.stopAllTracks();
     wTrig.samplerateOffset(0);
@@ -1234,6 +1261,7 @@ int InitGamePlay(boolean curStateChanged) {
     // Set up general game variables
     CurrentPlayer = 0;
     CurrentBallInPlay = 1;
+    SamePlayerShootsAgain = false;       
     
     for (int count=0; count<4; count++) {
       // init game play variables
@@ -1294,21 +1322,20 @@ int InitGamePlay(boolean curStateChanged) {
 int InitNewBall(bool curStateChanged, byte playerNum, int ballNum) {  
 
   if (curStateChanged) {
+    
+if (DEBUG_MESSAGES) { 
+  Serial.write("InitNewBall(curStateChanged)\r\n");
+}         
+    
     BallFirstSwitchHitTime = 0;
     SamePlayerShootsAgain = false;
-
-    // check to see if ball in saucers
-    if (BSOS_ReadSingleSwitchState(SW_SAUCER_TREASURE)) BSOS_PushToSolenoidStack(SOL_SAUCER_TREASURE, 5);  
-    if (BSOS_ReadSingleSwitchState(SW_SAUCER_PARAGON)) BSOS_PushToSolenoidStack(SOL_SAUCER_PARAGON, 5);
-    if (BSOS_ReadSingleSwitchState(SW_SAUCER_GOLDEN)) BSOS_PushToSolenoidStack(SOL_SAUCER_GOLDEN, 5);  
-
 
     BSOS_SetDisableFlippers(false);
     BSOS_EnableSolenoidStack(); 
     BSOS_SetDisplayCredits(Credits, true);
 //    SetPlayerLamps(playerNum+1, 500);
     
-    if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) {
+    if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) { // kick ball into shooter lane
       BSOS_PushToTimedSolenoidStack(SOL_OUTHOLE, 4, CurrentTime + 100);
     }
 
@@ -1325,35 +1352,27 @@ int InitNewBall(bool curStateChanged, byte playerNum, int ballNum) {
 //      BSOS_SetLampState(HEAD_SAME_PLAYER, 1, 0, 500);
     }
     
-    // Initialize game-specific start-of-ball lights & variables  - yy    
-    CurrentDropTargetsValid = 0x7F;    // 01111111 = 127  bits 1-3=right drops, 4-7=inline
 
+
+    reset_3bank();  // reset right 3-bank
+    reset_inline(); // reset inline drops
     
     
-    
-    
-  }
+  } // end new ball init
 
-  // reset drop targets if needed
-//  if (BSOS_ReadSingleSwitchState(SW_DROP_BOTTOM) || BSOS_ReadSingleSwitchState(SW_DROP_MIDDLE) ||BSOS_ReadSingleSwitchState(SW_DROP_TOP)) {
-//    BSOS_PushToTimedSolenoidStack(SOL_DROP_RIGHT, 12, CurrentTime+200);
-//  }
 
-// test here
-reset_3bank();
-// also reset inline bank
+  // check to see if ball in saucers
+  if (BSOS_ReadSingleSwitchState(SW_SAUCER_TREASURE)) BSOS_PushToSolenoidStack(SOL_SAUCER_TREASURE, 5);  
+  if (BSOS_ReadSingleSwitchState(SW_SAUCER_PARAGON)) BSOS_PushToSolenoidStack(SOL_SAUCER_PARAGON, 5);
+  if (BSOS_ReadSingleSwitchState(SW_SAUCER_GOLDEN)) BSOS_PushToSolenoidStack(SOL_SAUCER_GOLDEN, 5);
 
-  if (BSOS_ReadSingleSwitchState(SW_DROP_INLINE_A) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_B) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_C) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_D)) {
-    BSOS_PushToTimedSolenoidStack(SOL_DROP_INLINE, 12, CurrentTime+300);
-  }
-  
   
 
   
   // We should only consider the ball initialized when 
   // the ball is no longer triggering the SW_OUTHOLE
   if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) {
-    return MACHINE_STATE_INIT_NEW_BALL;
+    return MACHINE_STATE_INIT_NEW_BALL;  // loop again
   } else {
 
     return MACHINE_STATE_NORMAL_GAMEPLAY;
@@ -1522,7 +1541,11 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
         case SW_DROP_TOP:                     // 3-bank drops
         case SW_DROP_MIDDLE:
         case SW_DROP_BOTTOM:
-if (DEBUG_MESSAGES) { Serial.write("* Right drops hit %d\n",switchHit); }        
+if (DEBUG_MESSAGES) { 
+      char buf[32];
+      sprintf(buf, "Right Drop (%d) [%d]\n\r", switchHit,CurrentDropTargetsValid);
+      Serial.write(buf);
+}     
           HandleRightDropTargetHit(switchHit,scoreMultiplier);
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;
           break;      
