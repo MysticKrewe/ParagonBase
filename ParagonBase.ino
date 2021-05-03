@@ -11,6 +11,7 @@
 
 Things to do:
 
+ * create paragon_award(PSaucerValue);  // 1-8 p-a-r-a-g-o-n special and corresponding show_paragon_lights()
  * manually fire 3-bank during diagnostic coil test (which # coil?) 
    
 
@@ -70,6 +71,9 @@ boolean MachineStateChanged = true;
 
 #define TIME_TO_WAIT_FOR_BALL         100
 
+// game specific timing
+#define SAUCER_PARAGON_DURATION         2000
+
 // enhanced settings copied from Trident2020 ---------------------
 
 #define EEPROM_BALL_SAVE_BYTE           100
@@ -97,6 +101,8 @@ boolean MachineStateChanged = true;
 #define INLINE2_MASK     0x16   // inlines 1-4
 #define INLINE3_MASK     0x32   // inlines 1-4
 #define INLINE4_MASK     0x64   // inlines 1-4
+
+#define SAUCER_DEBOUNCE_TIME  500   // #ms to debounce the saucer hits
 
 byte DropsHit = 0;              // holds mask value indicating which of drops have been hit
 
@@ -169,6 +175,8 @@ boolean ExtraBallCollected = false;
 
 unsigned long DropTargetClearTime = 0;
 
+unsigned long SaucerHitTime = 0;       // used for debouncing saucer hit
+byte PSaucerValue = 0;                 // 1-8 p-a-r-a-g-o-n special
 
 // Written in by Mike - yy
 byte CurrentDropTargetsValid = 0;         // bitmask showing which drop targets up right:b,m,t, inline 1-4 1-64 bits
@@ -289,8 +297,11 @@ void ReadStoredParameters() {
   AwardScores[2] = BSOS_ReadULFromEEProm(BSOS_AWARD_SCORE_3_EEPROM_START_BYTE);
 
 }
-
-
+// ----------------------------------------------------------------
+void AddToBonus(byte bonusAddition) {
+  Bonus += bonusAddition;
+  if (Bonus > MAX_DISPLAY_BONUS) Bonus = MAX_DISPLAY_BONUS;
+}
 
 
 //===============================================================================
@@ -311,9 +322,11 @@ void SetPlayerLamps(byte numPlayers, byte playerOffset = 0, int flashPeriod = 0)
 
 void ShowShootAgainLamp() {
   // turn same player lamps on/off based on ball save time
+  // Note: ball save starts once a target has been hit
   if (!BallSaveUsed && BallSaveNumSeconds>0 && (CurrentTime-BallFirstSwitchHitTime)<((unsigned long)(BallSaveNumSeconds-1)*1000)) {
     unsigned long msRemaining = ((unsigned long)(BallSaveNumSeconds-1)*1000)-(CurrentTime-BallFirstSwitchHitTime);
     BSOS_SetLampState(L_SHOOT_AGAIN, 1, 0, (msRemaining<1000)?100:500);
+    BSOS_SetLampState(L_BB_SHOOT_AGAIN, 1, 0, (msRemaining<1000)?100:500);    
   } else { // turn off
     BSOS_SetLampState(L_SHOOT_AGAIN, SamePlayerShootsAgain);
     BSOS_SetLampState(L_BB_SHOOT_AGAIN, SamePlayerShootsAgain);    // turn off?
@@ -1578,22 +1591,79 @@ if (DEBUG_MESSAGES) {
 
       // game-specific switch action
 //zz      
-        case SW_DROP_TOP:                     // 3-bank drops
+        // 3-bank drop targets
+        case SW_DROP_TOP:
         case SW_DROP_MIDDLE:
         case SW_DROP_BOTTOM:
+/*        
 if (DEBUG_MESSAGES) { 
       char buf[32];
       sprintf(buf, "Right Drop (%d) [%d]\n\r", switchHit,CurrentDropTargetsValid);
       Serial.write(buf);
-}     
+} */    
           HandleRightDropTargetHit(switchHit,scoreMultiplier);
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;
           break;      
+          
+        // Standup targets
+        case SW_BOTTOM_STANDUP:
+        case SW_TOP_STANDUP:
+          CurrentPlayerCurrentScore+=10;
+          AddToBonus(1);
+          if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;
+          break;
+          
+        // inline drops
+        // NOTE - not keeping track of target masks because really doesn't matter they have to be hit in sequential order anyway
+        case SW_DROP_INLINE_A:
+          CurrentPlayerCurrentScore+=1000;
+          AddToBonus(1);
+          if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;
+          break;
+        case SW_DROP_INLINE_B:
+          CurrentPlayerCurrentScore+=1000;
+          AddToBonus(1);
+          // no BallFirstSwitchHitTime because shouldn't be hittable 
+          break;        
+        case SW_DROP_INLINE_C: // 2x
+          if (BonusX>4) { // already maxxed multiplier
+            CurrentPlayerCurrentScore+=1000;
+            AddToBonus(1);            
+          } else { BonusX=2; }
+          // no BallFirstSwitchHitTime because shouldn't be hittable 
+          break;                
+        case SW_DROP_INLINE_D: // 3x
+          if (BonusX>4) { // already maxxed multiplier
+            CurrentPlayerCurrentScore+=1000;
+            AddToBonus(1);            
+          } else { BonusX=3; }
+          // no BallFirstSwitchHitTime because shouldn't be hittable 
+          break;   
 
-
-
-
-        
+        // lanes
+        case SW_RIGHT_OUTLANE:
+          CurrentPlayerCurrentScore+=1000;
+          if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
+          break;
+        case SW_RIGHT_INLANE:
+          CurrentPlayerCurrentScore+=1000;
+          if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
+          break;          
+          
+        // Paragon saucer
+        case SW_SAUCER_PARAGON:
+          // We only count a saucer hit if it hasn't happened in the last 500ms software debounce)
+          if (SaucerHitTime==0 || (CurrentTime-SaucerHitTime)>SAUCER_DEBOUNCE_TIME) {
+            SaucerHitTime = CurrentTime;
+ //           ShowSaucerHit = PSaucerValue; // 1-7 p-a-r-a-g-o-n
+            AddToBonus(1);
+            // paragon_award(PSaucerValue);  // 1-8 p-a-r-a-g-o-n special
+            BSOS_PushToTimedSolenoidStack(SOL_SAUCER_PARAGON, 5, CurrentTime + SAUCER_PARAGON_DURATION);             
+          }
+          if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime; 
+          break;
+          
+          
     }
   }
   if (CurrentPlayerCurrentScore != CurrentScores[CurrentPlayer]) {
