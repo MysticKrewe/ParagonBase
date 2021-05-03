@@ -163,7 +163,12 @@ boolean BallSaveUsed = false;
 byte BallSaveNumSeconds = 0;
 byte BallsPerGame = 3;
 
+boolean ExtraBallCollected = false;
+
 // game specific
+
+unsigned long DropTargetClearTime = 0;
+
 
 // Written in by Mike - yy
 byte CurrentDropTargetsValid = 0;         // bitmask showing which drop targets up right:b,m,t, inline 1-4 1-64 bits
@@ -302,6 +307,19 @@ void SetPlayerLamps(byte numPlayers, byte playerOffset = 0, int flashPeriod = 0)
   }
 } // END: SetPlayerLamps()
 */
+// ----------------------------------------------------------------
+
+void ShowShootAgainLamp() {
+  // turn same player lamps on/off based on ball save time
+  if (!BallSaveUsed && BallSaveNumSeconds>0 && (CurrentTime-BallFirstSwitchHitTime)<((unsigned long)(BallSaveNumSeconds-1)*1000)) {
+    unsigned long msRemaining = ((unsigned long)(BallSaveNumSeconds-1)*1000)-(CurrentTime-BallFirstSwitchHitTime);
+    BSOS_SetLampState(L_SHOOT_AGAIN, 1, 0, (msRemaining<1000)?100:500);
+  } else { // turn off
+    BSOS_SetLampState(L_SHOOT_AGAIN, SamePlayerShootsAgain);
+    BSOS_SetLampState(L_BB_SHOOT_AGAIN, SamePlayerShootsAgain);    // turn off?
+  }
+}
+
 // ----------------------------------------------------------------
 void ShowBonusOnTree(byte bonus, byte dim=0) {
   if (bonus>MAX_DISPLAY_BONUS) bonus = MAX_DISPLAY_BONUS;
@@ -1334,13 +1352,12 @@ if (DEBUG_MESSAGES) {
     BSOS_SetDisableFlippers(false);
     BSOS_EnableSolenoidStack(); 
     BSOS_SetDisplayCredits(Credits, true);
-//    SetPlayerLamps(playerNum+1, 500);
     
     if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) { // kick ball into shooter lane
       BSOS_PushToTimedSolenoidStack(SOL_OUTHOLE, 4, CurrentTime + 100);
     }
 
-    for (int count=0; count<CurrentNumPlayers; count++) {
+    for (int count=0; count<CurrentNumPlayers; count++) {   // show scores on display
       BSOS_SetDisplay(count, CurrentScores[count], true, 2);
     }
 
@@ -1348,16 +1365,26 @@ if (DEBUG_MESSAGES) {
     BSOS_SetLampState(BALL_IN_PLAY, 1);
     BSOS_SetLampState(TILT, 0);
 
-    if (BallSaveNumSeconds>0) {
-      BSOS_SetLampState(SAME_PLAYER, 1, 0, 500);
-//      BSOS_SetLampState(HEAD_SAME_PLAYER, 1, 0, 500);
+    if (BallSaveNumSeconds>0) { // if ball save active, turn on backbox light
+      BSOS_SetLampState(L_BB_SHOOT_AGAIN, 1, 0, 500);
     }
     
 
 
     reset_3bank();  // reset right 3-bank
     reset_inline(); // reset inline drops
-    
+
+    Bonus = 1;
+    ShowBonusOnTree(1);
+    BonusX = 1;
+    BallSaveUsed = false;
+    BallTimeInTrough = 0;
+    NumTiltWarnings = 0;
+    LastTiltWarningTime = 0;
+
+    // Initialize game-specific start-of-ball lights & variables    
+    DropTargetClearTime = 0;
+    ExtraBallCollected = false;
     
   } // end new ball init
 
@@ -1404,6 +1431,9 @@ int NormalGamePlay() {
     }
   }
 
+  ShowShootAgainLamp();
+// new
+  ShowPlayerScores(CurrentPlayer, (BallFirstSwitchHitTime==0)?true:false, (BallFirstSwitchHitTime>0 && ((CurrentTime-LastTimeScoreChanged)>2000))?true:false);  
   
   // Check to see if ball is in the outhole
   if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) {
@@ -1423,8 +1453,8 @@ int NormalGamePlay() {
           BSOS_PushToTimedSolenoidStack(SOL_OUTHOLE, 4, CurrentTime + 100);
           if (BallFirstSwitchHitTime>0) {
             BallSaveUsed = true;
-            BSOS_SetLampState(SAME_PLAYER, 0);
-//            BSOS_SetLampState(HEAD_SAME_PLAYER, 0);
+            BSOS_SetLampState(L_SHOOT_AGAIN, 0);
+            BSOS_SetLampState(L_BB_SHOOT_AGAIN, 0);
           }
           BallTimeInTrough = CurrentTime;
 
