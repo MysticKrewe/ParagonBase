@@ -6,6 +6,11 @@
  
  Version 0.1.0 - 04/03/21
  
+ 
+ 
+
+ 
+ 
  */
 
 // Solenoids
@@ -27,7 +32,8 @@
 
 // 2,3 and 4 don't respond
 
-#define SOL_DROP_RIGHT        4  // unknown  // 12 in Bally
+#define SOL_DROP_RIGHT        4  // NOT USED, 12 in Bally - uses U4/Q17 on Continuous solenoid line (BSOS_SetCoinLockout(true, 0x10); delay(125); BSOS_SetCoinLockout(false, 0x10);
+
 //#define SOL_COIN_LOCKOUT      2 //4?
 //#define SOL_FLIPPER_ENABLE    14  //6  // 3 4no
 
@@ -46,7 +52,7 @@
 #define SW_DROP_INLINE_C      1   // 1000 + 2x bonus multiplier     CurrentDropTargetsValid && 0x20 (32)
 #define SW_DROP_INLINE_B      2   // 1000 + bonus advance           CurrentDropTargetsValid && 0x10 (16)
 #define SW_DROP_INLINE_A      3   // 1000 + bonus advance           CurrentDropTargetsValid && 0x08 (8)
-#define SW_TREASURE_SAUCER    30  // 5000 + 5x bonus multiplier, lites extra ball, then special - treasure chamber saucer (behind inline drops)
+#define SW_SAUCER_TREASURE    30  // 5000 + 5x bonus multiplier, lites extra ball, then special - treasure chamber saucer (behind inline drops)
 
 #define SW_DROP_TOP           18   // 500 points                                                     CurrentDropTargetsValid && 0x04
 #define SW_DROP_MIDDLE        17   // 500 points                                                     CurrentDropTargetsValid && 0x02
@@ -54,7 +60,7 @@
 
 #define SW_RIGHT_OUTLANE      21   // 1000 points
 #define SW_RIGHT_INLANE       22   // 1000 points
-#define SW_PARAGON_SAUCER     23   // paragon saucer - 1 bonus + light letter, spell paragon+hit=50k + special
+#define SW_SAUCER_PARAGON     23   // paragon saucer - 1 bonus + light letter, spell paragon+hit=50k + special
 
 #define SW_TOP_ROLLOVER       25   // top center star rollover (500 points + advance bonus)
 #define SW_500_REBOUND        26   // 500 point rebound (both left and right)
@@ -62,7 +68,7 @@
 #define SW_UPPER_STANDUP      28   // 10 points + advance bonus, lower center target
 #define SW_TOP_STANDUP        29   // 10 points + advance bonus, top center standup target 
 
-#define SW_GOLDEN_SAUCER      31   // golden cliffs saucer (increasing award from 2k+ 2k each time)
+#define SW_SAUCER_GOLDEN      31   // golden cliffs saucer (increasing award from 2k+ 2k each time)
 #define SW_SPINNER            32   // spinner (100 points, when hit 5x advances bonus)
 #define SW_STAR_ROLLOVER      33   // 50 points, top right, upper right star rollover, golden cliffs and drop target rebound switch (advance bonus?)
 

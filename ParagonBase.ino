@@ -7,7 +7,12 @@
   working code file
   
   0.0.1 - 4-7-21 - Slightly modified version of bsos/pinballbase.ino that compiles with Paragon definitions
-  
+
+
+Things to do:
+
+ * manually fire 3-bank during diagnostic coil test (which # coil?) 
+   
 
 */
 #include "BallySternOS.h"
@@ -103,15 +108,6 @@ byte DropsHit = 0;              // holds mask value indicating which of drops ha
 #define TILT_WARNING_DEBOUNCE_TIME      1000
 
 
-// ----------------------------------------------------------------
-void fire_3bank() {
-
-  BSOS_SetCoinLockout(true, 0x10);
-  delay(125);
-  BSOS_SetCoinLockout(false, 0x10);
-
-}
-
 /*********************************************************************
 
     Machine state and options
@@ -177,10 +173,36 @@ byte DropSequence=0;                      // 1-3 # right drops hit in sequence
 unsigned int DropsRightDownScore[4];      // reward for all right drops down
 byte BonusHeld[4];                        // bits: 1=20k, 2=30k, 4=40k
 
+////////////////////////////////////////////////////////////////////////////
+//
+//  Machine/Hardware-specific code
+//
+////////////////////////////////////////////////////////////////////////////
+
 // ----------------------------------------------------------------
+void reset_3bank() {
+  // Paragon-specific - resets right 3-bank drop targets on continuous solenoid line
+
+  if (BSOS_ReadSingleSwitchState(SW_DROP_TOP) || BSOS_ReadSingleSwitchState(SW_DROP_MIDDLE) || BSOS_ReadSingleSwitchState(SW_DROP_BOTTOM)) {
+    BSOS_SetCoinLockout(true, 0x10);
+    delay(125);
+    BSOS_SetCoinLockout(false, 0x10);
+  }
+  CurrentDropTargetsValid = CurrentDropTargetsValid | 7; // turn on bits 1-3
+  DropSequence=0;  
+}
+
+
+// ----------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
+//
+//  Machine Generic code
+//
+////////////////////////////////////////////////////////////////////////////
+
 
 // copied from Trident
-
+// ----------------------------------------------------------------
 
 byte ReadSetting(byte setting, byte defaultValue) {
   byte value = EEPROM.read(setting);
@@ -190,6 +212,7 @@ byte ReadSetting(byte setting, byte defaultValue) {
   }
   return value;
 }
+// ----------------------------------------------------------------
 
 void ReadStoredParameters() {
   HighScore = BSOS_ReadULFromEEProm(BSOS_HIGHSCORE_EEPROM_START_BYTE, 10000);
@@ -351,6 +374,7 @@ byte GetDisplayMask(byte numDigits) {
   return displayMask;
 }
 
+//-----------------------------------------------------------------
 
 void ShowPlayerScores(byte displayToUpdate, boolean flashCurrent, boolean dashCurrent, unsigned long allScoresShowValue=0) {
 
@@ -488,7 +512,7 @@ void ShowPlayerScores(byte displayToUpdate, boolean flashCurrent, boolean dashCu
     LastTimeOverrideAnimated = overrideAnimationSeed;
   }
 
-}
+} // end: ShowPlayerScores()
 
 ////////////////////////////////////////////////////////////////////////////
 //
@@ -496,17 +520,7 @@ void ShowPlayerScores(byte displayToUpdate, boolean flashCurrent, boolean dashCu
 //
 ////////////////////////////////////////////////////////////////////////////
 
-/* base version
-void AddCredit() {
-  if (Credits<MaximumCredits) {
-    Credits++;
-    BSOS_WriteByteToEEProm(BSOS_CREDITS_EEPROM_BYTE, Credits);
-//    PlaySoundEffect(SOUND_EFFECT_ADD_CREDIT);
-  } else {
-  }
-  BSOS_SetCoinLockout((Credits<MaximumCredits)?false:true);
-}
-*/
+
 
 /*  might possibly want to add later
 void AddCoinToAudit(byte switchHit) {
@@ -529,6 +543,7 @@ void AddCoinToAudit(byte switchHit) {
 
 // Trident version
 void AddCredit(boolean playSound = false, byte numToAdd = 1) {
+  // Adds regular credit to machine + audit, no knocker
   if (Credits < MaximumCredits) {
     Credits += numToAdd;
     if (Credits > MaximumCredits) Credits = MaximumCredits;
@@ -540,14 +555,16 @@ void AddCredit(boolean playSound = false, byte numToAdd = 1) {
     BSOS_SetDisplayCredits(Credits);
     BSOS_SetCoinLockout(true);
   }
-}
+} // end: AddCredit()
 //-----------------------------------------------------------------
 
 void AddSpecialCredit() {
+  // Adds special credit + audit, knocker
+  // NOTE: update this to add x special parm?
   AddCredit(false, 1);
   BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true);
   BSOS_WriteULToEEProm(BSOS_TOTAL_REPLAYS_EEPROM_START_BYTE, BSOS_ReadULFromEEProm(BSOS_TOTAL_REPLAYS_EEPROM_START_BYTE) + 1);  
-}
+} // end: AddSpecialCredit()
 //-----------------------------------------------------------------
 boolean AddPlayer() {
 
@@ -569,7 +586,7 @@ boolean AddPlayer() {
 //    PlaySoundEffect(SOUND_EFFECT_ADD_PLAYER_1 + (CurrentNumPlayers - 1));
   
   return true;
-}
+} // end: AddPlayer()
 //-----------------------------------------------------------------
 
 ////////////////////////////////////////////////////////////////////////////
@@ -596,6 +613,7 @@ int RunSelfTest(int curState, boolean curStateChanged) {
   return returnState;
 }
 */
+//-----------------------------------------------------------------
 
 #define ADJ_TYPE_LIST                 1
 #define ADJ_TYPE_MIN_MAX              2
@@ -797,7 +815,7 @@ int RunSelfTest(int curState, boolean curStateChanged) {
   }
 
   return returnState;
-}
+} // end: RunSelfTest()
 //-----------------------------------------------------------------
 
 
@@ -884,6 +902,11 @@ int RunAttractMode(int curState, boolean curStateChanged) {
     if (DEBUG_MESSAGES) {
       Serial.write("Entering Attract Mode\n\r");
     }
+    
+
+//    AttractLastHeadMode = 0;
+//    AttractLastPlayfieldMode = 0;
+    
     for (int count=0; count<4; count++) {  // blank out displays?
       BSOS_SetDisplayBlank(count, 0x00);     
     }
@@ -947,7 +970,10 @@ int RunAttractMode(int curState, boolean curStateChanged) {
 
     AttractLastPlayfieldMode = 2;
   }
-
+  
+  
+  
+  // ---------------------------------------
   // check for certain switches during attract mode: coins, start game, setup
   // any other switch will be displayed in console if debug enabled
   byte switchHit;
@@ -955,23 +981,27 @@ int RunAttractMode(int curState, boolean curStateChanged) {
     if (switchHit==SW_CREDIT_RESET) {
       if (AddPlayer()) returnState = MACHINE_STATE_INIT_GAMEPLAY;
     } else if (switchHit==SW_COIN_1 || switchHit==SW_COIN_2 || switchHit==SW_COIN_3) {
+//      AddCoinToAudit(switchHit);      
+//      AddCredit(true, 1);  // is this a newer version that incorporates bsos_setdisplaycredits?
+// above instead of below
       AddCredit();
-// add audits here if you want - or is that done in AddCredit() yes it is but not coinslot specific      
       BSOS_SetDisplayCredits(Credits, true);
-    } else if (switchHit==SW_SELF_TEST_SWITCH && (CurrentTime-GetLastSelfTestChangedTime())>500) {  // 1/2 switch debounce?
+      
+    } else if (switchHit==SW_SELF_TEST_SWITCH && (CurrentTime-GetLastSelfTestChangedTime())>250) {  // 1/2 switch debounce?
       returnState = MACHINE_STATE_TEST_LIGHTS;  // enter diagnostic mode
       SetLastSelfTestChangedTime(CurrentTime);
     } else {
 #ifdef DEBUG_MESSAGES
       char buf[128];
-      sprintf(buf, "Switch 0x%02X\n", switchHit);
+      sprintf(buf, "Switch 0x%02X (%d)\n", switchHit,switchHit);
       Serial.write(buf);
 #endif      
     }
   }
 
   return returnState;
-}
+} // end: RunAttractMode()
+
 //-----------------------------------------------------------------
 
 ////////////////////////////////////////////////////////////////////////////
@@ -992,36 +1022,18 @@ byte CountBits(byte byteToBeCounted) {  // copied from Trident2020 not sure if n
 
 /* scratch pad
 
-// reset drop targets:
 
-  BSOS_PushToTimedSolenoidStack(SOL_DROP_INLINE, 12, CurrentTime + 400);  // also SOL_DROP_RIGHT
+
   DropTargetClearTime = CurrentTime;  // this might be used to do timed modes where we keep track of how much time has elapsed since drops were reset
 
 
 */
+//-----------------------------------------------------------------
 
 void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
   
 // Needs to be optimized 
-
-/*
-
-Drop target assignments:
-
-#define SW_DROP_INLINE_D      1   // 1000 + 3x bonus multiplier     CurrentDropTargetsValid && 0x40 (64)
-#define SW_DROP_INLINE_C      2   // 1000 + 2x bonus multiplier     CurrentDropTargetsValid && 0x20 (32)
-#define SW_DROP_INLINE_B      3   // 1000 + bonus advance           CurrentDropTargetsValid && 0x10 (16)
-#define SW_DROP_INLINE_A      4   // 1000 + bonus advance           CurrentDropTargetsValid && 0x08 (8)
-#define SW_TREASURE_SAUCER    31  // 5000 + 5x bonus multiplier, lites extra ball, then special - treasure chamber saucer (behind inline drops)
-
-#define SW_DROP_TOP           19   // 500 points                                                     CurrentDropTargetsValid && 0x04
-#define SW_DROP_MIDDLE        18   // 500 points                                                     CurrentDropTargetsValid && 0x02
-#define SW_DROP_BOTTOM        17   // 500 points - all three down awards 10k, 15k, 20k, 25k, special CurrentDropTargetsValid && 0x01
-
-*/
-
 // more efficient?  byte switchMask = 1<<(SW_DROP_TARGET_1-switchHit);
-
 //   PlaySoundEffect(SOUND_EFFECT_DT_SKILL_SHOT);
 
   // checking in reverse order in case 2+ hit at same time, so can't get sequential credit
@@ -1045,23 +1057,26 @@ Drop target assignments:
 
   // check to see if all drops down
   if (BSOS_ReadSingleSwitchState(SW_DROP_BOTTOM) && BSOS_ReadSingleSwitchState(SW_DROP_MIDDLE) && BSOS_ReadSingleSwitchState(SW_DROP_TOP)) {
+    
     if (DropSequence==3) { // were they done in squence?
-
 //   PlaySoundEffect();
-      CurrentPlayerCurrentScore+=2*DropsRightDownScore[CurrentPlayer];
-    } else { // check to see if all down
-//   PlaySoundEffect();    
-      CurrentPlayerCurrentScore+=DropsRightDownScore[CurrentPlayer];    
+    } else { 
+//   PlaySoundEffect();      
     }
-    // reset drops
+    if (DropsRightDownScore[CurrentPlayer]==30000) { // award special
+// award_special((DropSequence==3?2:1)); // yy    
+    } else {
+      CurrentPlayerCurrentScore+=(DropSequence==3?2:1)*DropsRightDownScore[CurrentPlayer];   
+    }
 
-    BSOS_PushToTimedSolenoidStack(SOL_DROP_RIGHT, 12, CurrentTime + 400);  
 //  DropTargetClearTime = CurrentTime;  // if we want to keep track of time
-  
     DropsRightDownScore[CurrentPlayer]+=5000; // need to activate special & check boundaries
-    CurrentDropTargetsValid = CurrentDropTargetsValid | 7; // turn on bits 1-3
-    DropSequence=0; 
-  }
+    if (DropsRightDownScore[CurrentPlayer]==35000) DropsRightDownScore[CurrentPlayer]=10000; // reset score tree after special
+    // reset drops
+    reset_3bank();    
+    //CurrentDropTargetsValid = CurrentDropTargetsValid | 7; // turn on bits 1-3
+    //DropSequence=0;  done in reset_3bank();
+  } // end: all drop targets down
   
 } // end: HandleRightDropTargetHit()
 
@@ -1193,14 +1208,23 @@ unsigned long InitGameStartTime = 0;
 // ----------------------------------------------------------------
 
 int InitGamePlay(boolean curStateChanged) {
+
+  if (DEBUG_MESSAGES) {
+    Serial.write("InitGamePlay\n\r");
+  }  
+
   int returnState = MACHINE_STATE_INIT_GAMEPLAY;
 
-  if (curStateChanged) {
+  
+  if (curStateChanged) { // run once/first-time    
+
+#if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
+    wTrig.stopAllTracks();
+    wTrig.samplerateOffset(0);
+#endif
+      
     InitGameStartTime = CurrentTime;
     BSOS_SetCoinLockout((Credits>=MaximumCredits)?true:false);
-
-// test here
-fire_3bank();
     
     BSOS_SetDisableFlippers(true);
     BSOS_DisableSolenoidStack();
@@ -1215,7 +1239,7 @@ fire_3bank();
       // init game play variables
       CurrentScores[count] = 0;
       
-      // game specific values that carry over from ball-to-ball - xx
+      // game specific values that carry over from ball-to-ball only init here - xx
       
       DropsRightDownScore[count]=10000;  // reset right drops value tree
       BonusHeld[count]=0;                 // any 20k+ bonus 
@@ -1248,7 +1272,10 @@ fire_3bank();
       BSOS_SetDisplay(count, 0);
       BSOS_SetDisplayBlank(count, 0x00);
     }
-  }
+    
+    ShowPlayerScores(0xFF, false, false); // new
+    
+  } // end run-once moving on
 
   // Wait for TIME_TO_WAIT_FOR_BALL seconds, or until the ball appears
   // The reason to bail out after TIME_TO_WAIT_FOR_BALL is just
@@ -1262,13 +1289,19 @@ fire_3bank();
   return returnState;  
 }
 
-//====================================================
+//==================================================== zz
 //
 int InitNewBall(bool curStateChanged, byte playerNum, int ballNum) {  
 
   if (curStateChanged) {
     BallFirstSwitchHitTime = 0;
     SamePlayerShootsAgain = false;
+
+    // check to see if ball in saucers
+    if (BSOS_ReadSingleSwitchState(SW_SAUCER_TREASURE)) BSOS_PushToSolenoidStack(SOL_SAUCER_TREASURE, 5);  
+    if (BSOS_ReadSingleSwitchState(SW_SAUCER_PARAGON)) BSOS_PushToSolenoidStack(SOL_SAUCER_PARAGON, 5);
+    if (BSOS_ReadSingleSwitchState(SW_SAUCER_GOLDEN)) BSOS_PushToSolenoidStack(SOL_SAUCER_GOLDEN, 5);  
+
 
     BSOS_SetDisableFlippers(false);
     BSOS_EnableSolenoidStack(); 
@@ -1302,9 +1335,13 @@ int InitNewBall(bool curStateChanged, byte playerNum, int ballNum) {
   }
 
   // reset drop targets if needed
-  if (BSOS_ReadSingleSwitchState(SW_DROP_BOTTOM) || BSOS_ReadSingleSwitchState(SW_DROP_MIDDLE) ||BSOS_ReadSingleSwitchState(SW_DROP_TOP)) {
-    BSOS_PushToTimedSolenoidStack(SOL_DROP_RIGHT, 12, CurrentTime+200);
-  }
+//  if (BSOS_ReadSingleSwitchState(SW_DROP_BOTTOM) || BSOS_ReadSingleSwitchState(SW_DROP_MIDDLE) ||BSOS_ReadSingleSwitchState(SW_DROP_TOP)) {
+//    BSOS_PushToTimedSolenoidStack(SOL_DROP_RIGHT, 12, CurrentTime+200);
+//  }
+
+// test here
+reset_3bank();
+// also reset inline bank
 
   if (BSOS_ReadSingleSwitchState(SW_DROP_INLINE_A) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_B) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_C) || BSOS_ReadSingleSwitchState(SW_DROP_INLINE_D)) {
     BSOS_PushToTimedSolenoidStack(SOL_DROP_INLINE, 12, CurrentTime+300);
@@ -1318,6 +1355,7 @@ int InitNewBall(bool curStateChanged, byte playerNum, int ballNum) {
   if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) {
     return MACHINE_STATE_INIT_NEW_BALL;
   } else {
+
     return MACHINE_STATE_NORMAL_GAMEPLAY;
   }
   
@@ -1406,8 +1444,12 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
   } else if (curState==MACHINE_STATE_NORMAL_GAMEPLAY) {
     returnState = NormalGamePlay();
   } else if (curState==MACHINE_STATE_COUNTDOWN_BONUS) {
+
 //    returnState = CountdownBonus(curStateChanged);
-    returnState = MACHINE_STATE_BALL_OVER;
+    ShowPlayerScores(CurrentPlayer, (BallFirstSwitchHitTime==0)?true:false, (BallFirstSwitchHitTime>0 && ((CurrentTime-LastTimeScoreChanged)>2000))?true:false);
+
+    returnState = MACHINE_STATE_BALL_OVER; // disable this when countdown enabled
+    
   } else if (curState==MACHINE_STATE_BALL_OVER) {    
   
     // copied from Trident2020
@@ -1477,9 +1519,10 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
 
       // game-specific switch action
 //zz      
-        case SW_DROP_TOP:
+        case SW_DROP_TOP:                     // 3-bank drops
         case SW_DROP_MIDDLE:
-        case SW_DROP_BOTTOM:        
+        case SW_DROP_BOTTOM:
+if (DEBUG_MESSAGES) { Serial.write("* Right drops hit %d\n",switchHit); }        
           HandleRightDropTargetHit(switchHit,scoreMultiplier);
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;
           break;      
@@ -1490,10 +1533,15 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
         
     }
   }
-
-  if (scoreAtTop!=CurrentScores[CurrentPlayer]) {
-    Serial.write("Score changed\n");
+  if (CurrentPlayerCurrentScore != CurrentScores[CurrentPlayer]) {
+    CurrentScores[CurrentPlayer]=CurrentPlayerCurrentScore;
+    ShowPlayerScores(0xFF, false, false);   
   }
+  
+//  if (scoreAtTop!=CurrentScores[CurrentPlayer]) {
+//    Serial.write("Score changed\n");
+//  }
+
   return returnState;
 }
 
