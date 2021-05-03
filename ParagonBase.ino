@@ -1273,6 +1273,7 @@ int InitGamePlay(boolean curStateChanged) {
       BonusHeld[count]=0;                 // any 20k+ bonus 
           
     }
+    CurrentPlayerCurrentScore=0;        // start with 0
 
     // if the ball is in the outhole, then we can move on
     if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) {
@@ -1470,6 +1471,15 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
     returnState = MACHINE_STATE_BALL_OVER; // disable this when countdown enabled
     
   } else if (curState==MACHINE_STATE_BALL_OVER) {    
+
+
+if (DEBUG_MESSAGES) { 
+      char buf[32];
+      sprintf(buf, " Ball %d Over P%d\n\r",CurrentBallInPlay,CurrentPlayer);
+      Serial.write(buf);
+}  
+
+
   
     // copied from Trident2020
     CurrentScores[ CurrentPlayer] = CurrentPlayerCurrentScore;
