@@ -198,6 +198,18 @@ byte BonusHeld[4];                        // bits: 1=20k, 2=30k, 4=40k
 ////////////////////////////////////////////////////////////////////////////
 
 // ----------------------------------------------------------------
+void RunDemo() {
+/* 
+    BSOS_PushToTimedSolenoidStack(SOL_CENTER_BUMPER, 4, CurrentTime+5000);
+    BSOS_PushToTimedSolenoidStack(SOL_LEFT_BUMPER, 4, CurrentTime+5200);
+    BSOS_PushToTimedSolenoidStack(SOL_RIGHT_BUMPER, 4, CurrentTime+5400);
+/**/  
+
+ 
+}
+
+// ----------------------------------------------------------------
+
 void reset_3bank() {
   // Paragon-specific - resets right 3-bank drop targets on continuous solenoid line
 
@@ -1375,6 +1387,10 @@ int InitGamePlay(boolean curStateChanged) {
     }
     
     ShowPlayerScores(0xFF, false, false); // new
+
+
+
+RunDemo();
     
   } // end run-once moving on
 
