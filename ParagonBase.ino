@@ -177,6 +177,7 @@ unsigned long DropTargetClearTime = 0;
 
 unsigned long SaucerHitTime = 0;       // used for debouncing saucer hit
 byte PSaucerValue = 0;                 // 1-8 p-a-r-a-g-o-n special
+byte GoldenSaucerValue = 1;            // 1-10 (value * 2000= points)
 
 // Written in by Mike - yy
 byte CurrentDropTargetsValid = 0;         // bitmask showing which drop targets up right:b,m,t, inline 1-4 1-64 bits
@@ -318,6 +319,26 @@ void SetPlayerLamps(byte numPlayers, byte playerOffset = 0, int flashPeriod = 0)
   }
 } // END: SetPlayerLamps()
 */
+// Game specific
+
+// ----------------------------------------------------------------
+
+void ShowGoldenSaucerLamps() {
+  if ((GoldenSaucerValue==1) || (GoldenSaucerValue==6)) 
+    { BSOS_SetLampState(L_2K_GOLDEN, 1); } else { BSOS_SetLampState(L_2K_GOLDEN, 0); }
+  if ((GoldenSaucerValue==2) || (GoldenSaucerValue==7)) 
+    { BSOS_SetLampState(L_4K_GOLDEN, 1); } else { BSOS_SetLampState(L_4K_GOLDEN, 0); }
+  if ((GoldenSaucerValue==3) || (GoldenSaucerValue==8)) 
+    { BSOS_SetLampState(L_6K_GOLDEN, 1); } else { BSOS_SetLampState(L_6K_GOLDEN, 0); }
+  if ((GoldenSaucerValue==4) || (GoldenSaucerValue==9)) 
+    { BSOS_SetLampState(L_8K_GOLDEN, 1); } else { BSOS_SetLampState(L_8K_GOLDEN, 0); }
+  if (GoldenSaucerValue==5)
+    { BSOS_SetLampState(L_10K_GOLDEN, 1); } else { BSOS_SetLampState(L_10K_GOLDEN, 0); }
+  if (GoldenSaucerValue==10)
+    { BSOS_SetLampState(L_20K_GOLDEN, 1); } else { BSOS_SetLampState(L_20K_GOLDEN, 0); }
+
+}
+
 // ----------------------------------------------------------------
 
 void ShowShootAgainLamp() {
@@ -1135,6 +1156,15 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
 } // end: HandleRightDropTargetHit()
 
 //-----------------------------------------------------------------
+void HandleGoldenSaucerHit() {
+
+  CurrentPlayerCurrentScore+=GoldenSaucerValue*2000;
+  GoldenSaucerValue++;
+  if (GoldenSaucerValue>10) { GoldenSaucerValue=10; } 
+ 
+  BSOS_PushToTimedSolenoidStack(SOL_SAUCER_GOLDEN, 5, CurrentTime + SAUCER_PARAGON_DURATION);  
+}
+//-----------------------------------------------------------------
 
 void setup() {
   if (DEBUG_MESSAGES) {
@@ -1444,7 +1474,11 @@ int NormalGamePlay() {
     }
   }
 
+  // lamp functions
   ShowShootAgainLamp();
+  ShowGoldenSaucerLamps();
+  
+  
 // new
   ShowPlayerScores(CurrentPlayer, (BallFirstSwitchHitTime==0)?true:false, (BallFirstSwitchHitTime>0 && ((CurrentTime-LastTimeScoreChanged)>2000))?true:false);  
   
@@ -1659,6 +1693,15 @@ if (DEBUG_MESSAGES) {
             AddToBonus(1);
             // paragon_award(PSaucerValue);  // 1-8 p-a-r-a-g-o-n special
             BSOS_PushToTimedSolenoidStack(SOL_SAUCER_PARAGON, 5, CurrentTime + SAUCER_PARAGON_DURATION);             
+          }
+          if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime; 
+          break;
+
+        // Paragon saucer
+        case SW_SAUCER_GOLDEN:
+          if (SaucerHitTime==0 || (CurrentTime-SaucerHitTime)>SAUCER_DEBOUNCE_TIME) {
+            SaucerHitTime = CurrentTime;
+            HandleGoldenSaucerHit();
           }
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime; 
           break;
