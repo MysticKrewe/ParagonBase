@@ -178,6 +178,8 @@ unsigned long DropTargetClearTime = 0;
 unsigned long SaucerHitTime = 0;       // used for debouncing saucer hit
 byte PSaucerValue = 0;                 // 1-8 p-a-r-a-g-o-n special
 byte GoldenSaucerValue = 1;            // 1-10 (value * 2000= points)
+byte WaterfallValue=1;
+byte RightDropsValue=1;
 
 // Written in by Mike - yy
 byte CurrentDropTargetsValid = 0;         // bitmask showing which drop targets up right:b,m,t, inline 1-4 1-64 bits
@@ -332,7 +334,7 @@ void ShowGoldenSaucerLamps() {
     { BSOS_SetLampState(L_6K_GOLDEN, 1); } else { BSOS_SetLampState(L_6K_GOLDEN, 0); }
   if ((GoldenSaucerValue==4) || (GoldenSaucerValue==9)) 
     { BSOS_SetLampState(L_8K_GOLDEN, 1); } else { BSOS_SetLampState(L_8K_GOLDEN, 0); }
-  if (GoldenSaucerValue==5)
+  if ((GoldenSaucerValue>4) || (GoldenSaucerValue<10))
     { BSOS_SetLampState(L_10K_GOLDEN, 1); } else { BSOS_SetLampState(L_10K_GOLDEN, 0); }
   if (GoldenSaucerValue==10)
     { BSOS_SetLampState(L_20K_GOLDEN, 1); } else { BSOS_SetLampState(L_20K_GOLDEN, 0); }
@@ -1428,6 +1430,11 @@ if (DEBUG_MESSAGES) {
     // Initialize game-specific start-of-ball lights & variables    
     DropTargetClearTime = 0;
     ExtraBallCollected = false;
+    
+    // reset ball specific ladders
+    GoldenSaucerValue=1;
+    WaterfallValue=1;
+    RightDropsValue=1;
     
   } // end new ball init
 
