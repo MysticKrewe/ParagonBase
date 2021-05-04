@@ -64,7 +64,7 @@
 
 #define SW_TOP_ROLLOVER       25   // top center star rollover (500 points + advance bonus)
 #define SW_500_REBOUND        26   // 500 point rebound (both left and right)
-#define SW_WATERFALL_ROLLOVER 27   // 1000 points + bonus advance, waterfall (right squigly star rollover)  all 3-bank drops down increase value from 1k, to 5k, 10k, special
+#define SW_WATERFALL_ROLLOVER 27   // 1000 points + bonus advance, waterfall (right squigly star rollover)  all 3-bank drops down increase value from 1k, to 5k, 10k, special, then 10k - resets on new ball
 #define SW_BOTTOM_STANDUP     28   // 10 points + advance bonus, lower center target
 #define SW_TOP_STANDUP        29   // 10 points + advance bonus, top center standup target 
 

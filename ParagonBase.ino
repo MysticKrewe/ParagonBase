@@ -178,8 +178,10 @@ unsigned long DropTargetClearTime = 0;
 unsigned long SaucerHitTime = 0;       // used for debouncing saucer hit
 byte PSaucerValue = 0;                 // 1-8 p-a-r-a-g-o-n special
 byte GoldenSaucerValue = 1;            // 1-10 (value * 2000= points)
-byte WaterfallValue=1;
-byte RightDropsValue=1;
+byte WaterfallValue=0;                 // 0=1k 1=5k, 2=10k 3=special
+boolean WaterfallSpecialAwarded=false; // per ball
+byte RightDropsValue=1;                // 10k,15,20,25,special
+byte SpinnerValue=1;                   // 1-6, when 6 add bonus, 100 per spin
 
 // Written in by Mike - yy
 byte CurrentDropTargetsValid = 0;         // bitmask showing which drop targets up right:b,m,t, inline 1-4 1-64 bits
@@ -1153,6 +1155,13 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
     reset_3bank();    
     //CurrentDropTargetsValid = CurrentDropTargetsValid | 7; // turn on bits 1-3
     //DropSequence=0;  done in reset_3bank();
+
+    // handle waterfall ladder
+    if (WaterfallSpecialAwarded) { WaterfallValue=2; }
+    else {     
+      WaterfallValue++;
+      if (WaterfallValue>3) WaterfallValue=3;
+    }
   } // end: all drop targets down
   
 } // end: HandleRightDropTargetHit()
@@ -1433,8 +1442,10 @@ if (DEBUG_MESSAGES) {
     
     // reset ball specific ladders
     GoldenSaucerValue=1;
-    WaterfallValue=1;
+    WaterfallValue=0;
     RightDropsValue=1;
+    WaterfallSpecialAwarded=false;  // reset each ball?
+    SpinnerValue=1;
     
   } // end new ball init
 
@@ -1630,8 +1641,8 @@ if (DEBUG_MESSAGES) {
         }
         break;   
 
-      // game-specific switch action
-//zz      
+      // game-specific switch action ===============================================
+      
         // 3-bank drop targets
         case SW_DROP_TOP:
         case SW_DROP_MIDDLE:
@@ -1712,6 +1723,64 @@ if (DEBUG_MESSAGES) {
           }
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime; 
           break;
+
+        case SW_TOP_ROLLOVER:
+          CurrentPlayerCurrentScore+=500;
+          AddToBonus(1);
+          if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
+          break;          
+          
+        case SW_500_REBOUND:
+          CurrentPlayerCurrentScore+=500;
+          if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
+          break;
+          
+        case SW_WATERFALL_ROLLOVER: // 1k, 5k, 10k, special, back to 10k stay per ball
+          // waterfall value advanced by right 3-bank drops
+          AddToBonus(1);
+          switch (WaterfallValue) {
+            case 0:
+              CurrentPlayerCurrentScore+=1000;
+              break;
+            case 1:
+            case 2:
+              CurrentPlayerCurrentScore+=WaterfallValue*5000;
+              break;
+            case 3:
+              AddSpecialCredit();
+              WaterfallSpecialAwarded=true;
+              WaterfallValue=2;
+              break;
+          }        
+          if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
+          break;
+          
+        case SW_SPINNER:  // 100+ every 5 hits add bonus
+          CurrentPlayerCurrentScore+=100;
+          SpinnerValue++;
+          if (SpinnerValue>5) { AddToBonus(1); SpinnerValue=1; }
+          if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
+          break;       
+
+        case SW_STAR_ROLLOVER:  // also rebound behind right drops
+          CurrentPlayerCurrentScore+=50;
+          if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
+          break;
+          
+        case SW_RIGHT_SLING:
+        case SW_LEFT_SLING:
+          CurrentPlayerCurrentScore+=500;
+          if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
+          break;          
+          
+        case SW_BEAST_BUMPER:
+        case SW_CENTER_BUMPER:
+        case SW_RIGHT_BUMPER:
+        case SW_LEFT_BUMPER:         
+          CurrentPlayerCurrentScore+=100;
+          if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
+          break;          
+           
           
           
     }
