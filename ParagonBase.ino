@@ -1188,13 +1188,13 @@ void GetHoldBonus(byte bset) {
   if (bset & 4) Bonus+=40;
 }
 //-----------------------------------------------------------------
-void SetHoldBonus(byte bonus) {
-  // sets BonusMem based on bonus value
-  // called at end of ball, max carry over bonus =90k
+void SetHoldBonus(byte hbonus) {
+  // sets BonusMem based on Bonus value
+  // called at end of ball, max carry over hbonus =90k
   byte bset;
-  if (bonus>=40) { bset=4; bonus-=40; } else { bset=0; }
-  if (bonus>=30) { bset=bset|2; bonus-=30; }
-  if (bonus>=20) { bset=bset|1; }
+  if (hbonus>=40) { bset=4; hbonus-=40; } else { bset=0; }
+  if (hbonus>=30) { bset=bset|2; hbonus-=30; }
+  if (hbonus>=20) { bset=bset|1; }
   BonusMem[CurrentPlayer]=bset;
 }
 //-----------------------------------------------------------------
@@ -1733,7 +1733,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
   } else if (curState==MACHINE_STATE_NORMAL_GAMEPLAY) {
     returnState = NormalGamePlay();
   } else if (curState==MACHINE_STATE_COUNTDOWN_BONUS) {
-    SetHoldBonus[Bonus]; 
+    SetHoldBonus(Bonus); 
     returnState = CountdownBonus(curStateChanged);
     ShowPlayerScores(CurrentPlayer, (BallFirstSwitchHitTime==0)?true:false, (BallFirstSwitchHitTime>0 && ((CurrentTime-LastTimeScoreChanged)>2000))?true:false);
 
