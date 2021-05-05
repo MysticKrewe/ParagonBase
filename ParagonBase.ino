@@ -375,7 +375,7 @@ void ShowBonusOnTree(byte bonus, byte dim=0) {
   
   byte cap = 10;  // number of lights in count-down tree
 
-  for (byte turnOff=(bonus+1); turnOff<11; turnOff++) {
+  for (byte turnOff=(bonus+1); turnOff<11; turnOff++) { // turn off 1-10
     BSOS_SetLampState(L_1K_BONUS + (turnOff-1), 0);
   }
   if (bonus==0) return;
@@ -396,7 +396,7 @@ void ShowBonusOnTree(byte bonus, byte dim=0) {
   }
 
   byte bottom; 
-  for (bottom=1; bottom<bonus; bottom++){
+  for (bottom=1; bottom<bonus; bottom++){  // turn off lamps leading up to bonus?
     BSOS_SetLampState(L_1K_BONUS + (bottom-1), 0);
   }
 
@@ -1573,7 +1573,7 @@ int CountdownBonus(boolean curStateChanged) {
     BonusCountDownEndTime = 0xFFFFFFFF;
   }
 
-  if ((CurrentTime - LastCountdownReportTime) > 200) {
+  if ((CurrentTime - LastCountdownReportTime) > 200) { // # ms to count down bonus?
 
     if (Bonus > 0) {
 
@@ -1630,7 +1630,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
     returnState = CountdownBonus(curStateChanged);
     ShowPlayerScores(CurrentPlayer, (BallFirstSwitchHitTime==0)?true:false, (BallFirstSwitchHitTime>0 && ((CurrentTime-LastTimeScoreChanged)>2000))?true:false);
 
-    returnState = MACHINE_STATE_BALL_OVER; // disable this when countdown enabled
+//    returnState = MACHINE_STATE_BALL_OVER; // disable this when countdown enabled
     
   } else if (curState==MACHINE_STATE_BALL_OVER) {    
 
