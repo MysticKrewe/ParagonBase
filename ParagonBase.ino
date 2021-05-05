@@ -182,6 +182,7 @@ byte WaterfallValue=0;                 // 0=1k 1=5k, 2=10k 3=special
 boolean WaterfallSpecialAwarded=false; // per ball
 byte RightDropsValue=1;                // 10k,15,20,25,special
 byte SpinnerValue=1;                   // 1-6, when 6 add bonus, 100 per spin
+byte TreasureValue=1;                  // 5000 + 5x bonus multiplier, extra ball, then special
 
 // Written in by Mike - yy
 byte CurrentDropTargetsValid = 0;         // bitmask showing which drop targets up right:b,m,t, inline 1-4 1-64 bits
@@ -370,7 +371,24 @@ void ShowShootAgainLamp() {
 }
 
 // ----------------------------------------------------------------
+void ShowAwardLamps() {
+  // show some playfield feature lamps 
+  
+  // Right Drops: 10,15,20,25,30=sp
+  if (DropsRightDownScore[CurrentPlayer]==10000) { BSOS_SetLampState(L_10K_DROPS, 1); } else { BSOS_SetLampState(L_10K_DROPS, 0); }
+  if (DropsRightDownScore[CurrentPlayer]==15000) { BSOS_SetLampState(L_15K_DROPS, 1); } else { BSOS_SetLampState(L_15K_DROPS, 0); }
+  if (DropsRightDownScore[CurrentPlayer]==20000) { BSOS_SetLampState(L_20K_DROPS, 1); } else { BSOS_SetLampState(L_20K_DROPS, 0); }
+  if (DropsRightDownScore[CurrentPlayer]==25000) { BSOS_SetLampState(L_25K_DROPS, 1); } else { BSOS_SetLampState(L_25K_DROPS, 0); }
+  if (DropsRightDownScore[CurrentPlayer]==30000) { BSOS_SetLampState(L_SPECIAL_DROPS, 1); } else { BSOS_SetLampState(L_SPECIAL_DROPS, 0); }
 
+  // Waterfall  0=1k 1=5k, 2=10k 3=special
+  if (WaterfallValue==0) { BSOS_SetLampState(L_5K_WATER, 1,0,300); } else { BSOS_SetLampState(L_5K_WATER, 0); }
+  if (WaterfallValue==1) { BSOS_SetLampState(L_10K_WATER, 1,0,300); } else { BSOS_SetLampState(L_10K_WATER, 0); }
+  if (WaterfallValue==2) { BSOS_SetLampState(L_WATER_SPECIAL, 1,0,300); } else { BSOS_SetLampState(L_WATER_SPECIAL, 0); }
+  
+  
+  
+}
 // ----------------------------------------------------------------
 void SwitchOffBonus(byte x) {
   // switch off 10k,20,30,40 bonus lights
@@ -664,12 +682,31 @@ void AddCredit(boolean playSound = false, byte numToAdd = 1) {
   }
 } // end: AddCredit()
 //-----------------------------------------------------------------
+void AwardExtraBall() {
+
+  // add additional checks and sound  
+  SamePlayerShootsAgain=true;
+
+}
+//-----------------------------------------------------------------
+void AwardSpecial() {
+
+  if (TournamentScoring) {
+    CurrentPlayerCurrentScore += SpecialValue;
+  } else {
+    AddSpecialCredit();
+  }
+
+  BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true);
+
+}
+//-----------------------------------------------------------------
 
 void AddSpecialCredit() {
   // Adds special credit + audit, knocker
   // NOTE: update this to add x special parm?
   AddCredit(false, 1);
-  BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true);
+
   BSOS_WriteULToEEProm(BSOS_TOTAL_REPLAYS_EEPROM_START_BYTE, BSOS_ReadULFromEEProm(BSOS_TOTAL_REPLAYS_EEPROM_START_BYTE) + 1);  
 } // end: AddSpecialCredit()
 //-----------------------------------------------------------------
@@ -1163,7 +1200,7 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
     else { DropSequence=0; }
   }
 
-  // check to see if all drops down
+  // --------------------- check to see if all drops down
   if (BSOS_ReadSingleSwitchState(SW_DROP_BOTTOM) && BSOS_ReadSingleSwitchState(SW_DROP_MIDDLE) && BSOS_ReadSingleSwitchState(SW_DROP_TOP)) {
     
     if (DropSequence==3) { // were they done in squence?
@@ -1172,7 +1209,9 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
 //   PlaySoundEffect();      
     }
     if (DropsRightDownScore[CurrentPlayer]==30000) { // award special
-// award_special((DropSequence==3?2:1)); // yy    
+      // NOTE: Do we want to limit special awards per game?
+      AwardSpecial(); 
+      if (DropSequence==3) AwardSpecial();  // Award a second special for in squence
     } else {
       CurrentPlayerCurrentScore+=(DropSequence==3?2:1)*DropsRightDownScore[CurrentPlayer];   
     }
@@ -1182,9 +1221,7 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
     if (DropsRightDownScore[CurrentPlayer]==35000) DropsRightDownScore[CurrentPlayer]=10000; // reset score tree after special
     // reset drops
     reset_3bank();    
-    //CurrentDropTargetsValid = CurrentDropTargetsValid | 7; // turn on bits 1-3
-    //DropSequence=0;  done in reset_3bank();
-
+ 
     // handle waterfall ladder
     if (WaterfallSpecialAwarded) { WaterfallValue=2; }
     else {     
@@ -1203,6 +1240,25 @@ void HandleGoldenSaucerHit() {
   if (GoldenSaucerValue>10) { GoldenSaucerValue=10; } 
  
   BSOS_PushToTimedSolenoidStack(SOL_SAUCER_GOLDEN, 5, CurrentTime + SAUCER_PARAGON_DURATION);  
+}
+//-----------------------------------------------------------------
+void HandleTreasureSaucerHit() {
+  switch (TreasureValue) {
+      case 1:
+        CurrentPlayerCurrentScore+=5000;
+        BonusX=5;
+        break;
+      case 2:
+        AwardExtraBall();
+        break;
+      case 3:
+        AwardSpecial();
+        reset_inline();
+  }
+  TreasureValue++;
+  if (TreasureValue>3) TreasureValue=1;
+ 
+  BSOS_PushToTimedSolenoidStack(SOL_SAUCER_TREASURE, 5, CurrentTime + SAUCER_PARAGON_DURATION);
 }
 //-----------------------------------------------------------------
 
@@ -1479,6 +1535,7 @@ if (DEBUG_MESSAGES) {
     RightDropsValue=1;
     WaterfallSpecialAwarded=false;  // reset each ball?
     SpinnerValue=1;
+    TreasureValue=1;
     
   } // end new ball init
 
@@ -1529,6 +1586,7 @@ int NormalGamePlay() {
   ShowShootAgainLamp();
   ShowGoldenSaucerLamps();
   ShowBonusOnTree(Bonus);  // replace with ShowBonusLamps() when using modes
+  ShowAwardLamps();  // waterfall and drops
 
 
   
@@ -1863,6 +1921,15 @@ if (DEBUG_MESSAGES) {
         case SW_LEFT_BUMPER:         
           CurrentPlayerCurrentScore+=100;
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
+          break;  
+
+        // treasure chamber saucer
+        case SW_SAUCER_TREASURE:
+          if (SaucerHitTime==0 || (CurrentTime-SaucerHitTime)>SAUCER_DEBOUNCE_TIME) {
+            SaucerHitTime = CurrentTime;
+            HandleTreasureSaucerHit();
+          }
+          if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime; 
           break;          
            
           
