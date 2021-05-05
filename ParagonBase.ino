@@ -178,11 +178,14 @@ unsigned long DropTargetClearTime = 0;
 unsigned long SaucerHitTime = 0;       // used for debouncing saucer hit
 byte PSaucerValue = 0;                 // 1-8 p-a-r-a-g-o-n special
 byte GoldenSaucerValue = 1;            // 1-10 (value * 2000= points)
+byte GoldenSaucerMem[4];               // 0-10, 2k-20k carries from ball to ball
 byte WaterfallValue=0;                 // 0=1k 1=5k, 2=10k 3=special
 boolean WaterfallSpecialAwarded=false; // per ball
 byte RightDropsValue=1;                // 10k,15,20,25,special
 byte SpinnerValue=1;                   // 1-6, when 6 add bonus, 100 per spin
 byte TreasureValue=1;                  // 5000 + 5x bonus multiplier, extra ball, then special
+
+byte BonusMem[4];                      // carried over bonus scoring
 
 // Written in by Mike - yy
 byte CurrentDropTargetsValid = 0;         // bitmask showing which drop targets up right:b,m,t, inline 1-4 1-64 bits
@@ -1175,6 +1178,27 @@ byte CountBits(byte byteToBeCounted) {  // copied from Trident2020 not sure if n
 */
 //-----------------------------------------------------------------
 
+//-----------------------------------------------------------------
+//-----------------------------------------------------------------
+void GetHoldBonus(byte bset) {
+  // sets global Bonus var based on BonusMem
+  // called at beginning of ball
+  if (bset & 1) Bonus+=20;
+  if (bset & 2) Bonus+=30;
+  if (bset & 4) Bonus+=40;
+}
+//-----------------------------------------------------------------
+void SetHoldBonus(byte bonus) {
+  // sets BonusMem based on bonus value
+  // called at end of ball, max carry over bonus =90k
+  byte bset;
+  if (bonus>=40) { bset=4; bonus-=40; } else { bset=0; }
+  if (bonus>=30) { bset=bset|2; bonus-=30; }
+  if (bonus>=20) { bset=bset|1; }
+  BonusMem[CurrentPlayer]=bset;
+}
+//-----------------------------------------------------------------
+
 void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
   
 // Needs to be optimized 
@@ -1428,9 +1452,12 @@ int InitGamePlay(boolean curStateChanged) {
       
       DropsRightDownScore[count]=10000;  // reset right drops value tree
       BonusHeld[count]=0;                 // any 20k+ bonus 
+      GoldenSaucerMem[count]=1;          // zero player golden saucer values
+      BonusMem[count]=0;                 // 0=none, 1=20k, 2=30k, 3=40k
           
     }
     CurrentPlayerCurrentScore=0;        // start with 0
+  
 
     // if the ball is in the outhole, then we can move on
     if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) {
@@ -1511,8 +1538,6 @@ if (DEBUG_MESSAGES) {
     if (BallSaveNumSeconds>0) { // if ball save active, turn on backbox light
       BSOS_SetLampState(L_BB_SHOOT_AGAIN, 1, 0, 500);
     }
-    
-
 
     reset_3bank();  // reset right 3-bank
     reset_inline(); // reset inline drops
@@ -1530,12 +1555,19 @@ if (DEBUG_MESSAGES) {
     ExtraBallCollected = false;
     
     // reset ball specific ladders
-    GoldenSaucerValue=1;
+
     WaterfallValue=0;
     RightDropsValue=1;
     WaterfallSpecialAwarded=false;  // reset each ball?
     SpinnerValue=1;
     TreasureValue=1;
+
+// new ball setups
+    CurrentPlayerCurrentScore = CurrentScores[CurrentPlayer]; // Reset score at top 
+    CurrentStandupsHit = StandupsHit[CurrentPlayer]; // not used
+//    scoreAtTop = CurrentPlayerCurrentScore;
+    GoldenSaucerValue=GoldenSaucerMem[CurrentPlayer]; // Carries from ball to ball
+    GetHoldBonus(BonusMem[CurrentPlayer]);
     
   } // end new ball init
 
@@ -1685,7 +1717,7 @@ int CountdownBonus(boolean curStateChanged) {
 
 int RunGamePlayMode(int curState, boolean curStateChanged) {
   int returnState = curState;
-  unsigned long scoreAtTop = CurrentScores[CurrentPlayer];
+//  unsigned long scoreAtTop = CurrentScores[CurrentPlayer];
   // unsigned long scoreAtTop = CurrentPlayerCurrentScore;
   
   byte bonusAtTop = Bonus;
@@ -1717,9 +1749,10 @@ if (DEBUG_MESSAGES) {
 }  
 
 
-  
-    // copied from Trident2020
-    CurrentScores[ CurrentPlayer] = CurrentPlayerCurrentScore;
+    // end of ball memory settings ---------------------
+    CurrentScores[CurrentPlayer] = CurrentPlayerCurrentScore;
+    GoldenSaucerMem[CurrentPlayer] = GoldenSaucerValue;
+    SetHoldBonus[Bonus];    
     //
   
     if (SamePlayerShootsAgain) {
@@ -1730,13 +1763,14 @@ if (DEBUG_MESSAGES) {
         CurrentPlayer = 0;
         CurrentBallInPlay+=1;
       }
-
+/*
 // new ball setups
-      // Reset score at top since player changed
-      CurrentPlayerCurrentScore = CurrentScores[CurrentPlayer];
-      CurrentStandupsHit = StandupsHit[CurrentPlayer];
-      scoreAtTop = CurrentPlayerCurrentScore;
-
+      CurrentPlayerCurrentScore = CurrentScores[CurrentPlayer]; // Reset score at top 
+      CurrentStandupsHit = StandupsHit[CurrentPlayer]; // not used
+//      scoreAtTop = CurrentPlayerCurrentScore;
+      GoldenSaucerValue=GoldenSaucerMem[CurrentPlayer];   // Carries from ball to ball
+      GetHoldBonus(BonusMem[CurrentPlayer]);
+*/
       
       if (CurrentBallInPlay>BallsPerGame) {
 //        CheckHighScores();
