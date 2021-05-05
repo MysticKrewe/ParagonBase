@@ -422,12 +422,15 @@ void ShowBonusOnTree(byte bonus, byte dim=0) {
       if (bonus>=30) { bonus-=30; BSOS_SetLampState(L_30K_BONUS, 1); } else { BSOS_SetLampState(L_30K_BONUS, 0); }
       if (bonus>=20) { bonus-=20; BSOS_SetLampState(L_20K_BONUS, 1); } else {BSOS_SetLampState(L_20K_BONUS, 0); }
       if (bonus>cap) { bonus-=cap; BSOS_SetLampState(L_10K_BONUS, 1, dim, 250); } 
-      else if (bonus=cap) { bonus-=cap; BSOS_SetLampState(L_10K_BONUS, 1);}
+      else if (bonus=cap) { bonus-=cap; BSOS_SetLampState(L_10K_BONUS, 1);
+        BSOS_SetLampState(L_9K_BONUS, 1);
+      }
     }
   } else {
     BSOS_SetLampState(L_40K_BONUS, 0);
     BSOS_SetLampState(L_30K_BONUS, 0);
     BSOS_SetLampState(L_20K_BONUS, 0);
+    BSOS_SetLampState(L_10K_BONUS, 0);    
   }
   if (bonus==0) return;
   
