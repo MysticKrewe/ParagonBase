@@ -1565,9 +1565,9 @@ if (DEBUG_MESSAGES) {
 // new ball setups
     CurrentPlayerCurrentScore = CurrentScores[CurrentPlayer]; // Reset score at top 
     CurrentStandupsHit = StandupsHit[CurrentPlayer]; // not used
-//    scoreAtTop = CurrentPlayerCurrentScore;
     GoldenSaucerValue=GoldenSaucerMem[CurrentPlayer]; // Carries from ball to ball
     GetHoldBonus(BonusMem[CurrentPlayer]);
+    DropsRightDownScore[CurrentPlayer]=10000;  // uncomment if you want to reset each ball
     
   } // end new ball init
 
@@ -1733,7 +1733,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
   } else if (curState==MACHINE_STATE_NORMAL_GAMEPLAY) {
     returnState = NormalGamePlay();
   } else if (curState==MACHINE_STATE_COUNTDOWN_BONUS) {
-
+    SetHoldBonus[Bonus]; 
     returnState = CountdownBonus(curStateChanged);
     ShowPlayerScores(CurrentPlayer, (BallFirstSwitchHitTime==0)?true:false, (BallFirstSwitchHitTime>0 && ((CurrentTime-LastTimeScoreChanged)>2000))?true:false);
 
@@ -1752,8 +1752,7 @@ if (DEBUG_MESSAGES) {
     // end of ball memory settings ---------------------
     CurrentScores[CurrentPlayer] = CurrentPlayerCurrentScore;
     GoldenSaucerMem[CurrentPlayer] = GoldenSaucerValue;
-    SetHoldBonus[Bonus];    
-    //
+    // SetHoldBonus done before countdown bonus
   
     if (SamePlayerShootsAgain) {
       returnState = MACHINE_STATE_INIT_NEW_BALL;
