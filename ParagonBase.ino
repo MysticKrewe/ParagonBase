@@ -411,36 +411,31 @@ void ShowBonusOnTree(byte bonus, byte dim=0) {
   
   byte cap = 10;  // number of lights in count-down tree
 
-  for (byte turnOff=0; turnOff<14; turnOff++) { // turn off 1-10, 20k,30k,40k
-    BSOS_SetLampState(L_1K_BONUS + turnOff, 0);
-  }
-
-
-  if (bonus>=cap) {  // extended bonus lights
-    while(bonus>=cap) {
-      if (bonus>=40) { bonus-=40; BSOS_SetLampState(L_40K_BONUS, 1, dim, 250); }
-      if (bonus>=30) { bonus-=30; BSOS_SetLampState(L_30K_BONUS, 1, 0, 250); }
-      if (bonus>=20) { bonus-=20; BSOS_SetLampState(L_20K_BONUS, 1); }
-      if (bonus>=cap) { bonus-=cap; BSOS_SetLampState(L_10K_BONUS, 1, dim, 250); }
-
-    }
-  if (bonus==0) return;
-
-  BSOS_SetLampState(L_1K_BONUS + (bonus-1), 1, 0);   // turn on singular bonus lamp
-  
-//    for (byte turnOff=(bonus+1); turnOff<(cap+1); turnOff++) {
-//      BSOS_SetLampState(L_1K_BONUS + (turnOff-1), 0);
-//    }
-  }
-
-//  byte bottom; 
-//  for (bottom=1; bottom<bonus; bottom++){  // turn off lamps leading up to bonus? redundant?
-//    BSOS_SetLampState(L_1K_BONUS + (bottom-1), 0);
+//  for (byte turnOff=0; turnOff<14; turnOff++) { // turn off 1-10, 20k,30k,40k
+//    BSOS_SetLampState(L_1K_BONUS + turnOff, 0);
 //  }
 
-//  if (bottom<=cap) {
-//    BSOS_SetLampState(L_1K_BONUS + (bottom-1), 1, 0); // turn on singular bonus lamp
-//  }    
+  
+  if (bonus>=cap) {  // extended bonus lights
+    while(bonus>=cap) {
+      if (bonus>=40) { bonus-=40; BSOS_SetLampState(L_40K_BONUS, 1); }
+      if (bonus>=30) { bonus-=30; BSOS_SetLampState(L_30K_BONUS, 1); } else { BSOS_SetLampState(L_30K_BONUS, 0); }
+      if (bonus>=20) { bonus-=20; BSOS_SetLampState(L_20K_BONUS, 1); } else {BSOS_SetLampState(L_20K_BONUS, 0); }
+      if (bonus>cap) { bonus-=cap; BSOS_SetLampState(L_10K_BONUS, 1, dim, 250); } 
+      else if (bonus=cap) { bonus-=cap; BSOS_SetLampState(L_10K_BONUS, 1);}
+    }
+  } else {
+    BSOS_SetLampState(L_40K_BONUS, 0);
+    BSOS_SetLampState(L_30K_BONUS, 0);
+    BSOS_SetLampState(L_20K_BONUS, 0);
+  }
+  if (bonus==0) return;
+  
+  for (byte x=1; x<cap; x++) {
+    if (bonus==x) { BSOS_SetLampState(L_1K_BONUS + (x-1), 1, 0); }
+    else { BSOS_SetLampState(L_1K_BONUS + (x-1), 0); }
+  }
+
 } // END: ShowBonusOnTree()
 
 byte LastBonusShown = 0;
