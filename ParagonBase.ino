@@ -430,12 +430,12 @@ void ShowBonusOnTree(byte bonus, byte dim=0) {
   }
 
   byte bottom; 
-  for (bottom=1; bottom<bonus; bottom++){  // turn off lamps leading up to bonus?
+  for (bottom=1; bottom<bonus; bottom++){  // turn off lamps leading up to bonus? redundant?
     BSOS_SetLampState(L_1K_BONUS + (bottom-1), 0);
   }
 
   if (bottom<=cap) {
-    BSOS_SetLampState(L_1K_BONUS + (bottom-1), 1, 0);
+    BSOS_SetLampState(L_1K_BONUS + (bottom-1), 1, 0); // turn on singular bonus lamp
   }    
 } // END: ShowBonusOnTree()
 
