@@ -17,7 +17,7 @@
 
 // original code started at 0, not  sure if we should start at 1?
 
-#define SOL_OUTHOLE           6 //3 //6
+#define SOL_OUTHOLE           6  //
 #define SOL_KNOCKER           5  // 2 in Bally
 #define SOL_SAUCER_TREASURE   7  // saucer behind inline drops 5x
 #define SOL_SAUCER_PARAGON    9  // paragon saucer

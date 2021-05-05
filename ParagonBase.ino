@@ -199,7 +199,7 @@ byte BonusHeld[4];                        // bits: 1=20k, 2=30k, 4=40k
 
 // ----------------------------------------------------------------
 void RunDemo() {
- 
+/* 
     BSOS_PushToTimedSolenoidStack(SOL_CENTER_BUMPER, 4, CurrentTime+5000);
     BSOS_PushToTimedSolenoidStack(SOL_LEFT_BUMPER, 4, CurrentTime+5200);
     BSOS_PushToTimedSolenoidStack(SOL_RIGHT_BUMPER, 4, CurrentTime+5400);
@@ -209,7 +209,6 @@ void RunDemo() {
 }
 
 // ----------------------------------------------------------------
-
 void reset_3bank() {
   // Paragon-specific - resets right 3-bank drop targets on continuous solenoid line
 
@@ -348,7 +347,7 @@ void ShowGoldenSaucerLamps() {
     { BSOS_SetLampState(L_6K_GOLDEN, 1); } else { BSOS_SetLampState(L_6K_GOLDEN, 0); }
   if ((GoldenSaucerValue==4) || (GoldenSaucerValue==9)) 
     { BSOS_SetLampState(L_8K_GOLDEN, 1); } else { BSOS_SetLampState(L_8K_GOLDEN, 0); }
-  if ((GoldenSaucerValue>4) && (GoldenSaucerValue<10))
+  if ((GoldenSaucerValue>4) || (GoldenSaucerValue<10))
     { BSOS_SetLampState(L_10K_GOLDEN, 1); } else { BSOS_SetLampState(L_10K_GOLDEN, 0); }
   if (GoldenSaucerValue==10)
     { BSOS_SetLampState(L_20K_GOLDEN, 1); } else { BSOS_SetLampState(L_20K_GOLDEN, 0); }
@@ -374,7 +373,7 @@ void ShowShootAgainLamp() {
 void ShowBonusOnTree(byte bonus, byte dim=0) {
   if (bonus>MAX_DISPLAY_BONUS) bonus = MAX_DISPLAY_BONUS;
   
-  byte cap = 10;
+  byte cap = 10;  // number of lights in count-down tree
 
   for (byte turnOff=(bonus+1); turnOff<11; turnOff++) {
     BSOS_SetLampState(L_1K_BONUS + (turnOff-1), 0);
@@ -383,7 +382,7 @@ void ShowBonusOnTree(byte bonus, byte dim=0) {
 
   if (bonus>=cap) {
     while(bonus>=cap) {
-      BSOS_SetLampState(L_1K_BONUS + (cap-1), 1, dim, 250); // I belive the 250 should sync with the bonus countdown time
+      BSOS_SetLampState(L_1K_BONUS + (cap-1), 1, dim, 250); // (wrong?) I belive the 250 should sync with the bonus countdown time
       bonus -= cap;
       cap -= 1;
       if (cap==0) {
@@ -407,6 +406,7 @@ void ShowBonusOnTree(byte bonus, byte dim=0) {
 } // END: ShowBonusOnTree()
 
 byte LastBonusShown = 0;
+// routine below not used but will be if we want to occasionally re-purpose the bonus lamps for something else
 void ShowBonusLamps() {
 /*  - no game modes yet  
   if (GameMode==GAME_MODE_MINI_GAME_QUALIFIED) {
@@ -1511,7 +1511,9 @@ int NormalGamePlay() {
   // lamp functions
   ShowShootAgainLamp();
   ShowGoldenSaucerLamps();
-  
+  ShowBonusOnTree(Bonus);  // replace with ShowBonusLamps() when using modes
+
+
   
 // new
   ShowPlayerScores(CurrentPlayer, (BallFirstSwitchHitTime==0)?true:false, (BallFirstSwitchHitTime>0 && ((CurrentTime-LastTimeScoreChanged)>2000))?true:false);  
@@ -1553,6 +1555,55 @@ int NormalGamePlay() {
 }
 
 //====================================================
+
+unsigned long CountdownStartTime = 0;
+unsigned long LastCountdownReportTime = 0;
+unsigned long BonusCountDownEndTime = 0;
+
+int CountdownBonus(boolean curStateChanged) {
+
+  // If this is the first time through the countdown loop
+  if (curStateChanged) {
+    BSOS_SetLampState(BALL_IN_PLAY, 1, 0, 250);
+
+    CountdownStartTime = CurrentTime;
+    ShowBonusOnTree(Bonus);
+
+    LastCountdownReportTime = CountdownStartTime;
+    BonusCountDownEndTime = 0xFFFFFFFF;
+  }
+
+  if ((CurrentTime - LastCountdownReportTime) > 200) {
+
+    if (Bonus > 0) {
+
+      // Only give sound & score if this isn't a tilt
+      if (NumTiltWarnings <= MaxTiltWarnings) {
+//        PlaySoundEffect(SOUND_EFFECT_BONUS_COUNT + (BonusX-1));
+        CurrentPlayerCurrentScore += 1000*((unsigned long)BonusX);
+      }
+
+      Bonus -= 1;
+      ShowBonusOnTree(Bonus);
+    } else if (BonusCountDownEndTime == 0xFFFFFFFF) {
+//      PlaySoundEffect(SOUND_EFFECT_BALL_OVER);
+      BSOS_SetLampState(L_1K_BONUS, 0);
+      BonusCountDownEndTime = CurrentTime + 1000;
+    }
+    LastCountdownReportTime = CurrentTime;
+  }
+
+  if (CurrentTime > BonusCountDownEndTime) {
+
+    // Reset any lights & variables of goals that weren't completed
+
+    BonusCountDownEndTime = 0xFFFFFFFF;
+    return MACHINE_STATE_BALL_OVER;
+  }
+
+  return MACHINE_STATE_COUNTDOWN_BONUS;
+}
+
 //====================================================
 //====================================================
 //====================================================
@@ -1576,7 +1627,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
     returnState = NormalGamePlay();
   } else if (curState==MACHINE_STATE_COUNTDOWN_BONUS) {
 
-//    returnState = CountdownBonus(curStateChanged);
+    returnState = CountdownBonus(curStateChanged);
     ShowPlayerScores(CurrentPlayer, (BallFirstSwitchHitTime==0)?true:false, (BallFirstSwitchHitTime>0 && ((CurrentTime-LastTimeScoreChanged)>2000))?true:false);
 
     returnState = MACHINE_STATE_BALL_OVER; // disable this when countdown enabled
