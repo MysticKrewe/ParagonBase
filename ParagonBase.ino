@@ -406,6 +406,13 @@ void OLDShowBonusOnTree(byte bonus, byte dim=0) {
 } // END: ShowBonusOnTree()
 
 // ----------------------------------------------------------------
+void SwitchOffBonus(byte x) {
+  // switch off 10k,20,30, bonus lights
+  for (byte y=0;y<x; y++) {
+    BSOS_SetLampState(L_10K_BONUS+y, 1);
+  }
+
+}
 void ShowBonusOnTree(byte bonus, byte dim=0) {
   if (bonus>MAX_DISPLAY_BONUS) bonus = MAX_DISPLAY_BONUS;
   
@@ -418,19 +425,28 @@ void ShowBonusOnTree(byte bonus, byte dim=0) {
   
   if (bonus>=cap) {  // extended bonus lights
     while(bonus>=cap) {
-      if (bonus>=40) { bonus-=40; BSOS_SetLampState(L_40K_BONUS, 1); }
-      if (bonus>=30) { bonus-=30; BSOS_SetLampState(L_30K_BONUS, 1); } else { BSOS_SetLampState(L_30K_BONUS, 0); }
-      if (bonus>=20) { bonus-=20; BSOS_SetLampState(L_20K_BONUS, 1); } else {BSOS_SetLampState(L_20K_BONUS, 0); }
+      if (bonus>=40) { 
+        bonus-=40; 
+        BSOS_SetLampState(L_40K_BONUS, 1); 
+        if (bonus<cap)  SwitchOffBonus(3);
+      }
+      if (bonus>=30) { 
+        bonus-=30; 
+        BSOS_SetLampState(L_30K_BONUS, 1); 
+        if (bonus<cap)  SwitchOffBonus(2);        
+      }
+      if (bonus>=20) { 
+        bonus-=20; 
+        BSOS_SetLampState(L_20K_BONUS, 1);
+        if (bonus<cap)  SwitchOffBonus(1);        
+      }
       if (bonus>cap) { bonus-=cap; BSOS_SetLampState(L_10K_BONUS, 1, dim, 250); } 
       else if (bonus==cap) { bonus-=cap; BSOS_SetLampState(L_10K_BONUS, 1);
-//        BSOS_SetLampState(L_9K_BONUS, 0);
       }
-    }
+      
+    } // while
   } else {
-    BSOS_SetLampState(L_40K_BONUS, 0);
-    BSOS_SetLampState(L_30K_BONUS, 0);
-    BSOS_SetLampState(L_20K_BONUS, 0);
-    BSOS_SetLampState(L_10K_BONUS, 0);    
+    SwitchOffBonus(4); // turn off 10k-40k
   }
 //  if (bonus==0) return;
   
