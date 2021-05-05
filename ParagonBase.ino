@@ -409,7 +409,7 @@ void OLDShowBonusOnTree(byte bonus, byte dim=0) {
 void SwitchOffBonus(byte x) {
   // switch off 10k,20,30, bonus lights
   for (byte y=0;y<x; y++) {
-    BSOS_SetLampState(L_10K_BONUS+y, 1);
+    BSOS_SetLampState(L_10K_BONUS+y, 0);
   }
 
 }
