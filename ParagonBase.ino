@@ -423,7 +423,7 @@ void ShowBonusOnTree(byte bonus, byte dim=0) {
       if (bonus>=20) { bonus-=20; BSOS_SetLampState(L_20K_BONUS, 1); } else {BSOS_SetLampState(L_20K_BONUS, 0); }
       if (bonus>cap) { bonus-=cap; BSOS_SetLampState(L_10K_BONUS, 1, dim, 250); } 
       else if (bonus=cap) { bonus-=cap; BSOS_SetLampState(L_10K_BONUS, 1);
-        BSOS_SetLampState(L_9K_BONUS, 1);
+//        BSOS_SetLampState(L_9K_BONUS, 0);
       }
     }
   } else {
@@ -432,7 +432,7 @@ void ShowBonusOnTree(byte bonus, byte dim=0) {
     BSOS_SetLampState(L_20K_BONUS, 0);
     BSOS_SetLampState(L_10K_BONUS, 0);    
   }
-  if (bonus==0) return;
+//  if (bonus==0) return;
   
   for (byte x=1; x<cap; x++) {
     if (bonus==x) { BSOS_SetLampState(L_1K_BONUS + (x-1), 1, 0); }
