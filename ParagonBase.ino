@@ -370,7 +370,7 @@ void ShowShootAgainLamp() {
 }
 
 // ----------------------------------------------------------------
-void ShowBonusOnTree(byte bonus, byte dim=0) {
+void OLDShowBonusOnTree(byte bonus, byte dim=0) {
   if (bonus>MAX_DISPLAY_BONUS) bonus = MAX_DISPLAY_BONUS;
   
   byte cap = 10;  // number of lights in count-down tree
@@ -382,7 +382,7 @@ void ShowBonusOnTree(byte bonus, byte dim=0) {
 
   if (bonus>=cap) {
     while(bonus>=cap) {
-      BSOS_SetLampState(L_1K_BONUS + (cap-1), 1, dim, 250); // (wrong?) I belive the 250 should sync with the bonus countdown time
+      BSOS_SetLampState(L_1K_BONUS + (cap-1), 1, dim, 250); // make light blink
       bonus -= cap;
       cap -= 1;
       if (cap==0) {
@@ -393,6 +393,40 @@ void ShowBonusOnTree(byte bonus, byte dim=0) {
     for (byte turnOff=(bonus+1); turnOff<(cap+1); turnOff++) {
       BSOS_SetLampState(L_1K_BONUS + (turnOff-1), 0);
     }
+  }
+
+  byte bottom; 
+  for (bottom=1; bottom<bonus; bottom++){  // turn off lamps leading up to bonus?
+    BSOS_SetLampState(L_1K_BONUS + (bottom-1), 0);
+  }
+
+  if (bottom<=cap) {
+    BSOS_SetLampState(L_1K_BONUS + (bottom-1), 1, 0);
+  }    
+} // END: ShowBonusOnTree()
+
+// ----------------------------------------------------------------
+void ShowBonusOnTree(byte bonus, byte dim=0) {
+  if (bonus>MAX_DISPLAY_BONUS) bonus = MAX_DISPLAY_BONUS;
+  
+  byte cap = 10;  // number of lights in count-down tree
+
+  for (byte turnOff=(bonus+1); turnOff<14; turnOff++) { // turn off 1-10, 20k,30k,40k
+    BSOS_SetLampState(L_1K_BONUS + (turnOff-1), 0);
+  }
+  if (bonus==0) return;
+
+  if (bonus>=cap) {  // extended bonus lights
+    while(bonus>=cap) {
+      if (bonus>=40) { bonus-=40; BSOS_SetLampState(L_40K_BONUS, 1, dim, 250); }
+      if (bonus>=30) { bonus-=30; BSOS_SetLampState(L_30K_BONUS, 1, 0, 250); }
+      if (bonus>=20) { bonus-=20; BSOS_SetLampState(L_20K_BONUS, 1); }
+      if (bonus>=cap) { bonus-=cap; BSOS_SetLampState(L_10K_BONUS, 1, dim, 250); }
+
+    }
+//    for (byte turnOff=(bonus+1); turnOff<(cap+1); turnOff++) {
+//      BSOS_SetLampState(L_1K_BONUS + (turnOff-1), 0);
+//    }
   }
 
   byte bottom; 
