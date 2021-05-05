@@ -422,6 +422,10 @@ void ShowBonusOnTree(byte bonus, byte dim=0) {
 //    BSOS_SetLampState(L_1K_BONUS + turnOff, 0);
 //  }
 
+  // Need to clear any upper bonus lights before counting down
+  if (bonus<40) BSOS_SetLampState(L_40K_BONUS, 0);
+  if (bonus<30) BSOS_SetLampState(L_30K_BONUS, 0);
+  if (bonus<20) BSOS_SetLampState(L_20K_BONUS, 0);
   
   if (bonus>=cap) {  // extended bonus lights
     while(bonus>=cap) {
