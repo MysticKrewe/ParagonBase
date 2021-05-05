@@ -382,9 +382,9 @@ void ShowAwardLamps() {
   if (DropsRightDownScore[CurrentPlayer]==30000) { BSOS_SetLampState(L_SPECIAL_DROPS, 1); } else { BSOS_SetLampState(L_SPECIAL_DROPS, 0); }
 
   // Waterfall  0=1k 1=5k, 2=10k 3=special
-  if (WaterfallValue==0) { BSOS_SetLampState(L_5K_WATER, 1,0,300); } else { BSOS_SetLampState(L_5K_WATER, 0); }
-  if (WaterfallValue==1) { BSOS_SetLampState(L_10K_WATER, 1,0,300); } else { BSOS_SetLampState(L_10K_WATER, 0); }
-  if (WaterfallValue==2) { BSOS_SetLampState(L_WATER_SPECIAL, 1,0,300); } else { BSOS_SetLampState(L_WATER_SPECIAL, 0); }
+  if (WaterfallValue==1) { BSOS_SetLampState(L_5K_WATER, 1,0,300); } else { BSOS_SetLampState(L_5K_WATER, 0); }
+  if (WaterfallValue==2) { BSOS_SetLampState(L_10K_WATER, 1,0,300); } else { BSOS_SetLampState(L_10K_WATER, 0); }
+  if (WaterfallValue==3) { BSOS_SetLampState(L_WATER_SPECIAL, 1,0,300); } else { BSOS_SetLampState(L_WATER_SPECIAL, 0); }
   
   
   
