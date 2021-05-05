@@ -347,7 +347,7 @@ void ShowGoldenSaucerLamps() {
     { BSOS_SetLampState(L_6K_GOLDEN, 1); } else { BSOS_SetLampState(L_6K_GOLDEN, 0); }
   if ((GoldenSaucerValue==4) || (GoldenSaucerValue==9)) 
     { BSOS_SetLampState(L_8K_GOLDEN, 1); } else { BSOS_SetLampState(L_8K_GOLDEN, 0); }
-  if ((GoldenSaucerValue>4) || (GoldenSaucerValue<10))
+  if ((GoldenSaucerValue>4) && (GoldenSaucerValue<10))
     { BSOS_SetLampState(L_10K_GOLDEN, 1); } else { BSOS_SetLampState(L_10K_GOLDEN, 0); }
   if (GoldenSaucerValue==10)
     { BSOS_SetLampState(L_20K_GOLDEN, 1); } else { BSOS_SetLampState(L_20K_GOLDEN, 0); }
@@ -370,57 +370,19 @@ void ShowShootAgainLamp() {
 }
 
 // ----------------------------------------------------------------
-void OLDShowBonusOnTree(byte bonus, byte dim=0) {
-  if (bonus>MAX_DISPLAY_BONUS) bonus = MAX_DISPLAY_BONUS;
-  
-  byte cap = 10;  // number of lights in count-down tree
-
-  for (byte turnOff=(bonus+1); turnOff<11; turnOff++) { // turn off 1-10
-    BSOS_SetLampState(L_1K_BONUS + (turnOff-1), 0);
-  }
-  if (bonus==0) return;
-
-  if (bonus>=cap) {
-    while(bonus>=cap) {
-      BSOS_SetLampState(L_1K_BONUS + (cap-1), 1, dim, 250); // make light blink
-      bonus -= cap;
-      cap -= 1;
-      if (cap==0) {
-        bonus = 0;
-        break;
-      }
-    }
-    for (byte turnOff=(bonus+1); turnOff<(cap+1); turnOff++) {
-      BSOS_SetLampState(L_1K_BONUS + (turnOff-1), 0);
-    }
-  }
-
-  byte bottom; 
-  for (bottom=1; bottom<bonus; bottom++){  // turn off lamps leading up to bonus?
-    BSOS_SetLampState(L_1K_BONUS + (bottom-1), 0);
-  }
-
-  if (bottom<=cap) {
-    BSOS_SetLampState(L_1K_BONUS + (bottom-1), 1, 0);
-  }    
-} // END: ShowBonusOnTree()
 
 // ----------------------------------------------------------------
 void SwitchOffBonus(byte x) {
-  // switch off 10k,20,30, bonus lights
+  // switch off 10k,20,30,40 bonus lights
   for (byte y=0;y<x; y++) {
     BSOS_SetLampState(L_10K_BONUS+y, 0);
   }
-
 }
+
 void ShowBonusOnTree(byte bonus, byte dim=0) {
   if (bonus>MAX_DISPLAY_BONUS) bonus = MAX_DISPLAY_BONUS;
   
   byte cap = 10;  // number of lights in count-down tree
-
-//  for (byte turnOff=0; turnOff<14; turnOff++) { // turn off 1-10, 20k,30k,40k
-//    BSOS_SetLampState(L_1K_BONUS + turnOff, 0);
-//  }
 
   // Need to clear any upper bonus lights before counting down
   if (bonus<40) BSOS_SetLampState(L_40K_BONUS, 0);
@@ -452,8 +414,7 @@ void ShowBonusOnTree(byte bonus, byte dim=0) {
   } else {
     SwitchOffBonus(4); // turn off 10k-40k
   }
-//  if (bonus==0) return;
-  
+
   for (byte x=1; x<cap; x++) {
     if (bonus==x) { BSOS_SetLampState(L_1K_BONUS + (x-1), 1); }
     else { BSOS_SetLampState(L_1K_BONUS + (x-1), 0); }
