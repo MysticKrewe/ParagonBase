@@ -103,6 +103,7 @@ boolean MachineStateChanged = true;
 #define INLINE4_MASK     0x64   // inlines 1-4
 
 #define SAUCER_DEBOUNCE_TIME  500   // #ms to debounce the saucer hits
+#define PARAGON_TIMING   250    // ms to change paragon letters in saucer
 
 byte DropsHit = 0;              // holds mask value indicating which of drops have been hit
 
@@ -176,7 +177,9 @@ boolean ExtraBallCollected = false;
 unsigned long DropTargetClearTime = 0;
 
 unsigned long SaucerHitTime = 0;       // used for debouncing saucer hit
-byte PSaucerValue = 0;                 // 1-8 p-a-r-a-g-o-n special
+byte ParagonValue = 0;                 // 1-8 p-a-r-a-g-o-n special
+byte ParagonLit[4];                    // which paragon letters are lit, bits 1-7 or 8
+unsigned long LastParagonLetterTime=0; //
 byte GoldenSaucerValue = 1;            // 1-10 (value * 2000= points)
 byte GoldenSaucerMem[4];               // 0-10, 2k-20k carries from ball to ball
 byte WaterfallValue=0;                 // 0=1k 1=5k, 2=10k 3=special
@@ -386,11 +389,37 @@ void ShowAwardLamps() {
 
   // Waterfall  0=1k 1=5k, 2=10k 3=special
   if (WaterfallValue==1) { BSOS_SetLampState(L_5K_WATER, 1,0,300); } else { BSOS_SetLampState(L_5K_WATER, 0); }
-  if (WaterfallValue==2) { BSOS_SetLampState(L_10K_WATER, 1,0,300); } else { BSOS_SetLampState(L_10K_WATER, 0); }
-  if (WaterfallValue==3) { BSOS_SetLampState(L_WATER_SPECIAL, 1,0,300); } else { BSOS_SetLampState(L_WATER_SPECIAL, 0); }
+  if (WaterfallValue==2) { BSOS_SetLampState(L_10K_WATER, 1,0,250); } else { BSOS_SetLampState(L_10K_WATER, 0); }
+  if (WaterfallValue==3) { BSOS_SetLampState(L_WATER_SPECIAL, 1,0,200); } else { BSOS_SetLampState(L_WATER_SPECIAL, 0); }
+
   
+}
+
+// ----------------------------------------------------------------
+void ShowParagonLamps() {
+  byte x=ParagonLit[CurrentPlayer];
+  byte y;
   
+  // Upper paragon letters
+  if (x&128) { // paragon lit
+    for (y=0; y<8; y++) { BSOS_SetLampState(L_SAUCER_P+y, 1,0,400); }
+  } else { // light p-a-r-a-g-o-n letters
+    for (y=0; y<7; y++) { 
+      if (ParagonValue==y) { BSOS_SetLampState(L_SAUCER_P+y, 1); } else { BSOS_SetLampState(L_SAUCER_P+y, 0); }      
+    }
+  }
+
+  // Center Paragon Letters
+  for (y=0; y<7; y++) {
+    if (x & (byte) pow(2,y)) { BSOS_SetLampState(L_CENTER_P+y, 1); } else { BSOS_SetLampState(L_CENTER_P+y, 0); }   
+  }
   
+  // letter timing
+  if (CurrentTime-LastParagonLetterTime>PARAGON_TIMING) {
+    ParagonValue++;
+    if (ParagonValue>6) ParagonValue=0;
+    LastParagonLetterTime=CurrentTime;
+  }
 }
 // ----------------------------------------------------------------
 void SwitchOffBonus(byte x) {
@@ -1186,34 +1215,17 @@ void GetHoldBonus(byte bset) {
   if (bset & 1) Bonus+=20;
   if (bset & 2) Bonus+=30;
   if (bset & 4) Bonus+=40;
-
-#ifdef DEBUG_MESSAGES
-      char buf[128];
-      sprintf(buf, "GetHoldBonus bset=%d Bonus=%d\r\n",bset,Bonus);
-      Serial.write(buf);
-#endif     
-  
 }
 //-----------------------------------------------------------------
 void SetHoldBonus(byte hbonus) {
   // sets BonusMem based on Bonus value
   // called at end of ball, max carry over hbonus =90k
   byte bset;
-#ifdef DEBUG_MESSAGES
-      char buf[128];
-      sprintf(buf, "SetHoldBonus passed bonus=%d\r\n",hbonus);
-      Serial.write(buf);
-#endif      
+
   if (hbonus>=40) { bset=4; hbonus-=40; } else { bset=0; }
   if (hbonus>=30) { bset=bset|2; hbonus-=30; }
   if (hbonus>=20) { bset=bset|1; }
   BonusMem[CurrentPlayer]=bset;
-#ifdef DEBUG_MESSAGES
-//      char buf[128];
-      sprintf(buf, "SetHoldBonus CurrentPlayer=%d bset=%d\r\n",CurrentPlayer,bset);
-      Serial.write(buf);
-#endif    
-  
 }
 //-----------------------------------------------------------------
 
@@ -1284,6 +1296,32 @@ void HandleGoldenSaucerHit() {
   BSOS_PushToTimedSolenoidStack(SOL_SAUCER_GOLDEN, 5, CurrentTime + SAUCER_PARAGON_DURATION);  
 }
 //-----------------------------------------------------------------
+void HandleParagonHit() {
+  if ((ParagonLit[CurrentPlayer]&128)==128) { // award special  or &127
+  
+    AwardSpecial();
+    ParagonLit[CurrentPlayer]=0;  // reset this
+    
+  } else {
+//    ParagonLit[CurrentPlayer]=(ParagonLit[CurrentPlayer] & ~(1 << (ParagonValue - 1)));
+    ParagonLit[CurrentPlayer]=(ParagonLit[CurrentPlayer] & ~(1 << (ParagonValue)));
+    
+    AddToBonus(1);
+    // play special sound
+  }
+  if ((ParagonLit[CurrentPlayer]&127)==127) { // Paragon lit
+    ParagonLit[CurrentPlayer]=255; // special list
+    // play special sound
+  }
+if (DEBUG_MESSAGES) { 
+      char buf[32];
+      sprintf(buf, " ParagonVal=%d playerbitmask=%d\n\r",ParagonValue,ParagonLit[CurrentPlayer]);
+      Serial.write(buf);
+}    
+  
+  BSOS_PushToTimedSolenoidStack(SOL_SAUCER_PARAGON, 5, CurrentTime + SAUCER_PARAGON_DURATION);   
+}
+//-----------------------------------------------------------------
 void HandleTreasureSaucerHit() {
   switch (TreasureValue) {
       case 1:
@@ -1352,7 +1390,7 @@ void setup() {
   // Use dip switches to set up game variables
   if (DEBUG_MESSAGES) {
     char buf[32];
-    sprintf(buf, "DipBank 0 = 0x%02X\n", dipBank);
+    sprintf(buf, "DipBank 0 = 0x%02X\n\r", dipBank);
     Serial.write(buf);
   }
   HighScore = BSOS_ReadULFromEEProm(BSOS_HIGHSCORE_EEPROM_START_BYTE, 10000);
@@ -1460,17 +1498,17 @@ int InitGamePlay(boolean curStateChanged) {
     // Set up general game variables
     CurrentPlayer = 0;
     CurrentBallInPlay = 1;
-    SamePlayerShootsAgain = false;       
+    SamePlayerShootsAgain = false;    
     
     for (int count=0; count<4; count++) {
       // init game play variables
       CurrentScores[count] = 0;
       
-      // game specific values that carry over from ball-to-ball only init here - xx
-      
+      // game specific values that carry over from ball-to-ball only init here - xx      
       DropsRightDownScore[count]=10000;  // reset right drops value tree
       BonusHeld[count]=0;                 // any 20k+ bonus 
       GoldenSaucerMem[count]=1;          // zero player golden saucer values
+      ParagonLit[count]=0;
       BonusMem[count]=0;                 // 0=none, 1=20k, 2=30k, 3=40k
           
     }
@@ -1585,7 +1623,9 @@ if (DEBUG_MESSAGES) {
     CurrentStandupsHit = StandupsHit[CurrentPlayer]; // not used
     GoldenSaucerValue=GoldenSaucerMem[CurrentPlayer]; // Carries from ball to ball
     GetHoldBonus(BonusMem[CurrentPlayer]);
-    DropsRightDownScore[CurrentPlayer]=10000;  // uncomment if you want to reset each ball
+    ParagonValue=0; // p-a-r-a-g-o-n or 8
+//    DropsRightDownScore[CurrentPlayer]=10000;  // uncomment if you want to reset each ball
+// P-a-r-a-g-o-n also does not reset
     
   } // end new ball init
 
@@ -1637,7 +1677,7 @@ int NormalGamePlay() {
   ShowGoldenSaucerLamps();
   ShowBonusOnTree(Bonus);  // replace with ShowBonusLamps() when using modes
   ShowAwardLamps();  // waterfall and drops
-
+  ShowParagonLamps();
 
   
 // new
@@ -1668,8 +1708,9 @@ int NormalGamePlay() {
 
           returnState = MACHINE_STATE_NORMAL_GAMEPLAY;          
         } else {
-          // possibly one time call for end of ball stuff?
-    SetHoldBonus(Bonus);          
+          // one-time, end of ball routines
+          SetHoldBonus(Bonus);  // works well - one time end of ball call
+          
           returnState = MACHINE_STATE_COUNTDOWN_BONUS;
         }
       }
@@ -1753,7 +1794,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
   } else if (curState==MACHINE_STATE_NORMAL_GAMEPLAY) {
     returnState = NormalGamePlay();
   } else if (curState==MACHINE_STATE_COUNTDOWN_BONUS) {
-//    SetHoldBonus(Bonus);  // not here multiple calls
+    //   Do not put one-time end of ball stuff here - this loops
     returnState = CountdownBonus(curStateChanged);
     ShowPlayerScores(CurrentPlayer, (BallFirstSwitchHitTime==0)?true:false, (BallFirstSwitchHitTime>0 && ((CurrentTime-LastTimeScoreChanged)>2000))?true:false);
 
@@ -1902,10 +1943,9 @@ if (DEBUG_MESSAGES) {
           // We only count a saucer hit if it hasn't happened in the last 500ms software debounce)
           if (SaucerHitTime==0 || (CurrentTime-SaucerHitTime)>SAUCER_DEBOUNCE_TIME) {
             SaucerHitTime = CurrentTime;
- //           ShowSaucerHit = PSaucerValue; // 1-7 p-a-r-a-g-o-n
-            AddToBonus(1);
+            HandleParagonHit();
             // paragon_award(PSaucerValue);  // 1-8 p-a-r-a-g-o-n special
-            BSOS_PushToTimedSolenoidStack(SOL_SAUCER_PARAGON, 5, CurrentTime + SAUCER_PARAGON_DURATION);             
+            
           }
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime; 
           break;
