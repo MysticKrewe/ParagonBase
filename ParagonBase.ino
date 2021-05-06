@@ -1942,8 +1942,8 @@ if (DEBUG_MESSAGES) {
               CurrentPlayerCurrentScore+=WaterfallValue*5000;
               break;
             case 3:
-              AddSpecialCredit();
-              WaterfallSpecialAwarded=true;
+              AwardSpecial();
+              WaterfallSpecialAwarded=true; // Note this isn't saved per player
               WaterfallValue=2;
               break;
           }        
