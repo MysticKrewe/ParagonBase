@@ -103,6 +103,7 @@ boolean MachineStateChanged = true;
 #define INLINE4_MASK     0x64   // inlines 1-4
 
 #define SAUCER_DEBOUNCE_TIME  500   // #ms to debounce the saucer hits
+#define SAUCER_HOLD_TIME 1000   // amount to freeze letter when hit
 #define PARAGON_TIMING   250    // ms to change paragon letters in saucer
 
 byte DropsHit = 0;              // holds mask value indicating which of drops have been hit
@@ -399,7 +400,8 @@ void ShowAwardLamps() {
 // ----------------------------------------------------------------
 void ShowParagonLamps() {
   byte x=ParagonLit[CurrentPlayer];
-  byte y,z;
+  byte y;
+  int z;
   
   // Upper paragon letters
   if (x&128) { // paragon lit
@@ -415,16 +417,23 @@ void ShowParagonLamps() {
   }
 
   // Center Paragon Letters
+  
   for (y=0; y<7; y++) {
-    z=(byte) pow(2,y);
+    z=pow(2,(int)y);
     if ((x & z)==z) { BSOS_SetLampState(L_CENTER_P+y, 1); } else { BSOS_SetLampState(L_CENTER_P+y, 0); }   
   }
+/*  
+  if ((x & 1)==1) { BSOS_SetLampState(L_CENTER_P+0, 1); } else { BSOS_SetLampState(L_CENTER_P+0, 0); }   
+  if ((x & 2)==2) { BSOS_SetLampState(L_CENTER_P+1, 1); } else { BSOS_SetLampState(L_CENTER_P+1, 0); }   
+  if ((x & 3)==4) { BSOS_SetLampState(L_CENTER_P+2, 1); } else { BSOS_SetLampState(L_CENTER_P+2, 0); }   
+*/  
+  
   
   // letter timing
-  if ((MoveParagon) && (CurrentTime-LastParagonLetterTime>PARAGON_TIMING)) {
+  if ((MoveParagon) && ((CurrentTime-LastParagonLetterTime)>PARAGON_TIMING)) {
+    LastParagonLetterTime=CurrentTime;
     ParagonValue++;
     if (ParagonValue>6) ParagonValue=0;
-    LastParagonLetterTime=CurrentTime;
   }
 }
 // ----------------------------------------------------------------
@@ -1950,7 +1959,7 @@ if (DEBUG_MESSAGES) {
           // We only count a saucer hit if it hasn't happened in the last 500ms software debounce)
           MoveParagon=false;
           // probably play sound here before debounce?
-          if (SaucerHitTime==0 || (CurrentTime-SaucerHitTime)>SAUCER_DEBOUNCE_TIME) {
+          if (SaucerHitTime==0 || (CurrentTime-SaucerHitTime)>SAUCER_HOLD_TIME) { // saucer_debounce_time 500
             SaucerHitTime = CurrentTime;
             HandleParagonHit();
           }
@@ -2038,7 +2047,7 @@ if (DEBUG_MESSAGES) {
   } // while switch hit
   
   // Let's check for things to un-freeze
-  if ((CurrentTime-SaucerHitTime)>SAUCER_DEBOUNCE_TIME) MoveParagon=true;  
+  if ((CurrentTime-SaucerHitTime)>SAUCER_HOLD_TIME) MoveParagon=true;  
   
   if (CurrentPlayerCurrentScore != CurrentScores[CurrentPlayer]) {
     CurrentScores[CurrentPlayer]=CurrentPlayerCurrentScore;
