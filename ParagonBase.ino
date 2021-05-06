@@ -399,7 +399,7 @@ void ShowAwardLamps() {
 // ----------------------------------------------------------------
 void ShowParagonLamps() {
   byte x=ParagonLit[CurrentPlayer];
-  byte y;
+  byte y,z;
   
   // Upper paragon letters
   if (x&128) { // paragon lit
@@ -412,7 +412,8 @@ void ShowParagonLamps() {
 
   // Center Paragon Letters
   for (y=0; y<7; y++) {
-    if (x & (byte) pow(2,y)) { BSOS_SetLampState(L_CENTER_P+y, 1); } else { BSOS_SetLampState(L_CENTER_P+y, 0); }   
+    z=(byte) pow(2,y);
+    if ((x & 7)==y) { BSOS_SetLampState(L_CENTER_P+y, 1); } else { BSOS_SetLampState(L_CENTER_P+y, 0); }   
   }
   
   // letter timing
