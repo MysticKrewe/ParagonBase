@@ -1668,6 +1668,8 @@ int NormalGamePlay() {
 
           returnState = MACHINE_STATE_NORMAL_GAMEPLAY;          
         } else {
+          // possibly one time call for end of ball stuff?
+    SetHoldBonus(Bonus);          
           returnState = MACHINE_STATE_COUNTDOWN_BONUS;
         }
       }
@@ -1751,7 +1753,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
   } else if (curState==MACHINE_STATE_NORMAL_GAMEPLAY) {
     returnState = NormalGamePlay();
   } else if (curState==MACHINE_STATE_COUNTDOWN_BONUS) {
-    SetHoldBonus(Bonus); 
+//    SetHoldBonus(Bonus);  // not here multiple calls
     returnState = CountdownBonus(curStateChanged);
     ShowPlayerScores(CurrentPlayer, (BallFirstSwitchHitTime==0)?true:false, (BallFirstSwitchHitTime>0 && ((CurrentTime-LastTimeScoreChanged)>2000))?true:false);
 
