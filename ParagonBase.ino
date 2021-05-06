@@ -1186,16 +1186,34 @@ void GetHoldBonus(byte bset) {
   if (bset & 1) Bonus+=20;
   if (bset & 2) Bonus+=30;
   if (bset & 4) Bonus+=40;
+
+#ifdef DEBUG_MESSAGES
+      char buf[128];
+      sprintf(buf, "GetHoldBonus bset=%d Bonus=%d\r\n",bset,Bonus);
+      Serial.write(buf);
+#endif     
+  
 }
 //-----------------------------------------------------------------
 void SetHoldBonus(byte hbonus) {
   // sets BonusMem based on Bonus value
   // called at end of ball, max carry over hbonus =90k
   byte bset;
+#ifdef DEBUG_MESSAGES
+      char buf[128];
+      sprintf(buf, "SetHoldBonus passed bonus=%d\r\n",hbonus);
+      Serial.write(buf);
+#endif      
   if (hbonus>=40) { bset=4; hbonus-=40; } else { bset=0; }
   if (hbonus>=30) { bset=bset|2; hbonus-=30; }
   if (hbonus>=20) { bset=bset|1; }
   BonusMem[CurrentPlayer]=bset;
+#ifdef DEBUG_MESSAGES
+//      char buf[128];
+      sprintf(buf, "SetHoldBonus CurrentPlayer=%d bset=%d\r\n",CurrentPlayer,bset);
+      Serial.write(buf);
+#endif    
+  
 }
 //-----------------------------------------------------------------
 
