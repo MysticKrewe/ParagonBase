@@ -393,7 +393,21 @@ void ShowAwardLamps() {
   if (WaterfallValue==1) { BSOS_SetLampState(L_5K_WATER, 1,0,300); } else { BSOS_SetLampState(L_5K_WATER, 0); }
   if (WaterfallValue==2) { BSOS_SetLampState(L_10K_WATER, 1,0,250); } else { BSOS_SetLampState(L_10K_WATER, 0); }
   if (WaterfallValue==3) { BSOS_SetLampState(L_WATER_SPECIAL, 1,0,200); } else { BSOS_SetLampState(L_WATER_SPECIAL, 0); }
+  
+  // bonusX
+  if (BonusX==2) { BSOS_SetLampState(L_2X_BONUS, 1); } else { BSOS_SetLampState(L_2X_BONUS, 0); }
+  if (BonusX==3) { BSOS_SetLampState(L_3X_BONUS, 1); BSOS_SetLampState(L_TREASURE_5X, 1); } else { BSOS_SetLampState(L_3X_BONUS, 0); BSOS_SetLampState(L_TREASURE_5X, 0); }
+  if (BonusX==5) { BSOS_SetLampState(L_5X_BONUS, 1); } else { BSOS_SetLampState(L_5X_BONUS, 0); }
 
+  // treasure
+  if (TreasureValue==2) { BSOS_SetLampState(L_TREASURE_EB, 1); } else { BSOS_SetLampState(L_TREASURE_EB, 0); }
+  if (TreasureValue==3) { BSOS_SetLampState(L_TREASURE_SPECIAL, 1); } else { BSOS_SetLampState(L_TREASURE_SPECIAL, 0); }
+
+  // Spinner 
+  for (byte x=2; x<6; x++) {
+    if (SpinnerValue>=x) { BSOS_SetLampState(L_SPINNER_1+(x-2), 1); } else { BSOS_SetLampState(L_SPINNER_1+(x-2), 0); }
+  }
+  
   
 }
 
