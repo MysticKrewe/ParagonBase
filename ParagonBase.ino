@@ -403,17 +403,21 @@ void ShowParagonLamps() {
   
   // Upper paragon letters
   if (x&128) { // paragon lit
-    for (y=0; y<8; y++) { BSOS_SetLampState(L_SAUCER_P+y, 1,0,400); }
+    for (y=0; y<7; y++) { BSOS_SetLampState(L_SAUCER_P+y, 1,0,400); }
+    BSOS_SetLampState(L_SAUCER_SPECIAL, 1,0,400);
+    
   } else { // light p-a-r-a-g-o-n letters
     for (y=0; y<7; y++) { 
       if (ParagonValue==y) { BSOS_SetLampState(L_SAUCER_P+y, 1); } else { BSOS_SetLampState(L_SAUCER_P+y, 0); }      
     }
+    BSOS_SetLampState(L_SAUCER_SPECIAL, 0);
+
   }
 
   // Center Paragon Letters
   for (y=0; y<7; y++) {
     z=(byte) pow(2,y);
-    if ((x & 7)==y) { BSOS_SetLampState(L_CENTER_P+y, 1); } else { BSOS_SetLampState(L_CENTER_P+y, 0); }   
+    if ((y & z)==y) { BSOS_SetLampState(L_CENTER_P+y, 1); } else { BSOS_SetLampState(L_CENTER_P+y, 0); }   
   }
   
   // letter timing
