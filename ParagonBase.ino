@@ -417,17 +417,23 @@ void ShowParagonLamps() {
   }
 
   // Center Paragon Letters
-  
+/*  
   for (y=0; y<7; y++) {
     z=pow(2,(int)y);
     if ((x & z)==z) { BSOS_SetLampState(L_CENTER_P+y, 1); } else { BSOS_SetLampState(L_CENTER_P+y, 0); }   
   }
-/*  
-  if ((x & 1)==1) { BSOS_SetLampState(L_CENTER_P+0, 1); } else { BSOS_SetLampState(L_CENTER_P+0, 0); }   
-  if ((x & 2)==2) { BSOS_SetLampState(L_CENTER_P+1, 1); } else { BSOS_SetLampState(L_CENTER_P+1, 0); }   
-  if ((x & 3)==4) { BSOS_SetLampState(L_CENTER_P+2, 1); } else { BSOS_SetLampState(L_CENTER_P+2, 0); }   
 */  
   
+  if ((x & 1)==1) { BSOS_SetLampState(L_CENTER_P+0, 1); } else { BSOS_SetLampState(L_CENTER_P+0, 0); }   
+  if ((x & 2)==2) { BSOS_SetLampState(L_CENTER_P+1, 1); } else { BSOS_SetLampState(L_CENTER_P+1, 0); }   
+  if ((x & 4)==4) { BSOS_SetLampState(L_CENTER_P+2, 1); } else { BSOS_SetLampState(L_CENTER_P+2, 0); }   
+  if ((x & 8)==8) { BSOS_SetLampState(L_CENTER_P+3, 1); } else { BSOS_SetLampState(L_CENTER_P+3, 0); }  
+  if ((x & 16)==16) { BSOS_SetLampState(L_CENTER_P+4, 1); } else { BSOS_SetLampState(L_CENTER_P+4, 0); }
+  if ((x & 32)==32) { BSOS_SetLampState(L_CENTER_P+5, 1); } else { BSOS_SetLampState(L_CENTER_P+5, 0); }
+  if ((x & 64)==64) { BSOS_SetLampState(L_CENTER_P+6, 1); } else { BSOS_SetLampState(L_CENTER_P+6, 0); }
+
+  
+
   
   // letter timing
   if ((MoveParagon) && ((CurrentTime-LastParagonLetterTime)>PARAGON_TIMING)) {
