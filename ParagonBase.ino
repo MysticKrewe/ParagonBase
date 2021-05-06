@@ -1953,9 +1953,6 @@ if (DEBUG_MESSAGES) {
           if (SaucerHitTime==0 || (CurrentTime-SaucerHitTime)>SAUCER_DEBOUNCE_TIME) {
             SaucerHitTime = CurrentTime;
             HandleParagonHit();
-            if ((CurrentTime-SaucerHitTime)>SAUCER_DEBOUNCE_TIME) MoveParagon=true;
-            // paragon_award(PSaucerValue);  // 1-8 p-a-r-a-g-o-n special
-            
           }
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime; 
           break;
@@ -2038,7 +2035,11 @@ if (DEBUG_MESSAGES) {
           
           
     }
-  }
+  } // while switch hit
+  
+  // Let's check for things to un-freeze
+  if ((CurrentTime-SaucerHitTime)>SAUCER_DEBOUNCE_TIME) MoveParagon=true;  
+  
   if (CurrentPlayerCurrentScore != CurrentScores[CurrentPlayer]) {
     CurrentScores[CurrentPlayer]=CurrentPlayerCurrentScore;
     ShowPlayerScores(0xFF, false, false);   
