@@ -417,7 +417,7 @@ void ShowParagonLamps() {
   // Center Paragon Letters
   for (y=0; y<7; y++) {
     z=(byte) pow(2,y);
-    if ((y & z)==y) { BSOS_SetLampState(L_CENTER_P+y, 1); } else { BSOS_SetLampState(L_CENTER_P+y, 0); }   
+    if ((x & z)==z) { BSOS_SetLampState(L_CENTER_P+y, 1); } else { BSOS_SetLampState(L_CENTER_P+y, 0); }   
   }
   
   // letter timing
@@ -1953,7 +1953,7 @@ if (DEBUG_MESSAGES) {
           if (SaucerHitTime==0 || (CurrentTime-SaucerHitTime)>SAUCER_DEBOUNCE_TIME) {
             SaucerHitTime = CurrentTime;
             HandleParagonHit();
-            MoveParagon=true;
+            if ((CurrentTime-SaucerHitTime)>SAUCER_DEBOUNCE_TIME) MoveParagon=true;
             // paragon_award(PSaucerValue);  // 1-8 p-a-r-a-g-o-n special
             
           }
