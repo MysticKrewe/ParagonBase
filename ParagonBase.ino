@@ -180,6 +180,7 @@ unsigned long SaucerHitTime = 0;       // used for debouncing saucer hit
 byte ParagonValue = 0;                 // 1-8 p-a-r-a-g-o-n special
 byte ParagonLit[4];                    // which paragon letters are lit, bits 1-7 or 8
 unsigned long LastParagonLetterTime=0; //
+boolean MoveParagon=true;              // false = don't sweep paragon
 byte GoldenSaucerValue = 1;            // 1-10 (value * 2000= points)
 byte GoldenSaucerMem[4];               // 0-10, 2k-20k carries from ball to ball
 byte WaterfallValue=0;                 // 0=1k 1=5k, 2=10k 3=special
@@ -415,7 +416,7 @@ void ShowParagonLamps() {
   }
   
   // letter timing
-  if (CurrentTime-LastParagonLetterTime>PARAGON_TIMING) {
+  if ((MoveParagon) && (CurrentTime-LastParagonLetterTime>PARAGON_TIMING)) {
     ParagonValue++;
     if (ParagonValue>6) ParagonValue=0;
     LastParagonLetterTime=CurrentTime;
@@ -1303,8 +1304,8 @@ void HandleParagonHit() {
     ParagonLit[CurrentPlayer]=0;  // reset this
     
   } else {
-//    ParagonLit[CurrentPlayer]=(ParagonLit[CurrentPlayer] & ~(1 << (ParagonValue - 1)));
-    ParagonLit[CurrentPlayer]=(ParagonLit[CurrentPlayer] & ~(1 << (ParagonValue)));
+//    ParagonLit[CurrentPlayer]=(ParagonLit[CurrentPlayer] & ~(1 << (ParagonValue - 1))); // turn off 
+    ParagonLit[CurrentPlayer]=(ParagonLit[CurrentPlayer] |(1 << (ParagonValue))); // turn on
     
     AddToBonus(1);
     // play special sound
@@ -1605,6 +1606,7 @@ if (DEBUG_MESSAGES) {
     BallTimeInTrough = 0;
     NumTiltWarnings = 0;
     LastTiltWarningTime = 0;
+    MoveParagon=true;
 
     // Initialize game-specific start-of-ball lights & variables    
     DropTargetClearTime = 0;
@@ -1941,9 +1943,12 @@ if (DEBUG_MESSAGES) {
         // Paragon saucer
         case SW_SAUCER_PARAGON:
           // We only count a saucer hit if it hasn't happened in the last 500ms software debounce)
+          MoveParagon=false;
+          // probably play sound here before debounce?
           if (SaucerHitTime==0 || (CurrentTime-SaucerHitTime)>SAUCER_DEBOUNCE_TIME) {
             SaucerHitTime = CurrentTime;
             HandleParagonHit();
+            MoveParagon=true;
             // paragon_award(PSaucerValue);  // 1-8 p-a-r-a-g-o-n special
             
           }
