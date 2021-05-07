@@ -385,7 +385,8 @@ void ShowGoldenSaucerLamps() {
   if ((GoldenSaucerValue>4) && (GoldenSaucerValue<10))
     { BSOS_SetLampState(L_10K_GOLDEN, 1); } else { BSOS_SetLampState(L_10K_GOLDEN, 0); }
   if (GoldenSaucerValue==10)
-    { BSOS_SetLampState(L_20K_GOLDEN, 1); } else { BSOS_SetLampState(L_20K_GOLDEN, 0); }
+    { BSOS_SetLampState(L_20K_GOLDEN, 1); } else 
+    { if (GameMode!=GAME_MODE_SKILL_SHOT) BSOS_SetLampState(L_20K_GOLDEN, 0); }
 
 }
 
@@ -452,7 +453,8 @@ void ShowParagonLamps() {
     for (y=0; y<7; y++) { 
       if (ParagonValue==y) { BSOS_SetLampState(L_SAUCER_P+y, 1); } else { BSOS_SetLampState(L_SAUCER_P+y, 0); }      
     }
-    BSOS_SetLampState(L_SAUCER_SPECIAL, 0);
+    if (GameMode!=GAME_MODE_SKILL_SHOT)
+      BSOS_SetLampState(L_SAUCER_SPECIAL, 0);
 
   }
 
