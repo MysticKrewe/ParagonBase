@@ -1948,9 +1948,7 @@ if (DEBUG_MESSAGES) {
 }  
 
 
-    // end of ball memory settings ---------------------
-    CurrentScores[CurrentPlayer] = CurrentPlayerCurrentScore;
-    GoldenSaucerMem[CurrentPlayer] = GoldenSaucerValue;
+
     // SetHoldBonus done before countdown bonus
   
     if (SamePlayerShootsAgain) {
@@ -1961,6 +1959,11 @@ if (DEBUG_MESSAGES) {
         CurrentPlayer = 0;
         CurrentBallInPlay+=1;
       }
+      
+    // end of ball memory settings ---------------------
+    CurrentScores[CurrentPlayer] = CurrentPlayerCurrentScore;
+    GoldenSaucerMem[CurrentPlayer] = GoldenSaucerValue;
+    
 /*
 // new ball setups
       CurrentPlayerCurrentScore = CurrentScores[CurrentPlayer]; // Reset score at top 
