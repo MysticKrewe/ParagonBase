@@ -173,6 +173,14 @@ byte BallsPerGame = 3;
 
 boolean ExtraBallCollected = false;
 
+boolean EnableSkillFx = true;          // enable skill light effects
+
+byte SkillShotsCollected[4];           // track # skill shots collected per player
+byte SkillShotValue=0;                 // 2=20k 5=special
+unsigned long SkillSweepTime=0;        // time of last skill shot light sweep
+#define SKILL_SHOT_SWEEP_TIME 300      // ms to sweep skill shot values
+#define SKILL_SHOT_MODE_TIME  10000    // skill shot available for 10 seconds
+
 // game specific
 
 unsigned long DropTargetClearTime = 0;
@@ -217,6 +225,24 @@ void RunDemo() {
  
 }
 
+// ----------------------------------------------------------------
+void RunSkillShotMode() {
+  if (GameMode==GAME_MODE_SKILL_SHOT) {
+
+    if ((BallFirstSwitchHitTime>0) || (CurrentTime-GameModeStartTime>SKILL_SHOT_MODE_TIME)) { // time out skill mode
+      GameMode = GAME_MODE_UNSTRUCTURED_PLAY;
+    }
+
+    if (CurrentTime-SkillSweepTime>SKILL_SHOT_SWEEP_TIME*(1/(SkillShotsCollected[CurrentPlayer]+1))) {
+      SkillShotValue++;
+      if (SkillShotValue>6) SkillShotValue=0;
+      SkillSweepTime=CurrentTime;
+      if (SkillShotValue==2) { BSOS_SetLampState(L_20K_GOLDEN, 1,0,100); } else { BSOS_SetLampState(L_20K_GOLDEN, 0); }
+      if (SkillShotValue==5) { BSOS_SetLampState(L_SAUCER_SPECIAL, 1,0,100); } else { BSOS_SetLampState(L_SAUCER_SPECIAL, 0); }
+    }      
+  }
+
+}
 // ----------------------------------------------------------------
 void reset_3bank() {
   // Paragon-specific - resets right 3-bank drop targets on continuous solenoid line
@@ -436,7 +462,14 @@ void ShowParagonLamps() {
     z=pow(2,(int)y);
     if ((x & z)==z) { BSOS_SetLampState(L_CENTER_P+y, 1); } else { BSOS_SetLampState(L_CENTER_P+y, 0); }   
   }
-*/  
+*/
+  // this works, bit 1 turns on lamp0, bit 2 lamp1, etc
+  for (y=0; y<7; y++) {
+    BSOS_SetLampState(L_CENTER_P+y, x & (1<<y));
+  }  
+  
+  
+/*  
   
   if ((x & 1)==1) { BSOS_SetLampState(L_CENTER_P+0, 1); } else { BSOS_SetLampState(L_CENTER_P+0, 0); }   
   if ((x & 2)==2) { BSOS_SetLampState(L_CENTER_P+1, 1); } else { BSOS_SetLampState(L_CENTER_P+1, 0); }   
@@ -446,7 +479,7 @@ void ShowParagonLamps() {
   if ((x & 32)==32) { BSOS_SetLampState(L_CENTER_P+5, 1); } else { BSOS_SetLampState(L_CENTER_P+5, 0); }
   if ((x & 64)==64) { BSOS_SetLampState(L_CENTER_P+6, 1); } else { BSOS_SetLampState(L_CENTER_P+6, 0); }
 
-  
+*/  
 
   
   // letter timing
@@ -510,6 +543,13 @@ void ShowBonusOnTree(byte bonus, byte dim=0) {
 byte LastBonusShown = 0;
 // routine below not used but will be if we want to occasionally re-purpose the bonus lamps for something else
 void ShowBonusLamps() {
+/*  
+  if ((GameMode==GAME_MODE_SKILL_SHOT) && (EnableSkillFx)) {
+    for (byte x=0; x<10; x++) BSOS_SetLampState(L_1K_BONUS, 1,0,20+random(300));
+    EnableSkillFx=false; // run one time only until reset
+    return;
+  }
+*/  
 /*  - no game modes yet  
   if (GameMode==GAME_MODE_MINI_GAME_QUALIFIED) {
     byte lightPhase = ((CurrentTime-GameModeStartTime)/100)%15;
@@ -1324,6 +1364,15 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
 //-----------------------------------------------------------------
 void HandleGoldenSaucerHit() {
 
+  if (GameMode==GAME_MODE_SKILL_SHOT) {
+    if (SkillShotValue==2) {  // skill shot
+      SkillShotsCollected[CurrentPlayer]++;   // need to save to player info
+      CurrentPlayerCurrentScore+=GoldenSaucerValue*20000;
+      PlaySoundEffect(SFX_SKILL1); // play skill shot sound
+      GameMode=GAME_MODE_UNSTRUCTURED_PLAY;      
+    }
+  }
+
   CurrentPlayerCurrentScore+=GoldenSaucerValue*2000;
   GoldenSaucerValue++;
   if (GoldenSaucerValue>10) { GoldenSaucerValue=10; } 
@@ -1538,6 +1587,7 @@ int InitGamePlay(boolean curStateChanged) {
     for (int count=0; count<4; count++) {
       // init game play variables
       CurrentScores[count] = 0;
+      SkillShotsCollected[count]=0;      // zero skill shots collected
       
       // game specific values that carry over from ball-to-ball only init here - xx      
       DropsRightDownScore[count]=10000;  // reset right drops value tree
@@ -1645,6 +1695,7 @@ if (DEBUG_MESSAGES) {
     // Initialize game-specific start-of-ball lights & variables    
     DropTargetClearTime = 0;
     ExtraBallCollected = false;
+
     
     // reset ball specific ladders
 
@@ -1660,8 +1711,11 @@ if (DEBUG_MESSAGES) {
     GoldenSaucerValue=GoldenSaucerMem[CurrentPlayer]; // Carries from ball to ball
     GetHoldBonus(BonusMem[CurrentPlayer]);
     ParagonValue=0; // p-a-r-a-g-o-n or 8
-//    DropsRightDownScore[CurrentPlayer]=10000;  // uncomment if you want to reset each ball
-// P-a-r-a-g-o-n also does not reset
+
+    // set up skill shot
+    GameModeStartTime = CurrentTime;
+    GameMode = GAME_MODE_SKILL_SHOT;
+    EnableSkillFx = true;
     
   } // end new ball init
 
@@ -1708,6 +1762,8 @@ int NormalGamePlay() {
     }
   }
 
+  if (GameMode==GAME_MODE_SKILL_SHOT) RunSkillShotMode();
+  
   // lamp functions
   ShowShootAgainLamp();
   ShowGoldenSaucerLamps();
@@ -1739,6 +1795,8 @@ int NormalGamePlay() {
             BallSaveUsed = true;
             BSOS_SetLampState(L_SHOOT_AGAIN, 0);
             BSOS_SetLampState(L_BB_SHOOT_AGAIN, 0);
+            GameMode = GAME_MODE_UNSTRUCTURED_PLAY;  // turn off any skill shot mode
+            // play ball save sfx            
           }
           BallTimeInTrough = CurrentTime;
 
@@ -1828,7 +1886,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
   } else if (curState==MACHINE_STATE_INIT_NEW_BALL) {
     returnState = InitNewBall(curStateChanged, CurrentPlayer, CurrentBallInPlay);
   } else if (curState==MACHINE_STATE_NORMAL_GAMEPLAY) {
-    returnState = NormalGamePlay();
+    returnState = NormalGamePlay(); // also includes skill shot/modes
   } else if (curState==MACHINE_STATE_COUNTDOWN_BONUS) {
     //   Do not put one-time end of ball stuff here - this loops
     returnState = CountdownBonus(curStateChanged);

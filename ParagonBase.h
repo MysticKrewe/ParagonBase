@@ -192,27 +192,43 @@ struct PlayfieldAndCabinetSwitch TriggeredSwitches[] = {
 
 #define SFX_NONE                     0
 #define SFX_GAME_INTRO               1  // intro when game boots
-#define SFX_ADD_CREDIT               2
+#define SFX_GAME_INTRO2              2
+#define SFX_GAME_INTRO3              3
 
-#define SFX_ROLLOVER_SKILL_SHOT      2
-#define SFX_SU_SKILL_SHOT            3
-#define SFX_SPINNER             4
-#define SFX_ROLLOVER                 6
-#define SFX_LEFT_INLANE              7
-#define SFX_RIGHT_INLANE             8
-#define SFX_RIGHT_OUTLANE            9
-#define SFX_TOP_BUMPER_HIT           10
-#define SFX_BOTTOM_BUMPER_HIT        11
-#define SFX_DROP_TARGET              12
-#define SFX_RESCUE_FROM_THE_DEEP     14
-#define SFX_SHOOT_AGAIN              15
-#define SFX_FEEDING_FRENZY           16
-#define SFX_FEEDING_FRENZY_START     17
-#define SFX_SHARP_SHOOTER_START      18
-#define SFX_JACKPOT                  19
-#define SFX_ADD_PLAYER_1             20
-#define SFX_ADD_PLAYER_2             SFX_ADD_PLAYER_1+1
-#define SFX_ADD_PLAYER_3             SFX_ADD_PLAYER_1+2
-#define SFX_ADD_PLAYER_4             SFX_ADD_PLAYER_1+3
+#define SFX_ADD_CREDIT               10
+#define SFX_ADD_CREDIT2              11
+#define SFX_ADD_CREDIT3              12
+
+#define SFX_START_GAME1              20
+#define SFX_START_GAME2              21
+#define SFX_START_GAME3              22
+#define SFX_START_GAME4              23
+#define SFX_START_GAME5              24
+#define SFX_START_GAME6              26
+
+#define SFX_ADD_PLAYER2              30
+#define SFX_ADD_PLAYER3              31
+#define SFX_ADD_PLAYER4              32
+
+#define SFX_BEAST1                   40
+#define SFX_BEAST2                   41
+#define SFX_BEAST3                   42
+
+#define SFX_SKILL1                   50 // skill shot awarded
+#define SFX_SKILL2                   51
+
+/*
+
+#define SFX_
+#define SFX_
+#define SFX_
+#define SFX_
+#define SFX_
+#define SFX_
+#define SFX_
+#define SFX_
+#define SFX_
+
+*/
 
 // end: ParagonBase.h
