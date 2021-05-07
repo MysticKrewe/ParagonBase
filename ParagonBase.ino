@@ -1732,8 +1732,8 @@ if (DEBUG_MESSAGES) {
     GetHoldBonus(BonusMem[CurrentPlayer]);
 */
 
-    CurrentPlayerCurrentScore = CurrentScores[playerNum]; // Reset score at top 
-    CurrentStandupsHit = StandupsHit[playerNum]; // not used
+    CurrentPlayerCurrentScore=CurrentScores[playerNum]; // Reset score at top 
+  CurrentStandupsHit=StandupsHit[playerNum]; // not used
     GoldenSaucerValue=GoldenSaucerMem[playerNum]; // Carries from ball to ball
     GetHoldBonus(BonusMem[playerNum]);    
 
@@ -1940,7 +1940,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
     
   } else if (curState==MACHINE_STATE_BALL_OVER) {    
 
-
+/*
 if (DEBUG_MESSAGES) { 
       char buf[32];
       sprintf(buf, "Ball Over: Ball %d Over P%d  CurrentScore=%d\n\r",CurrentBallInPlay,CurrentPlayer,CurrentPlayerCurrentScore);
@@ -1952,12 +1952,12 @@ if (DEBUG_MESSAGES) {
       }
       
 }  
-
-    // end of ball memory settings ---------------------
+*/
+    // end of ball memory settings ---- SAVE PLAYER STATE AT BALL END
     CurrentScores[CurrentPlayer] = CurrentPlayerCurrentScore;
+    
+    // If you tilt out, you might lose the progress below
     GoldenSaucerMem[CurrentPlayer] = GoldenSaucerValue;
-
-
     // SetHoldBonus done before countdown bonus
   
     if (SamePlayerShootsAgain) {
@@ -1968,10 +1968,12 @@ if (DEBUG_MESSAGES) {
         CurrentPlayer = 0;
         CurrentBallInPlay+=1;
       }
-    
+      // ----- NEW PLAYER MEMORY LOADS ----------------------------------------------
       CurrentPlayerCurrentScore=CurrentScores[CurrentPlayer];
       GoldenSaucerValue=GoldenSaucerMem[CurrentPlayer];
 
+      
+      /*
 if (DEBUG_MESSAGES) { 
       char buf[32];
       sprintf(buf, "Bumping Player Up: Ball %d Over P%d  CurrentScore=%d\n\r",CurrentBallInPlay,CurrentPlayer,CurrentPlayerCurrentScore);
@@ -1983,10 +1985,10 @@ if (DEBUG_MESSAGES) {
       }
       
 }
-  
+*/  
       
       if (CurrentBallInPlay>BallsPerGame) {
-//        CheckHighScores();
+//zz        CheckHighScores();
 //        PlaySoundEffect(SOUND_EFFECT_GAME_OVER);
 //        SetPlayerLamps(0);
         for (int count=0; count<CurrentNumPlayers; count++) {
@@ -2004,6 +2006,7 @@ if (DEBUG_MESSAGES) {
     returnState = MACHINE_STATE_ATTRACT;
   }
 
+  // ============ SWITCH HITS ========================================================
   byte switchHit;
   while ( (switchHit=BSOS_PullFirstFromSwitchStack())!=SWITCH_STACK_EMPTY ) {
 
@@ -2184,13 +2187,14 @@ if (DEBUG_MESSAGES) {
     }
   } // while switch hit
   
-  // Let's check for things to un-freeze
+  // Let's check for things to un-freeze - should this be moved to showParagon?
   if ((CurrentTime-SaucerHitTime)>SAUCER_HOLD_TIME) MoveParagon=true;  
-  
-//  if (CurrentPlayerCurrentScore != CurrentScores[CurrentPlayer]) {
-//zz    CurrentScores[CurrentPlayer]=CurrentPlayerCurrentScore;
-//    ShowPlayerScores(0xFF, false, false);   
-//  }
+
+  // This constantly updates the player scores array - otherwise, if someone tilts the score value for next ball will be value at start of ball  
+  if (CurrentPlayerCurrentScore != CurrentScores[CurrentPlayer]) {
+    CurrentScores[CurrentPlayer]=CurrentPlayerCurrentScore;
+    ShowPlayerScores(0xFF, false, false);   
+  }
   
 //  if (scoreAtTop!=CurrentScores[CurrentPlayer]) {
 //    Serial.write("Score changed\n");
