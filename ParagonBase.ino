@@ -179,7 +179,9 @@ byte SkillShotsCollected[4];           // track # skill shots collected per play
 byte SkillShotValue=0;                 // 2=20k 5=special
 unsigned long SkillSweepTime=0;        // time of last skill shot light sweep
 #define SKILL_SHOT_SWEEP_TIME 600      // ms to sweep skill shot values
+#define SKILL_SHOT_DECREASE   100      // # ms to decrease sweep period for each completed ss
 #define SKILL_SHOT_MODE_TIME  30000    // skill shot available for 10 seconds
+unsigned int SkillSweepPeriod=SKILL_SHOT_SWEEP_TIME; // variable that changes
 
 // game specific
 
@@ -233,7 +235,7 @@ void RunSkillShotMode() {
       GameMode = GAME_MODE_UNSTRUCTURED_PLAY;
     }
 
-    if (CurrentTime-SkillSweepTime>SKILL_SHOT_SWEEP_TIME*(1/(SkillShotsCollected[CurrentPlayer]+1))) {
+    if (CurrentTime-SkillSweepTime>SkillSweepPeriod) {
       SkillShotValue++;
       if (SkillShotValue>6) SkillShotValue=0;
       SkillSweepTime=CurrentTime;
@@ -1369,6 +1371,7 @@ void HandleGoldenSaucerHit() {
   if (GameMode==GAME_MODE_SKILL_SHOT) {
     if (SkillShotValue==2) {  // skill shot
       SkillShotsCollected[CurrentPlayer]++;   // need to save to player info
+      SkillSweepPeriod-(SkillShotsCollected[CurrentPlayer]*SKILL_SHOT_DECREASE);
       CurrentPlayerCurrentScore+=GoldenSaucerValue*20000;
       PlaySoundEffect(SFX_SKILL1); // play skill shot sound
       GameMode=GAME_MODE_UNSTRUCTURED_PLAY;      
@@ -1387,6 +1390,7 @@ void HandleParagonHit() {
   if (GameMode==GAME_MODE_SKILL_SHOT) {
     if (SkillShotValue==5) {  // skill shot
       SkillShotsCollected[CurrentPlayer]++;   // need to save to player info
+      SkillSweepPeriod-(SkillShotsCollected[CurrentPlayer]*SKILL_SHOT_DECREASE);      
       AwardSpecial();
       //CurrentPlayerCurrentScore+=GoldenSaucerValue*20000;
       PlaySoundEffect(SFX_SKILL2); // play skill shot sound
