@@ -1383,6 +1383,18 @@ void HandleGoldenSaucerHit() {
 }
 //-----------------------------------------------------------------
 void HandleParagonHit() {
+
+  if (GameMode==GAME_MODE_SKILL_SHOT) {
+    if (SkillShotValue==5) {  // skill shot
+      SkillShotsCollected[CurrentPlayer]++;   // need to save to player info
+      AwardSpecial();
+      //CurrentPlayerCurrentScore+=GoldenSaucerValue*20000;
+      PlaySoundEffect(SFX_SKILL2); // play skill shot sound
+      GameMode=GAME_MODE_UNSTRUCTURED_PLAY;      
+    }
+  }  
+  
+  
   if ((ParagonLit[CurrentPlayer]&128)==128) { // award special  or &127
   
     AwardSpecial();
