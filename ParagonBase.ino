@@ -1984,7 +1984,8 @@ if (DEBUG_MESSAGES) {
         returnState = MACHINE_STATE_MATCH_MODE;
       }
       else returnState = MACHINE_STATE_INIT_NEW_BALL;
-    }    
+    } // new ball/player?
+    
   } else if (curState==MACHINE_STATE_MATCH_MODE) {
     returnState = MACHINE_STATE_GAME_OVER;
   } else {
@@ -2174,10 +2175,10 @@ if (DEBUG_MESSAGES) {
   // Let's check for things to un-freeze
   if ((CurrentTime-SaucerHitTime)>SAUCER_HOLD_TIME) MoveParagon=true;  
   
-  if (CurrentPlayerCurrentScore != CurrentScores[CurrentPlayer]) {
-    CurrentScores[CurrentPlayer]=CurrentPlayerCurrentScore;
-    ShowPlayerScores(0xFF, false, false);   
-  }
+//  if (CurrentPlayerCurrentScore != CurrentScores[CurrentPlayer]) {
+//zz    CurrentScores[CurrentPlayer]=CurrentPlayerCurrentScore;
+//    ShowPlayerScores(0xFF, false, false);   
+//  }
   
 //  if (scoreAtTop!=CurrentScores[CurrentPlayer]) {
 //    Serial.write("Score changed\n");
