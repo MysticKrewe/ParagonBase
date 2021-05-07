@@ -545,7 +545,7 @@ void ShowBonusLamps() {
   // special display during skill shot
   if (GameMode==GAME_MODE_SKILL_SHOT) {
     if (EnableSkillFx) {
-      for (byte x=0; x<10; x++) BSOS_SetLampState(L_1K_BONUS, 1,0,200+random(300));
+      for (byte x=0; x<10; x++) BSOS_SetLampState(L_1K_BONUS+x, 1,0,200+random(300));
       EnableSkillFx=false; // run one time only until reset
     }
     return;
