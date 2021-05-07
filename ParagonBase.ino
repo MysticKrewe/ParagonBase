@@ -1740,7 +1740,7 @@ if (DEBUG_MESSAGES) {
 
 if (DEBUG_MESSAGES) { 
       char buf[32];
-      sprintf(buf, "InitNewBall: Ball %d Over P%d / %d\n\r",CurrentBallInPlay,CurrentPlayer,playerNum);
+      sprintf(buf, "InitNewBall: Ball %d Over P%d / %d  CurrentScore=%d\n\r",CurrentBallInPlay,CurrentPlayer,playerNum,CurrentPlayerCurrentScore);
       Serial.write(buf);
       
       for (byte x=0;x<4;x++) {
@@ -1943,35 +1943,47 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
 
 if (DEBUG_MESSAGES) { 
       char buf[32];
-      sprintf(buf, " Ball %d Over P%d\n\r",CurrentBallInPlay,CurrentPlayer);
+      sprintf(buf, "Ball Over: Ball %d Over P%d  CurrentScore=%d\n\r",CurrentBallInPlay,CurrentPlayer,CurrentPlayerCurrentScore);
       Serial.write(buf);
+      
+      for (byte x=0;x<4;x++) {
+        sprintf(buf, " CurrentScores[%d]=%d\n\r",x,CurrentScores[x]);
+      Serial.write(buf);        
+      }
+      
 }  
 
+    // end of ball memory settings ---------------------
+    CurrentScores[CurrentPlayer] = CurrentPlayerCurrentScore;
+    GoldenSaucerMem[CurrentPlayer] = GoldenSaucerValue;
 
 
     // SetHoldBonus done before countdown bonus
   
     if (SamePlayerShootsAgain) {
       returnState = MACHINE_STATE_INIT_NEW_BALL;
-    } else {
+    } else {  // ---- new player
       CurrentPlayer+=1;
       if (CurrentPlayer>=CurrentNumPlayers) {
         CurrentPlayer = 0;
         CurrentBallInPlay+=1;
       }
-      
-    // end of ball memory settings ---------------------
-    CurrentScores[CurrentPlayer] = CurrentPlayerCurrentScore;
-    GoldenSaucerMem[CurrentPlayer] = GoldenSaucerValue;
     
-/*
-// new ball setups
-      CurrentPlayerCurrentScore = CurrentScores[CurrentPlayer]; // Reset score at top 
-      CurrentStandupsHit = StandupsHit[CurrentPlayer]; // not used
-//      scoreAtTop = CurrentPlayerCurrentScore;
-      GoldenSaucerValue=GoldenSaucerMem[CurrentPlayer];   // Carries from ball to ball
-      GetHoldBonus(BonusMem[CurrentPlayer]);
-*/
+      CurrentPlayerCurrentScore=CurrentScores[CurrentPlayer];
+      GoldenSaucerValue=GoldenSaucerMem[CurrentPlayer];
+
+if (DEBUG_MESSAGES) { 
+      char buf[32];
+      sprintf(buf, "Bumping Player Up: Ball %d Over P%d  CurrentScore=%d\n\r",CurrentBallInPlay,CurrentPlayer,CurrentPlayerCurrentScore);
+      Serial.write(buf);
+      
+      for (byte x=0;x<4;x++) {
+        sprintf(buf, " CurrentScores[%d]=%d\n\r",x,CurrentScores[x]);
+      Serial.write(buf);        
+      }
+      
+}
+  
       
       if (CurrentBallInPlay>BallsPerGame) {
 //        CheckHighScores();
