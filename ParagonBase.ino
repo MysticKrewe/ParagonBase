@@ -173,14 +173,13 @@ byte BallsPerGame = 3;
 
 boolean ExtraBallCollected = false;
 
-boolean EnableSkillFx = true;          // enable skill light effects
-
+boolean EnableSkillFx = true;          // enable skill light effects in award section
 byte SkillShotsCollected[4];           // track # skill shots collected per player
 byte SkillShotValue=0;                 // 2=20k 5=special
 unsigned long SkillSweepTime=0;        // time of last skill shot light sweep
 #define SKILL_SHOT_SWEEP_TIME 600      // ms to sweep skill shot values
 #define SKILL_SHOT_DECREASE   100      // # ms to decrease sweep period for each completed ss
-#define SKILL_SHOT_MODE_TIME  30000    // skill shot available for 10 seconds
+#define SKILL_SHOT_MODE_TIME  30000    // skill shot available for 30 seconds
 unsigned int SkillSweepPeriod=SKILL_SHOT_SWEEP_TIME; // variable that changes
 
 // game specific
@@ -287,11 +286,6 @@ void reset_inline() {
 //  Machine Generic code
 //
 ////////////////////////////////////////////////////////////////////////////
-
-
-// copied from Trident
-// ----------------------------------------------------------------
-
 byte ReadSetting(byte setting, byte defaultValue) {
   byte value = EEPROM.read(setting);
   if (value == 0xFF) {
@@ -301,7 +295,6 @@ byte ReadSetting(byte setting, byte defaultValue) {
   return value;
 }
 // ----------------------------------------------------------------
-
 void ReadStoredParameters() {
   HighScore = BSOS_ReadULFromEEProm(BSOS_HIGHSCORE_EEPROM_START_BYTE, 10000);
   Credits = BSOS_ReadByteFromEEProm(BSOS_CREDITS_EEPROM_BYTE);
@@ -547,13 +540,14 @@ void ShowBonusOnTree(byte bonus, byte dim=0) {
 byte LastBonusShown = 0;
 // routine below not used but will be if we want to occasionally re-purpose the bonus lamps for something else
 void ShowBonusLamps() {
-/*  
+  
+  // special display during skill shot
   if ((GameMode==GAME_MODE_SKILL_SHOT) && (EnableSkillFx)) {
     for (byte x=0; x<10; x++) BSOS_SetLampState(L_1K_BONUS, 1,0,20+random(300));
     EnableSkillFx=false; // run one time only until reset
     return;
   }
-*/  
+  
 /*  - no game modes yet  
   if (GameMode==GAME_MODE_MINI_GAME_QUALIFIED) {
     byte lightPhase = ((CurrentTime-GameModeStartTime)/100)%15;
