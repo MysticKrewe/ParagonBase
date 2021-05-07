@@ -159,7 +159,7 @@ unsigned long GameModeStartTime = 0;
 unsigned long GameModeEndTime = 0;
 unsigned long LastTiltWarningTime = 0;
 
-byte GameMode = GAME_MODE_SKILL_SHOT;
+byte GameMode=GAME_MODE_SKILL_SHOT;
 byte MaxTiltWarnings = 2;
 byte NumTiltWarnings = 0;
 
@@ -231,7 +231,8 @@ void RunSkillShotMode() {
   if (GameMode==GAME_MODE_SKILL_SHOT) {
 
     if ((BallFirstSwitchHitTime>0) || (CurrentTime-GameModeStartTime>SKILL_SHOT_MODE_TIME)) { // time out skill mode
-      GameMode = GAME_MODE_UNSTRUCTURED_PLAY;
+      GameMode=GAME_MODE_UNSTRUCTURED_PLAY;
+      ResetLights();
     }
 
     if (CurrentTime-SkillSweepTime>SkillSweepPeriod) {
@@ -542,9 +543,11 @@ byte LastBonusShown = 0;
 void ShowBonusLamps() {
   
   // special display during skill shot
-  if ((GameMode==GAME_MODE_SKILL_SHOT) && (EnableSkillFx)) {
-    for (byte x=0; x<10; x++) BSOS_SetLampState(L_1K_BONUS, 1,0,20+random(300));
-    EnableSkillFx=false; // run one time only until reset
+  if (GameMode==GAME_MODE_SKILL_SHOT) {
+    if (EnableSkillFx) {
+      for (byte x=0; x<10; x++) BSOS_SetLampState(L_1K_BONUS, 1,0,200+random(300));
+      EnableSkillFx=false; // run one time only until reset
+    }
     return;
   }
   
@@ -561,9 +564,13 @@ void ShowBonusLamps() {
     ShowBonusOnTree(Bonus);
   }
 }
+// ----------------------------------------------------------------
+void ResetLights() {   
+// set lights back to normal gameplay
+  ShowBonusOnTree(Bonus);  // overrides ShowBonusLamps();
 
-
-// copied from Trident
+}
+// ----------------------------------------------------------------
 
 ////////////////////////////////////////////////////////////////////////////
 //
@@ -1725,9 +1732,9 @@ if (DEBUG_MESSAGES) {
     ParagonValue=0; // p-a-r-a-g-o-n or 8
 
     // set up skill shot
-    GameModeStartTime = CurrentTime;
-    GameMode = GAME_MODE_SKILL_SHOT;
-    EnableSkillFx = true;
+    GameModeStartTime=CurrentTime;
+    GameMode=GAME_MODE_SKILL_SHOT;
+    EnableSkillFx=true;
     
   } // end new ball init
 
@@ -1779,7 +1786,8 @@ int NormalGamePlay() {
   // lamp functions
   ShowShootAgainLamp();
   ShowGoldenSaucerLamps();
-  ShowBonusOnTree(Bonus);  // replace with ShowBonusLamps() when using modes
+  //ShowBonusOnTree(Bonus);  // replace with ShowBonusLamps() when using modes
+  ShowBonusLamps();
   ShowAwardLamps();  // waterfall and drops
   ShowParagonLamps();
 
@@ -1807,7 +1815,8 @@ int NormalGamePlay() {
             BallSaveUsed = true;
             BSOS_SetLampState(L_SHOOT_AGAIN, 0);
             BSOS_SetLampState(L_BB_SHOOT_AGAIN, 0);
-            GameMode = GAME_MODE_UNSTRUCTURED_PLAY;  // turn off any skill shot mode
+            GameMode=GAME_MODE_UNSTRUCTURED_PLAY;  // turn off any skill shot mode
+            ResetLights();  // set playfield lights to normal
             // play ball save sfx            
           }
           BallTimeInTrough = CurrentTime;
