@@ -178,8 +178,8 @@ boolean EnableSkillFx = true;          // enable skill light effects
 byte SkillShotsCollected[4];           // track # skill shots collected per player
 byte SkillShotValue=0;                 // 2=20k 5=special
 unsigned long SkillSweepTime=0;        // time of last skill shot light sweep
-#define SKILL_SHOT_SWEEP_TIME 300      // ms to sweep skill shot values
-#define SKILL_SHOT_MODE_TIME  10000    // skill shot available for 10 seconds
+#define SKILL_SHOT_SWEEP_TIME 600      // ms to sweep skill shot values
+#define SKILL_SHOT_MODE_TIME  30000    // skill shot available for 10 seconds
 
 // game specific
 
@@ -237,8 +237,8 @@ void RunSkillShotMode() {
       SkillShotValue++;
       if (SkillShotValue>6) SkillShotValue=0;
       SkillSweepTime=CurrentTime;
-      if (SkillShotValue==2) { BSOS_SetLampState(L_20K_GOLDEN, 1,0,100); } else { BSOS_SetLampState(L_20K_GOLDEN, 0); }
-      if (SkillShotValue==5) { BSOS_SetLampState(L_SAUCER_SPECIAL, 1,0,100); } else { BSOS_SetLampState(L_SAUCER_SPECIAL, 0); }
+      if (SkillShotValue==2) { BSOS_SetLampState(L_20K_GOLDEN, 1,0,20); } else { BSOS_SetLampState(L_20K_GOLDEN, 0); }
+      if (SkillShotValue==5) { BSOS_SetLampState(L_SAUCER_SPECIAL, 1,0,20); } else { BSOS_SetLampState(L_SAUCER_SPECIAL, 0); }
     }      
   }
 
