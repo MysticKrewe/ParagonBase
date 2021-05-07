@@ -1725,10 +1725,25 @@ if (DEBUG_MESSAGES) {
     TreasureValue=1;
 
 // new ball setups
+/*
     CurrentPlayerCurrentScore = CurrentScores[CurrentPlayer]; // Reset score at top 
     CurrentStandupsHit = StandupsHit[CurrentPlayer]; // not used
     GoldenSaucerValue=GoldenSaucerMem[CurrentPlayer]; // Carries from ball to ball
     GetHoldBonus(BonusMem[CurrentPlayer]);
+*/
+
+if (DEBUG_MESSAGES) { 
+      char buf[32];
+      sprintf(buf, "InitNewBall: Ball %d Over P%d\n\r",CurrentBallInPlay,CurrentPlayer);
+      Serial.write(buf);
+}  
+
+    CurrentPlayerCurrentScore = CurrentScores[playerNum]; // Reset score at top 
+    CurrentStandupsHit = StandupsHit[playerNum]; // not used
+    GoldenSaucerValue=GoldenSaucerMem[playerNum]; // Carries from ball to ball
+    GetHoldBonus(BonusMem[playerNum]);    
+    
+    
     ParagonValue=0; // p-a-r-a-g-o-n or 8
 
     // set up skill shot
