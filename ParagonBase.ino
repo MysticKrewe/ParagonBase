@@ -1605,7 +1605,7 @@ int InitGamePlay(boolean curStateChanged) {
     
     for (int count=0; count<4; count++) {
       // init game play variables
-      CurrentScores[count] = 0;
+      CurrentScores[count] = 0;          // zero scores
       SkillShotsCollected[count]=0;      // zero skill shots collected
       
       // game specific values that carry over from ball-to-ball only init here - xx      
@@ -1732,16 +1732,24 @@ if (DEBUG_MESSAGES) {
     GetHoldBonus(BonusMem[CurrentPlayer]);
 */
 
-if (DEBUG_MESSAGES) { 
-      char buf[32];
-      sprintf(buf, "InitNewBall: Ball %d Over P%d\n\r",CurrentBallInPlay,CurrentPlayer);
-      Serial.write(buf);
-}  
-
     CurrentPlayerCurrentScore = CurrentScores[playerNum]; // Reset score at top 
     CurrentStandupsHit = StandupsHit[playerNum]; // not used
     GoldenSaucerValue=GoldenSaucerMem[playerNum]; // Carries from ball to ball
     GetHoldBonus(BonusMem[playerNum]);    
+
+
+if (DEBUG_MESSAGES) { 
+      char buf[32];
+      sprintf(buf, "InitNewBall: Ball %d Over P%d / %d\n\r",CurrentBallInPlay,CurrentPlayer,playerNum);
+      Serial.write(buf);
+      
+      for (byte x=0;x<4;x++) {
+        sprintf(buf, " CurrentScores[%d]=%d\n\r",x,CurrentScores[x]);
+      Serial.write(buf);        
+      }
+      
+}  
+
     
     
     ParagonValue=0; // p-a-r-a-g-o-n or 8
