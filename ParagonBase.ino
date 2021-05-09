@@ -1183,12 +1183,12 @@ void PlaySoundEffect(byte soundEffectNum) {
 
 
 
-unsigned long AttractLastLadderTime = 0;
-byte AttractLastLadderBonus = 0;
-unsigned long AttractLastStarTime = 0;
+//unsigned long AttractLastLadderTime = 0;
+//byte AttractLastLadderBonus = 0;
+//unsigned long AttractLastStarTime = 0;
 byte AttractLastHeadMode = 255;
 byte AttractLastPlayfieldMode = 255;
-byte InAttractMode = false;
+//byte InAttractMode = false;
 
 int RunAttractMode(int curState, boolean curStateChanged) {
 
@@ -1267,25 +1267,25 @@ int RunAttractMode(int curState, boolean curStateChanged) {
 
     }
 //n    
-    ShowGoldenSaucerLamps();
-    ShowParagonLamps();
-    ShowAwardLamps();
+//    ShowGoldenSaucerLamps();
+//    ShowParagonLamps();
+//    ShowAwardLamps();
     
     AttractLastPlayfieldMode = 1;
   } else { 
     if (AttractLastPlayfieldMode!=2) {
       BSOS_TurnOffAllLamps();
 //n      
-      AttractLastLadderBonus = 1;
-      AttractLastLadderTime = CurrentTime;      
+//      AttractLastLadderBonus = 1;
+//      AttractLastLadderTime = CurrentTime;      
       
     }
 //n
-    if ((CurrentTime-AttractLastLadderTime)>200) {
-      AttractLastLadderBonus += 1;
-      AttractLastLadderTime = CurrentTime;
-      ShowBonusOnTree(AttractLastLadderBonus%MAX_DISPLAY_BONUS);
-    }
+//    if ((CurrentTime-AttractLastLadderTime)>200) {
+//      AttractLastLadderBonus += 1;
+//      AttractLastLadderTime = CurrentTime;
+//      ShowBonusOnTree(AttractLastLadderBonus%MAX_DISPLAY_BONUS);
+//    }
     
     AttractLastPlayfieldMode = 2;
   }
