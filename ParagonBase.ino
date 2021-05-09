@@ -151,7 +151,7 @@ unsigned long SpecialValue = 0;
 byte DimLevel = 2;
 byte ScoreAwardReplay = 0;
 boolean HighScoreReplay = true;
-boolean MatchFeature = true;
+boolean MatchFeature = true;           // not in config, defined here
 byte SpecialLightAward = 0;
 boolean TournamentScoring = false;
 boolean ResetScoresToClearVersion = false;
@@ -2028,7 +2028,7 @@ int ShowMatchSequence(boolean curStateChanged) {
       if ( (CurrentNumPlayers > (NumMatchSpins - 40)) && ((CurrentScores[NumMatchSpins - 40] / 10) % 10) == MatchDigit) {
         ScoreMatches |= (1 << (NumMatchSpins - 40));
         AddSpecialCredit();
-        BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true);        
+//zz problem?        BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true);        
         MatchDelay += 1000;
         NumMatchSpins += 1;
         BSOS_SetLampState(MATCH, 1);
