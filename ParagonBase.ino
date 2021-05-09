@@ -27,6 +27,8 @@ Things to do:
 
 #define DEBUG_MESSAGES  1    // enable serial debug logging
 
+#define ENABLE_MATCH         // enable match mode (uses 2% program space)
+
 // Wav Trigger defines have been moved to BSOS_Config.h
 #if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
 #include "SendOnlyWavTrigger.h"
@@ -871,6 +873,42 @@ int RunSelfTest(int curState, boolean curStateChanged) {
 }
 */
 //-----------------------------------------------------------------
+/*
+
+Test/Audit/Parameters
+
+00:01 - Lamps
+XX:XX - Displays
+00:03 - Solenoids
+00:04 - Switches
+00:05 - Sound
+CHECK ALL VALUES YOUR FIRST RUN - THERE ARE NO DEFAULTS!
+01 - Award Score Level 1
+02 - Award Score Level 2
+03 - Award Score Level 3
+04 - High Score to Date
+05 - Current Credits
+06 - Total plays (Audit)
+07 - Total replays (Audit)
+08 - Total times high score beaten (Audit)
+09 - Chute #2 coins (Audit)
+10 - Chute #1 coins (Audit)
+11 - Chute #3 coins (Audit)
+Activating the Slam Switch at any time will reboot into Attract Mode.
+12 - Free play off/on (0, 1)
+13 - Ball Save Num Seconds (0, 6, 11, 16, 21)
+14 - Music Level (0, 1, 2, 3, [4, 5]) [if WAV Trigger is enabled in the build]
+15 - Tournament Scoring (0-no, 1-yes)
+16 - Tilt Warning (0, 1, 2)
+17 - Award Score Override (0 - 7)
+18 - Balls per game Override (3, 5)
+19 - Scrolling Scores (0-no, 1-yes)
+20 - Extra Ball Award (0 - 100,000) [only used for Tournament Scoring]
+21 - Special Award (0 - 100,000) [only used for Tournament Scoring]
+22 - Dim Level (2=50%, 3=33%)  (50% works ok for Comet 2SMD LEDs)
+
+*/
+
 
 #define ADJ_TYPE_LIST                 1
 #define ADJ_TYPE_MIN_MAX              2
@@ -938,7 +976,7 @@ int RunSelfTest(int curState, boolean curStateChanged) {
           CurrentAdjustmentByte = (byte *)&FreePlayMode;
           CurrentAdjustmentStorageByte = EEPROM_FREE_PLAY_BYTE;
           break;
-        case MACHINE_STATE_ADJUST_BALL_SAVE:
+        case MACHINE_STATE_ADJUST_BALL_SAVE:                        // 18
           AdjustmentType = ADJ_TYPE_LIST;
           NumAdjustmentValues = 5;
           AdjustmentValues[1] = 5;
@@ -1911,7 +1949,117 @@ int CountdownBonus(boolean curStateChanged) {
 }
 
 //====================================================
+void CheckHighScores() {
+  unsigned long highestScore = 0;
+  int highScorePlayerNum = 0;
+  for (int count = 0; count < CurrentNumPlayers; count++) {
+    if (CurrentScores[count] > highestScore) highestScore = CurrentScores[count];
+    highScorePlayerNum = count;
+  }
+
+  if (highestScore > HighScore) {
+    HighScore = highestScore;
+    if (HighScoreReplay) {
+      AddCredit(false, 3);
+      BSOS_WriteULToEEProm(BSOS_TOTAL_REPLAYS_EEPROM_START_BYTE, BSOS_ReadULFromEEProm(BSOS_TOTAL_REPLAYS_EEPROM_START_BYTE) + 3);
+    }
+    BSOS_WriteULToEEProm(BSOS_HIGHSCORE_EEPROM_START_BYTE, highestScore);
+    BSOS_WriteULToEEProm(BSOS_TOTAL_HISCORE_BEATEN_START_BYTE, BSOS_ReadULFromEEProm(BSOS_TOTAL_HISCORE_BEATEN_START_BYTE) + 1);
+
+    for (int count = 0; count < 4; count++) {
+      if (count == highScorePlayerNum) {
+        BSOS_SetDisplay(count, CurrentScores[count], true, 2);
+      } else {
+        BSOS_SetDisplayBlank(count, 0x00);
+      }
+    }
+
+    BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true);
+    BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime + 300, true);
+    BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime + 600, true);
+  }
+}
+
+
 //====================================================
+#if defined(ENABLE_MATCH)
+
+unsigned long MatchSequenceStartTime = 0;
+unsigned long MatchDelay = 150;
+byte MatchDigit = 0;
+byte NumMatchSpins = 0;
+byte ScoreMatches = 0;
+
+int ShowMatchSequence(boolean curStateChanged) {
+  if (!MatchFeature) return MACHINE_STATE_ATTRACT;
+
+  if (curStateChanged) {
+    MatchSequenceStartTime = CurrentTime;
+    MatchDelay = 1500;
+//    MatchDigit = random(0, 10);
+    MatchDigit = CurrentTime%10;
+    NumMatchSpins = 0;
+    BSOS_SetLampState(MATCH, 1, 0);
+    BSOS_SetDisableFlippers();
+    ScoreMatches = 0;
+    BSOS_SetLampState(BALL_IN_PLAY, 0);
+  }
+
+  if (NumMatchSpins < 40) {
+    if (CurrentTime > (MatchSequenceStartTime + MatchDelay)) {
+      MatchDigit += 1;
+      if (MatchDigit > 9) MatchDigit = 0;
+      //PlaySoundEffect(10+(MatchDigit%2));
+//      PlaySoundEffect(SOUND_EFFECT_MATCH_SPIN);
+      BSOS_SetDisplayBallInPlay((int)MatchDigit * 10);
+      MatchDelay += 50 + 4 * NumMatchSpins;
+      NumMatchSpins += 1;
+      BSOS_SetLampState(MATCH, NumMatchSpins % 2, 0);
+
+      if (NumMatchSpins == 40) {
+        BSOS_SetLampState(MATCH, 0);
+        MatchDelay = CurrentTime - MatchSequenceStartTime;
+      }
+    }
+  }
+
+  if (NumMatchSpins >= 40 && NumMatchSpins <= 43) {
+    if (CurrentTime > (MatchSequenceStartTime + MatchDelay)) {
+      if ( (CurrentNumPlayers > (NumMatchSpins - 40)) && ((CurrentScores[NumMatchSpins - 40] / 10) % 10) == MatchDigit) {
+        ScoreMatches |= (1 << (NumMatchSpins - 40));
+        AddSpecialCredit();
+        MatchDelay += 1000;
+        NumMatchSpins += 1;
+        BSOS_SetLampState(MATCH, 1);
+      } else {
+        NumMatchSpins += 1;
+      }
+      if (NumMatchSpins == 44) {
+        MatchDelay += 5000;
+      }
+    }
+  }
+
+  if (NumMatchSpins > 43) {
+    if (CurrentTime > (MatchSequenceStartTime + MatchDelay)) {
+      return MACHINE_STATE_ATTRACT;
+    }
+  }
+
+  for (int count = 0; count < 4; count++) {
+    if ((ScoreMatches >> count) & 0x01) {
+      // If this score matches, we're going to flash the last two digits
+      if ( (CurrentTime / 200) % 2 ) {
+        BSOS_SetDisplayBlank(count, BSOS_GetDisplayBlank(count) & 0x0F);
+      } else {
+        BSOS_SetDisplayBlank(count, BSOS_GetDisplayBlank(count) | 0x30);
+      }
+    }
+  }
+
+  return MACHINE_STATE_MATCH_MODE;
+}
+#endif // ENABLE_MATCH
 //====================================================
 
 int RunGamePlayMode(int curState, boolean curStateChanged) {
@@ -1988,7 +2136,7 @@ if (DEBUG_MESSAGES) {
 */  
       
       if (CurrentBallInPlay>BallsPerGame) {
-//zz        CheckHighScores();
+        CheckHighScores();
 //        PlaySoundEffect(SOUND_EFFECT_GAME_OVER);
 //        SetPlayerLamps(0);
         for (int count=0; count<CurrentNumPlayers; count++) {
@@ -2001,7 +2149,11 @@ if (DEBUG_MESSAGES) {
     } // new ball/player?
     
   } else if (curState==MACHINE_STATE_MATCH_MODE) {
-    returnState = MACHINE_STATE_GAME_OVER;
+    #if defined(ENABLE_MATCH)
+    returnState = ShowMatchSequence(curStateChanged);
+    #else
+    returnState = MACHINE_STATE_GAME_OVER; // disable match
+    #endif
   } else {
     returnState = MACHINE_STATE_ATTRACT;
   }
