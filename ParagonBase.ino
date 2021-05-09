@@ -2028,6 +2028,7 @@ int ShowMatchSequence(boolean curStateChanged) {
       if ( (CurrentNumPlayers > (NumMatchSpins - 40)) && ((CurrentScores[NumMatchSpins - 40] / 10) % 10) == MatchDigit) {
         ScoreMatches |= (1 << (NumMatchSpins - 40));
         AddSpecialCredit();
+        BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true);        
         MatchDelay += 1000;
         NumMatchSpins += 1;
         BSOS_SetLampState(MATCH, 1);
