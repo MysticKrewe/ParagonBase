@@ -1182,8 +1182,13 @@ void PlaySoundEffect(byte soundEffectNum) {
 ////////////////////////////////////////////////////////////////////////////
 
 
+
+unsigned long AttractLastLadderTime = 0;
+byte AttractLastLadderBonus = 0;
+unsigned long AttractLastStarTime = 0;
 byte AttractLastHeadMode = 255;
 byte AttractLastPlayfieldMode = 255;
+byte InAttractMode = false;
 
 int RunAttractMode(int curState, boolean curStateChanged) {
 
@@ -1194,13 +1199,13 @@ int RunAttractMode(int curState, boolean curStateChanged) {
     BSOS_DisableSolenoidStack();
     BSOS_TurnOffAllLamps();
     BSOS_SetDisableFlippers(true);
+    // turn off any music?
     if (DEBUG_MESSAGES) {
       Serial.write("Entering Attract Mode\n\r");
     }
-    
-
-//    AttractLastHeadMode = 0;
-//    AttractLastPlayfieldMode = 0;
+// recently uncommented
+    AttractLastHeadMode = 0;
+    AttractLastPlayfieldMode = 0;
     
     for (int count=0; count<4; count++) {  // blank out displays?
       BSOS_SetDisplayBlank(count, 0x00);     
@@ -1209,8 +1214,10 @@ int RunAttractMode(int curState, boolean curStateChanged) {
     BSOS_SetDisplayBallInPlay(0);
     AttractLastHeadMode = 255;
     AttractLastPlayfieldMode = 255;
-  }
-
+  } // one time entering attract mode
+  
+  // -------------------------------------------------------------------- head modes
+  
   // Alternate displays between high score and blank
   if ((CurrentTime/6000)%2==0) {  // 6 seconds change time?
 
@@ -1251,24 +1258,42 @@ int RunAttractMode(int curState, boolean curStateChanged) {
 //    SetPlayerLamps(((CurrentTime/250)%4) + 1);
     AttractLastHeadMode = 2;
   }
-
+  
+  // ------------------------------------------------- playfield modes
+  
   if ((CurrentTime/10000)%3==0) {   // every 30s turn off all playfield lamps?
     if (AttractLastPlayfieldMode!=1) {
       BSOS_TurnOffAllLamps();
+
     }
+//n    
+    ShowGoldenSaucerLamps();
+    ShowParagonLamps();
+    ShowAwardLamps();
     
     AttractLastPlayfieldMode = 1;
   } else { 
     if (AttractLastPlayfieldMode!=2) {
       BSOS_TurnOffAllLamps();
+//n      
+      AttractLastLadderBonus = 1;
+      AttractLastLadderTime = CurrentTime;      
+      
     }
-
+//n
+    if ((CurrentTime-AttractLastLadderTime)>200) {
+      AttractLastLadderBonus += 1;
+      AttractLastLadderTime = CurrentTime;
+      ShowBonusOnTree(AttractLastLadderBonus%MAX_DISPLAY_BONUS);
+    }
+    
     AttractLastPlayfieldMode = 2;
   }
   
   
   
-  // ---------------------------------------
+  // -------------------------------------------------- switch check
+  
   // check for certain switches during attract mode: coins, start game, setup
   // any other switch will be displayed in console if debug enabled
   byte switchHit;
@@ -2028,7 +2053,16 @@ int ShowMatchSequence(boolean curStateChanged) {
       if ( (CurrentNumPlayers > (NumMatchSpins - 40)) && ((CurrentScores[NumMatchSpins - 40] / 10) % 10) == MatchDigit) {
         ScoreMatches |= (1 << (NumMatchSpins - 40));
         AddSpecialCredit();
-//This causes crash when ball drains       BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true);        
+
+if (DEBUG_MESSAGES) { 
+      char buf[32];
+      sprintf(buf, "Game Matched: Spins %d Matches: %d\n\r",NumMatchSpins,ScoreMatches);
+      Serial.write(buf);
+     
+}  
+//This causes crash when ball drains       
+//BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true); 
+       
         MatchDelay += 1000;
         NumMatchSpins += 1;
         BSOS_SetLampState(MATCH, 1);
