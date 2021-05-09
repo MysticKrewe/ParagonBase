@@ -28,6 +28,7 @@ Things to do:
 #define DEBUG_MESSAGES  1    // enable serial debug logging
 
 //#define ENABLE_MATCH         // enable match mode (uses 2% program space)
+//#define ENABLE_ATTRACT       // enable additional attract mode code (for debugging)
 
 // Wav Trigger defines have been moved to BSOS_Config.h
 #if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
@@ -1182,11 +1183,12 @@ void PlaySoundEffect(byte soundEffectNum) {
 ////////////////////////////////////////////////////////////////////////////
 
 
-
-//unsigned long AttractLastLadderTime = 0;
-//byte AttractLastLadderBonus = 0;
-//unsigned long AttractLastStarTime = 0;
-//byte InAttractMode = false;
+#if defined(ENABLE_ATTRACT)
+unsigned long AttractLastLadderTime = 0;
+byte AttractLastLadderBonus = 0;
+unsigned long AttractLastStarTime = 0;
+byte InAttractMode = false;
+#endif
 
 byte AttractLastHeadMode = 255;
 byte AttractLastPlayfieldMode = 255;
@@ -1268,26 +1270,32 @@ int RunAttractMode(int curState, boolean curStateChanged) {
       BSOS_TurnOffAllLamps();
 
     }
-//n    
-//    ShowGoldenSaucerLamps();
-//    ShowParagonLamps();
-//    ShowAwardLamps();
+
+#if defined(ENABLE_ATTRACT)    
+    ShowGoldenSaucerLamps();
+    ShowParagonLamps();
+    ShowAwardLamps();
+#endif
     
     AttractLastPlayfieldMode = 1;
   } else { 
     if (AttractLastPlayfieldMode!=2) {
       BSOS_TurnOffAllLamps();
-//n      
-//      AttractLastLadderBonus = 1;
-//      AttractLastLadderTime = CurrentTime;      
+      
+#if defined(ENABLE_ATTRACT)      
+      AttractLastLadderBonus = 1;
+      AttractLastLadderTime = CurrentTime;
+#endif      
       
     }
-//n
-//    if ((CurrentTime-AttractLastLadderTime)>200) {
-//      AttractLastLadderBonus += 1;
-//      AttractLastLadderTime = CurrentTime;
-//      ShowBonusOnTree(AttractLastLadderBonus%MAX_DISPLAY_BONUS);
-//    }
+
+#if defined(ENABLE_ATTRACT)    
+    if ((CurrentTime-AttractLastLadderTime)>200) {
+      AttractLastLadderBonus += 1;
+      AttractLastLadderTime = CurrentTime;
+      ShowBonusOnTree(AttractLastLadderBonus%MAX_DISPLAY_BONUS);
+    }
+#endif
     
     AttractLastPlayfieldMode = 2;
   }
