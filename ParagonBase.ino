@@ -1186,9 +1186,11 @@ void PlaySoundEffect(byte soundEffectNum) {
 //unsigned long AttractLastLadderTime = 0;
 //byte AttractLastLadderBonus = 0;
 //unsigned long AttractLastStarTime = 0;
+//byte InAttractMode = false;
+
 byte AttractLastHeadMode = 255;
 byte AttractLastPlayfieldMode = 255;
-//byte InAttractMode = false;
+
 
 int RunAttractMode(int curState, boolean curStateChanged) {
 
