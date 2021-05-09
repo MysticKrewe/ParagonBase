@@ -27,7 +27,7 @@ Things to do:
 
 #define DEBUG_MESSAGES  1    // enable serial debug logging
 
-#define ENABLE_MATCH         // enable match mode (uses 2% program space)
+//#define ENABLE_MATCH         // enable match mode (uses 2% program space)
 
 // Wav Trigger defines have been moved to BSOS_Config.h
 #if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
