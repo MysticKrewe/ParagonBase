@@ -27,7 +27,7 @@ Things to do:
 
 #define DEBUG_MESSAGES  1    // enable serial debug logging
 
-//#define ENABLE_MATCH         // enable match mode (uses 2% program space)
+#define ENABLE_MATCH         // enable match mode (uses 2% program space)
 
 // Wav Trigger defines have been moved to BSOS_Config.h
 #if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
@@ -2028,7 +2028,7 @@ int ShowMatchSequence(boolean curStateChanged) {
       if ( (CurrentNumPlayers > (NumMatchSpins - 40)) && ((CurrentScores[NumMatchSpins - 40] / 10) % 10) == MatchDigit) {
         ScoreMatches |= (1 << (NumMatchSpins - 40));
         AddSpecialCredit();
-//zz problem?        BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true);        
+//This causes crash when ball drains       BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true);        
         MatchDelay += 1000;
         NumMatchSpins += 1;
         BSOS_SetLampState(MATCH, 1);
