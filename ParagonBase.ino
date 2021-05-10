@@ -25,7 +25,7 @@ Things to do:
 #define MAJOR_VERSION  2021  // update TRIDENT2020_MAJOR_VERSION references to just this
 #define MINOR_VERSION  1
 
-#define DEBUG_MESSAGES  1    // enable serial debug logging
+#define DEBUG_MESSAGES  0    // enable serial debug logging
 
 #define ENABLE_MATCH         // enable match mode (uses 2% program space)
 #define ENABLE_ATTRACT       // enable additional attract mode code (for debugging)
