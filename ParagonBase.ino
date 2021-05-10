@@ -30,7 +30,7 @@ Things to do:
 
 #define DEBUG_MESSAGES  1    // enable serial debug logging
 
-//#define ENABLE_MATCH         // enable match mode (uses 2% program space)
+#define ENABLE_MATCH         // enable match mode (uses 2% program space)
 #define ENABLE_ATTRACT       // enable additional attract mode code (for debugging)
 
 // Wav Trigger defines have been moved to BSOS_Config.h
