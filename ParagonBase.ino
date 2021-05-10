@@ -1321,7 +1321,7 @@ int RunAttractMode(int curState, boolean curStateChanged) {
       returnState = MACHINE_STATE_TEST_LIGHTS;  // enter diagnostic mode
       SetLastSelfTestChangedTime(CurrentTime);
     } else {
-#ifdef DEBUG_MESSAGES
+#if (DEBUG_MESSAGES)
       char buf[128];
       sprintf(buf, "Switch 0x%02X (%d)\n", switchHit,switchHit);
       Serial.write(buf);
@@ -2239,7 +2239,7 @@ if (DEBUG_MESSAGES) {
         case SW_DROP_BOTTOM:
 /*        
 if (DEBUG_MESSAGES) { 
-      char buf[32];
+      char buf[128];
       sprintf(buf, "Right Drop (%d) [%d]\n\r", switchHit,CurrentDropTargetsValid);
       Serial.write(buf);
 } */    
