@@ -9,7 +9,7 @@
   0.0.1 - 4-7-21 - Slightly modified version of bsos/pinballbase.ino that compiles with Paragon definitions
   
   version
-  0001
+  0001 - supposedly stable version but if enable match may not be stable?
 
 
 Things to do:
