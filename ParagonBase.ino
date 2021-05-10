@@ -7,6 +7,9 @@
   working code file
   
   0.0.1 - 4-7-21 - Slightly modified version of bsos/pinballbase.ino that compiles with Paragon definitions
+  
+  version
+  0001
 
 
 Things to do:
