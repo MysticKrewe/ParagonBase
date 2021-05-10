@@ -1184,9 +1184,16 @@ void PlaySoundEffect(byte soundEffectNum) {
 
 
 void ShowParagonSweep() {
-  byte lampPhase = (CurrentTime/10)%7;  // break 10s into 7 different phases 0-6
+  byte lampPhase = (CurrentTime/200)%7;  // break 200ms into 7 different phases 0-6, going lower than 200 doesn't work
   for (byte x=0;x<7;x++) {
     BSOS_SetLampState(L_CENTER_P+x, lampPhase==x);
+  }
+}
+
+void ShowParagonBlink() {
+//  byte lampPhase = (CurrentTime/10)%7;  // break 10s into 7 different phases 0-6
+  for (byte x=0;x<7;x++) {
+    BSOS_SetLampState(L_CENTER_P+x, 1,100);
   }
 }
 //-----------------------------------------------------------------
@@ -1284,6 +1291,7 @@ int RunAttractMode(int curState, boolean curStateChanged) {
     ShowGoldenSaucerLamps();
     ShowParagonLamps();
     ShowAwardLamps();
+    ShowParagonBlink();
 #endif
     
     AttractLastPlayfieldMode = 1;
