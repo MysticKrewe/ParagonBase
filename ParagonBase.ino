@@ -27,8 +27,8 @@ Things to do:
 
 #define DEBUG_MESSAGES  1    // enable serial debug logging
 
-//#define ENABLE_MATCH         // enable match mode (uses 2% program space)
-//#define ENABLE_ATTRACT       // enable additional attract mode code (for debugging)
+#define ENABLE_MATCH         // enable match mode (uses 2% program space)
+#define ENABLE_ATTRACT       // enable additional attract mode code (for debugging)
 
 // Wav Trigger defines have been moved to BSOS_Config.h
 #if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
@@ -1490,7 +1490,7 @@ void HandleParagonHit() {
     // play special sound
   }
 if (DEBUG_MESSAGES) { 
-      char buf[32];
+      char buf[64];
       sprintf(buf, " ParagonVal=%d playerbitmask=%d\n\r",ParagonValue,ParagonLit[CurrentPlayer]);
       Serial.write(buf);
 }    
@@ -1812,7 +1812,7 @@ if (DEBUG_MESSAGES) {
 
 
 if (DEBUG_MESSAGES) { 
-      char buf[32];
+      char buf[64];
       sprintf(buf, "InitNewBall: Ball %d Over P%d / %d  CurrentScore=%d\n\r",CurrentBallInPlay,CurrentPlayer,playerNum,CurrentPlayerCurrentScore);
       Serial.write(buf);
       
@@ -2065,7 +2065,7 @@ int ShowMatchSequence(boolean curStateChanged) {
         AddSpecialCredit();
 
 if (DEBUG_MESSAGES) { 
-      char buf[32];
+      char buf[64];
       sprintf(buf, "Game Matched: Spins %d Matches: %d\n\r",NumMatchSpins,ScoreMatches);
       Serial.write(buf);
      
