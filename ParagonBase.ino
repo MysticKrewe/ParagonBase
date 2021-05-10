@@ -1189,11 +1189,19 @@ void ShowParagonSweep() {
     BSOS_SetLampState(L_CENTER_P+x, lampPhase==x);
   }
 }
+//-----------------------------------------------------------------
+
+unsigned long BlinkTimer=0; // keep track of how long blinking
+unsigned int BlinkPhase=500;  // blink rate
 
 void ShowParagonBlink() {
-//  byte lampPhase = (CurrentTime/10)%7;  // break 10s into 7 different phases 0-6
+
+  if ((CurrentTime-BlinkTimer)>3000) {
+    BlinkTimer=CurrentTime;
+    BlinkPhase=100*random(5)+100; // random blink from 100ms to 500ms
+  }
   for (byte x=0;x<7;x++) {
-    BSOS_SetLampState(L_CENTER_P+x, 1,100);
+    BSOS_SetLampState(L_CENTER_P+x, 1,BlinkPhase);
   }
 }
 //-----------------------------------------------------------------
