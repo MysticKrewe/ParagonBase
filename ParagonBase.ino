@@ -25,9 +25,9 @@ Things to do:
 #define MAJOR_VERSION  2021  // update TRIDENT2020_MAJOR_VERSION references to just this
 #define MINOR_VERSION  1
 
-#define DEBUG_MESSAGES  0    // enable serial debug logging
+#define DEBUG_MESSAGES  1    // enable serial debug logging
 
-#define ENABLE_MATCH         // enable match mode (uses 2% program space)
+//#define ENABLE_MATCH         // enable match mode (uses 2% program space)
 #define ENABLE_ATTRACT       // enable additional attract mode code (for debugging)
 
 // Wav Trigger defines have been moved to BSOS_Config.h
@@ -1337,6 +1337,7 @@ int RunAttractMode(int curState, boolean curStateChanged) {
 #if (DEBUG_MESSAGES)
       char buf[128];
       sprintf(buf, "Switch 0x%02X (%d)\n", switchHit,switchHit);
+      buf[127]=0;
       Serial.write(buf);
 #endif      
     }
@@ -1502,11 +1503,6 @@ void HandleParagonHit() {
     ParagonLit[CurrentPlayer]=255; // special list
     // play special sound
   }
-if (DEBUG_MESSAGES) { 
-      char buf[64];
-      sprintf(buf, " ParagonVal=%d playerbitmask=%d\n\r",ParagonValue,ParagonLit[CurrentPlayer]);
-      Serial.write(buf);
-}    
   
   BSOS_PushToTimedSolenoidStack(SOL_SAUCER_PARAGON, 5, CurrentTime + SAUCER_PARAGON_DURATION);   
 }
@@ -1819,21 +1815,21 @@ if (DEBUG_MESSAGES) {
 */
 
     CurrentPlayerCurrentScore=CurrentScores[playerNum]; // Reset score at top 
-  CurrentStandupsHit=StandupsHit[playerNum]; // not used
+//  CurrentStandupsHit=StandupsHit[playerNum]; // not used
     GoldenSaucerValue=GoldenSaucerMem[playerNum]; // Carries from ball to ball
     GetHoldBonus(BonusMem[playerNum]);    
 
 
 if (DEBUG_MESSAGES) { 
-      char buf[64];
-      sprintf(buf, "InitNewBall: Ball %d Over P%d / %d  CurrentScore=%d\n\r",CurrentBallInPlay,CurrentPlayer,playerNum,CurrentPlayerCurrentScore);
+      char buf[128];
+      sprintf(buf, "InitNewBall: Ball %d Over P%d CurrentScore=%d\n\r",CurrentBallInPlay,CurrentPlayer,CurrentPlayerCurrentScore);
+      buf[127]=0;
       Serial.write(buf);
       
       for (byte x=0;x<4;x++) {
         sprintf(buf, " CurrentScores[%d]=%d\n\r",x,CurrentScores[x]);
       Serial.write(buf);        
-      }
-      
+      }     
 }  
 
     
@@ -2139,19 +2135,6 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
     
   } else if (curState==MACHINE_STATE_BALL_OVER) {    
 
-/*
-if (DEBUG_MESSAGES) { 
-      char buf[32];
-      sprintf(buf, "Ball Over: Ball %d Over P%d  CurrentScore=%d\n\r",CurrentBallInPlay,CurrentPlayer,CurrentPlayerCurrentScore);
-      Serial.write(buf);
-      
-      for (byte x=0;x<4;x++) {
-        sprintf(buf, " CurrentScores[%d]=%d\n\r",x,CurrentScores[x]);
-      Serial.write(buf);        
-      }
-      
-}  
-*/
     // end of ball memory settings ---- SAVE PLAYER STATE AT BALL END
     CurrentScores[CurrentPlayer] = CurrentPlayerCurrentScore;
     
@@ -2170,21 +2153,6 @@ if (DEBUG_MESSAGES) {
       // ----- NEW PLAYER MEMORY LOADS ----------------------------------------------
       CurrentPlayerCurrentScore=CurrentScores[CurrentPlayer];
       GoldenSaucerValue=GoldenSaucerMem[CurrentPlayer];
-
-      
-      /*
-if (DEBUG_MESSAGES) { 
-      char buf[32];
-      sprintf(buf, "Bumping Player Up: Ball %d Over P%d  CurrentScore=%d\n\r",CurrentBallInPlay,CurrentPlayer,CurrentPlayerCurrentScore);
-      Serial.write(buf);
-      
-      for (byte x=0;x<4;x++) {
-        sprintf(buf, " CurrentScores[%d]=%d\n\r",x,CurrentScores[x]);
-      Serial.write(buf);        
-      }
-      
-}
-*/  
       
       if (CurrentBallInPlay>BallsPerGame) {
         CheckHighScores();
