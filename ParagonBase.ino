@@ -1199,7 +1199,7 @@ void AlternatePlayfieldLights() {
   if ((CurrentTime-BlinkTimer)>500) {
     flip=1-flip; // alternate between 0 and 1
     for (byte x=0;x<59;x++) {
-      BSOS_SetLampState(x,flip); // 3rd param is dim 0=none, 1=50% 2=33%
+      BSOS_SetLampState(x,0,flip); // 3rd param is dim 0=none, 1=50% 2=33%
     }     
   }
  
