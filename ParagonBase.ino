@@ -439,6 +439,7 @@ void ShowAwardLamps() {
 
 // ----------------------------------------------------------------
 void ShowParagonLamps() {
+  // show/rotate upper right p-a-r-a-g-o-n lamps
   byte x=ParagonLit[CurrentPlayer];
   byte y;
   int z;
@@ -457,31 +458,14 @@ void ShowParagonLamps() {
 
   }
 
-  // Center Paragon Letters
-/*  
-  for (y=0; y<7; y++) {
-    z=pow(2,(int)y);
-    if ((x & z)==z) { BSOS_SetLampState(L_CENTER_P+y, 1); } else { BSOS_SetLampState(L_CENTER_P+y, 0); }   
-  }
-*/
+  
+  // light center paragon letters 
   // this works, bit 1 turns on lamp0, bit 2 lamp1, etc
-  for (y=0; y<7; y++) {
-    BSOS_SetLampState(L_CENTER_P+y, x & (1<<y));
-  }  
-  
-  
-/*  
-  
-  if ((x & 1)==1) { BSOS_SetLampState(L_CENTER_P+0, 1); } else { BSOS_SetLampState(L_CENTER_P+0, 0); }   
-  if ((x & 2)==2) { BSOS_SetLampState(L_CENTER_P+1, 1); } else { BSOS_SetLampState(L_CENTER_P+1, 0); }   
-  if ((x & 4)==4) { BSOS_SetLampState(L_CENTER_P+2, 1); } else { BSOS_SetLampState(L_CENTER_P+2, 0); }   
-  if ((x & 8)==8) { BSOS_SetLampState(L_CENTER_P+3, 1); } else { BSOS_SetLampState(L_CENTER_P+3, 0); }  
-  if ((x & 16)==16) { BSOS_SetLampState(L_CENTER_P+4, 1); } else { BSOS_SetLampState(L_CENTER_P+4, 0); }
-  if ((x & 32)==32) { BSOS_SetLampState(L_CENTER_P+5, 1); } else { BSOS_SetLampState(L_CENTER_P+5, 0); }
-  if ((x & 64)==64) { BSOS_SetLampState(L_CENTER_P+6, 1); } else { BSOS_SetLampState(L_CENTER_P+6, 0); }
-
-*/  
-
+  if (MachineState==MACHINE_STATE_NORMAL_GAMEPLAY) {
+    for (y=0; y<7; y++) {
+      BSOS_SetLampState(L_CENTER_P+y, x & (1<<y));
+    }  
+  }
   
   // letter timing
   if ((MoveParagon) && ((CurrentTime-LastParagonLetterTime)>PARAGON_TIMING)) {
@@ -1201,7 +1185,7 @@ void ShowParagonBlink() {
     BlinkPhase=100*random(5)+100; // random blink from 100ms to 500ms
   }
   for (byte x=0;x<7;x++) {
-    BSOS_SetLampState(L_CENTER_P+x, 1,BlinkPhase);
+    BSOS_SetLampState(L_CENTER_P+x, 1,0,BlinkPhase); // 3rd param is dim 0=none, 1=50% 2=33%
   }
 }
 //-----------------------------------------------------------------
@@ -1303,6 +1287,8 @@ int RunAttractMode(int curState, boolean curStateChanged) {
 #endif
     
     AttractLastPlayfieldMode = 1;
+    
+    
   } else { 
     if (AttractLastPlayfieldMode!=2) {  // first time setup
       BSOS_TurnOffAllLamps();
