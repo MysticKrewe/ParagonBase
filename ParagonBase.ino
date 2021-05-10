@@ -1183,7 +1183,6 @@ void ShowParagonSweep() {
   }
 }
 //-----------------------------------------------------------------
-
 void ShowParagonBlink() {
   // do not run at the same time as ShowParagonSweep
   if ((CurrentTime-BlinkTimer)>3000) {
@@ -1195,7 +1194,19 @@ void ShowParagonBlink() {
   }
 }
 //-----------------------------------------------------------------
+void AlternatePlayfieldLights() {
+  static byte flip=1;
+  if ((CurrentTime-BlinkTimer)>500) {
+    flip=1-flip; // alternate between 0 and 1
+    for (byte x=0;x<59;x++) {
+      BSOS_SetLampState(x,flip); // 3rd param is dim 0=none, 1=50% 2=33%
+    }     
+  }
+ 
 
+  
+}
+//-----------------------------------------------------------------
 
 #if defined(ENABLE_ATTRACT)
 unsigned long AttractLastLadderTime = 0;
@@ -1275,14 +1286,14 @@ int RunAttractMode(int curState, boolean curStateChanged) {
     }
 //    SetPlayerLamps(((CurrentTime/250)%4) + 1);
     AttractLastHeadMode = 2;
+    
   }
   
   // ------------------------------------------------- playfield modes
   
-  if ((CurrentTime/10000)%3==0) {   // every 30s turn off all playfield lamps?
-    if (AttractLastPlayfieldMode!=1) {
+  if ((CurrentTime/10000)%3==0) {   // ----------------------- mode 1
+    if (AttractLastPlayfieldMode!=1) { 
       BSOS_TurnOffAllLamps();
-
     }
 
 #if defined(ENABLE_ATTRACT)    
@@ -1292,11 +1303,20 @@ int RunAttractMode(int curState, boolean curStateChanged) {
     ShowParagonBlink();
 #endif
     
-    AttractLastPlayfieldMode = 1;
+    AttractLastPlayfieldMode=1;
     
-    
-  } else { 
+  } else if ((CurrentTime/10000)%3==1) {  // ----------------- mode 2
     if (AttractLastPlayfieldMode!=2) {  // first time setup
+      BSOS_TurnOffAllLamps();
+    }
+
+#if defined(ENABLE_ATTRACT)    
+    AlternatePlayfieldLights();
+#endif
+    AttractLastPlayfieldMode=2;
+  
+  } else {                                  // ------------------ last mode
+    if (AttractLastPlayfieldMode!=3) {  // first time setup
       BSOS_TurnOffAllLamps();
       
 #if defined(ENABLE_ATTRACT)      
@@ -1311,12 +1331,12 @@ int RunAttractMode(int curState, boolean curStateChanged) {
       AttractLastLadderBonus += 1;
       AttractLastLadderTime = CurrentTime;
       ShowBonusOnTree(AttractLastLadderBonus%MAX_DISPLAY_BONUS);
-      
-      ShowParagonSweep();
     }
+      
+    ShowParagonSweep();    
 #endif
     
-    AttractLastPlayfieldMode = 2;
+    AttractLastPlayfieldMode = 3;
   }
   
   
