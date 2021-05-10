@@ -1183,6 +1183,15 @@ void PlaySoundEffect(byte soundEffectNum) {
 ////////////////////////////////////////////////////////////////////////////
 
 
+void ShowParagonSweep() {
+  byte lampPhase = (CurrentTime/10)%7;  // break 10s into 7 different phases 0-6
+  for (byte x=0;x<7;x++) {
+    BSOS_SetLampState(L_CENTER_P+x, lampPhase==x);
+  }
+}
+//-----------------------------------------------------------------
+
+
 #if defined(ENABLE_ATTRACT)
 unsigned long AttractLastLadderTime = 0;
 byte AttractLastLadderBonus = 0;
@@ -1279,7 +1288,7 @@ int RunAttractMode(int curState, boolean curStateChanged) {
     
     AttractLastPlayfieldMode = 1;
   } else { 
-    if (AttractLastPlayfieldMode!=2) {
+    if (AttractLastPlayfieldMode!=2) {  // first time setup
       BSOS_TurnOffAllLamps();
       
 #if defined(ENABLE_ATTRACT)      
@@ -1294,6 +1303,8 @@ int RunAttractMode(int curState, boolean curStateChanged) {
       AttractLastLadderBonus += 1;
       AttractLastLadderTime = CurrentTime;
       ShowBonusOnTree(AttractLastLadderBonus%MAX_DISPLAY_BONUS);
+      
+      ShowParagonSweep();
     }
 #endif
     
