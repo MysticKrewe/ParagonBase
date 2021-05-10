@@ -2063,15 +2063,8 @@ int ShowMatchSequence(boolean curStateChanged) {
       if ( (CurrentNumPlayers > (NumMatchSpins - 40)) && ((CurrentScores[NumMatchSpins - 40] / 10) % 10) == MatchDigit) {
         ScoreMatches |= (1 << (NumMatchSpins - 40));
         AddSpecialCredit();
-
-if (DEBUG_MESSAGES) { 
-      char buf[64];
-      sprintf(buf, "Game Matched: Spins %d Matches: %d\n\r",NumMatchSpins,ScoreMatches);
-      Serial.write(buf);
-     
-}  
-//This causes crash when ball drains       
-//BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true); 
+       
+        BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true); 
        
         MatchDelay += 1000;
         NumMatchSpins += 1;
