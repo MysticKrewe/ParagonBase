@@ -1169,20 +1169,23 @@ void PlaySoundEffect(byte soundEffectNum) {
 //
 ////////////////////////////////////////////////////////////////////////////
 
+unsigned long BlinkTimer=0; // keep track of how long blinking
+unsigned int BlinkPhase=500;  // blink rate
 
 void ShowParagonSweep() {
-  byte lampPhase = (CurrentTime/200)%7;  // break 200ms into 7 different phases 0-6, going lower than 200 doesn't work
-  for (byte x=0;x<7;x++) {
-    BSOS_SetLampState(L_CENTER_P+x, lampPhase==x);
+  // do not run at th e same time as ShowParagonBlink
+  if ((CurrentTime-BlinkTimer)>200) {  
+    BlinkTimer=CurrentTime;
+    byte lampPhase = (byte) ((CurrentTime/200)%7);  // break 200ms into 7 different phases 0-6, going lower than 200 doesn't work
+    for (byte x=0;x<7;x++) {
+      BSOS_SetLampState(L_CENTER_P+x, lampPhase==x);
+    }
   }
 }
 //-----------------------------------------------------------------
 
-unsigned long BlinkTimer=0; // keep track of how long blinking
-unsigned int BlinkPhase=500;  // blink rate
-
 void ShowParagonBlink() {
-
+  // do not run at the same time as ShowParagonSweep
   if ((CurrentTime-BlinkTimer)>3000) {
     BlinkTimer=CurrentTime;
     BlinkPhase=100*random(5)+100; // random blink from 100ms to 500ms
