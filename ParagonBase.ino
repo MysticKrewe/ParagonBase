@@ -9,7 +9,7 @@
   0.0.1 - 4-7-21 - Slightly modified version of bsos/pinballbase.ino that compiles with Paragon definitions
   
   version
-  0001 - supposedly stable version but if enable match may not be stable?
+  0.002 - stable version with 3 attract modes
 
 
 Things to do:
@@ -1199,13 +1199,10 @@ void AlternatePlayfieldLights() {
   if ((CurrentTime-BlinkTimer)>500) {
     BlinkTimer=CurrentTime;
     flip=1-flip; // alternate between 0 and 1
-    for (byte x=0;x<40;x++) {
+    for (byte x=0;x<40;x++) {  // doesn't cover all lights because don't want to engage bb lights
       BSOS_SetLampState(x,(x+flip)%2,0); // 3rd param is dim 0=none, 1=50% 2=33%
     }     
   }
- 
-
-  
 }
 //-----------------------------------------------------------------
 
