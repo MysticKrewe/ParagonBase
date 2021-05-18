@@ -1750,7 +1750,8 @@ void RunHunt() {
 //-----------------------------------------------------------------
 void ShowHuntLamps() {
 // animate the Challenge beast shot lamps
-  byte anim=10+(((((CurrentTime-HuntShotTime)/500)%8)+1)*10);
+//  byte anim=10+(((((CurrentTime-HuntShotTime)/500)%8)+1)*10);
+  byte anim=30;
   switch (HuntLocation) {
     case 0: // inlines.
 //      BSOS_SetLampState(L_TREASURE_5X,1,0,anim);
