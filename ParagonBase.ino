@@ -1729,7 +1729,7 @@ void RunHunt() {
     HuntLocation=random(7);    // set the location
     HuntShotTime=CurrentTime;  // current shot starts now
     HuntShotLength=HUNT_BASE_SHOT_LENGTH-(500*HuntsCompleted[CurrentPlayer]);
-    if (HuntShotLength<250) HuntShotLength=250;
+    if (HuntShotLength<500) HuntShotLength=500;
     HuntFrozen=false;
     // psfx
     
@@ -2408,11 +2408,13 @@ if (DEBUG_MESSAGES) {
         // Standup targets
         case SW_BOTTOM_STANDUP:
         case SW_TOP_STANDUP:
+
           if ((HuntMode) && (!HuntFrozen)) { // handle stunning during the hunt by hitting standups
-            HuntShotTime=CurrentTime+HuntShotLength; 
+            HuntShotTime=CurrentTime;        
             HuntFrozen=true;
             // sfx stunned beast
           }
+ 
           CurrentPlayerCurrentScore+=10;
           AddToBonus(1);
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;
