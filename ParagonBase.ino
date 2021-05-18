@@ -73,7 +73,7 @@ boolean MachineStateChanged = true;
 // Eventually game mode definitions will go here
 #define GAME_MODE_SKILL_SHOT                    0
 #define GAME_MODE_UNSTRUCTURED_PLAY             1
-#define GAME_MODE_MINI_GAME_QUALIFIED           2
+#define GAME_MODE_MINI_GAME_QUALIFIED           2  // not used?
 
 #define TIME_TO_WAIT_FOR_BALL         100
 
@@ -213,7 +213,9 @@ byte DropSequence=0;                      // 1-3 # right drops hit in sequence
 
 // special modes
 boolean HuntMode=false;                // true if hunt underway (Challenge)
+byte HuntQualified=0;
 byte HuntsCompleted[4]={0, 0, 0, 0};   // # hunts completed per player
+byte HuntsQualified[4]={0, 0, 0, 0};   // # hunts completed per player
 unsigned long HuntStartTime=0;
 //unsigned long HuntFreezeTime=0;        
 unsigned long HuntShotTime=0;          // freeze will add
@@ -514,11 +516,13 @@ void ShowParagonLamps() {
   // light center paragon letters 
   // this works, bit 1 turns on lamp0, bit 2 lamp1, etc
   if ((HuntMode) && (HuntLocation==5)) { // don't overrite hunt lamps
-    
+    // do nothing
   } else {    
     if (MachineState==MACHINE_STATE_NORMAL_GAMEPLAY) {
       for (y=0; y<7; y++) {
-        BSOS_SetLampState(L_CENTER_P+y, x & (1<<y));
+        if ((HuntQualified) && (y==4)) { 
+          BSOS_SetLampState(L_CENTER_G,1,0,100); // light qualification lamp        
+        } else { BSOS_SetLampState(L_CENTER_P+y, x & (1<<y)); }
       }  
     }
   }
@@ -1702,20 +1706,26 @@ void setup() {
 
 //-----------------------------------------------------------------
 void HuntSuccess() {
-  CurrentPlayerCurrentScore+=HuntReward*10;
+  CurrentPlayerCurrentScore+=(HuntReward*10)*HuntQualified; // HuntQualified is an extra multiplier
   CurrentPlayerCurrentScore++; // add 1 for hunts
+  BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true); // why not
+  
   // show some cool light effect and sound
   HuntMode=false;
   HuntStartTime=0;
+  HuntQualified=0;
   HuntsCompleted[CurrentPlayer]++;
-  HuntReward+=1000; // let's add another 10k to hunt reward for every one completed per ball
-  BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true); // why not
-  // psfx
+  HuntsQualified[CurrentPlayer]=0;
+  // psfx  
+  HuntReward+=1000; // let's add another 10k (*10) to hunt reward for every one completed per ball
+
 }
 //-----------------------------------------------------------------
 void HuntFailed() {
   HuntMode=false;
   HuntStartTime=0;
+  HuntsQualified[CurrentPlayer]=0;
+  HuntQualified=0;  
   // psfx
 }
 //-----------------------------------------------------------------
@@ -1873,7 +1883,8 @@ int InitGamePlay(boolean curStateChanged) {
       BonusMem[count]=0;                 // 0=none, 1=20k, 2=30k, 3=40k
       
       HuntsCompleted[count]=0;
-          
+      HuntsQualified[count]=0;          // reset this game-to-game
+
     }
     CurrentPlayerCurrentScore=0;        // start with 0
   
@@ -1975,6 +1986,7 @@ if (DEBUG_MESSAGES) {
     ExtraBallCollected = false;
     
     HuntReward=HUNT_BASE_REWARD*(HuntsCompleted[playerNum]+1);
+    HuntQualified=HuntsQualified[playerNum]; // carry over hunt qualification if available
     
     // reset ball specific ladders
 
@@ -2110,8 +2122,10 @@ int NormalGamePlay() {
           BallTimeInTrough = CurrentTime;
 
           returnState = MACHINE_STATE_NORMAL_GAMEPLAY;          
-        } else {
+        } else {  // 1-time end of ball routines PRIOR to countdown bonus
+        
           if (HuntMode) { HuntFailed(); }  // terminate hunt mode when ball ends
+          HuntsQualified[CurrentPlayer]=HuntQualified;  // save any qualified hunts
 
           // one-time, end of ball routines
           SetHoldBonus(Bonus);  // works well - one time end of ball call
@@ -2412,8 +2426,9 @@ if (DEBUG_MESSAGES) {
         // Standup targets
         case SW_BOTTOM_STANDUP:
         case SW_TOP_STANDUP:
-
-          if ((HuntMode) && (!HuntFrozen)) { // handle stunning during the hunt by hitting standups
+          if ((HuntQualified) && (!HuntMode) && (switchHit==SW_BOTTOM_STANDUP)) {
+            HuntMode=true;  // start hunt mode
+          } else if ((HuntMode) && (!HuntFrozen)) { // handle stunning during the hunt by hitting standups
             HuntShotTime=CurrentTime;        
             HuntFrozen=true;
             // sfx stunned beast

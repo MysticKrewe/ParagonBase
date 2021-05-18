@@ -6,7 +6,7 @@ Secret Score: If you drop the three targets in order from bottom to top, score i
 
 SKILL SHOT:  Alternate between golden cliffs and Paragon, but also add special on paragon side (hit when lit = 5k bonus, 20k golden rewards 20k when lit, or 10k with longer on time.
 
-
+Beast (Hunt) MODE: Knock all three right drop targets down to start Beast mode.  Shots will flash and move every 4 seconds (mode lasts 45 seconds).  Hit the lit shot and score 25k + extra points based on how many slings/pops/beast (50,100,500) were hit during that ball.  Subsequent beast modes increase by 25k each time.  Hit top or bottom standup target to stun the beast for a few seconds.
 
 Questions:
 
