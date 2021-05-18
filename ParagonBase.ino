@@ -2111,6 +2111,8 @@ int NormalGamePlay() {
 
           returnState = MACHINE_STATE_NORMAL_GAMEPLAY;          
         } else {
+          if (HuntMode) { HuntFailed(); }  // terminate hunt mode when ball ends
+
           // one-time, end of ball routines
           SetHoldBonus(Bonus);  // works well - one time end of ball call
           
