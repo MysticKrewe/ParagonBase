@@ -190,7 +190,7 @@ unsigned int SkillSweepPeriod=SKILL_SHOT_SWEEP_TIME; // variable that changes
 
 // game specific
 
-unsigned long DropTargetClearTime = 0;
+//unsigned long DropTargetClearTime = 0; // not used
 
 unsigned long SaucerHitTime = 0;       // used for debouncing saucer hit
 byte ParagonValue = 0;                 // 1-8 p-a-r-a-g-o-n special
@@ -210,6 +210,35 @@ byte BonusMem[4];                      // carried over bonus scoring
 // Written in by Mike - yy
 byte CurrentDropTargetsValid = 0;         // bitmask showing which drop targets up right:b,m,t, inline 1-4 1-64 bits
 byte DropSequence=0;                      // 1-3 # right drops hit in sequence
+
+// special modes
+boolean HuntMode=false;                // true if hunt underway (Challenge)
+byte HuntsCompleted[4]={0, 0, 0, 0};   // # hunts completed per player
+unsigned long HuntStartTime=0;
+//unsigned long HuntFreezeTime=0;        
+unsigned long HuntShotTime=0;          // freeze will add
+boolean HuntFrozen=false;              // whether been frozen in this position or not, only allowed once per location
+byte HuntLocation=0;                   // location on PF for hunt target, 0=inlines, 1=upper drop, 2=spinner, 3=lower drops, 4=golden cliffs, 5=standup, 6=paragon
+byte HuntSwitches[6]={                 // switch # for hit location
+  SW_DROP_TOP,                         // 1
+  SW_SPINNER,
+  SW_DROP_BOTTOM,
+  SW_SAUCER_GOLDEN,
+  SW_BOTTOM_STANDUP,
+  SW_SAUCER_PARAGON
+};
+byte HuntLastShot=0;                  // previous location for hunt
+#define HUNT_MODE_LENGTH  45000       // 45 seconds
+#define HUNT_BASE_SHOT_LENGTH  4000   // 4 sec max time default per shot
+unsigned int HuntShotLength=0;        // length of time the shot actually stays dep on hunts
+#define HUNT_BASE_REWARD  2500        // base reward level (x10)
+#define HUNT_SLING_VALUE  5           // amount to add to hunt reward based on slings
+#define HUNT_BEAST_VALUE  50          // "  beast bumper hits
+#define HUNT_POPS_VALUE   10          // "  pops hit
+unsigned int HuntReward=0;            // assigned when hunt starts max=65535 (x10) HUNT_BASE_REWARD*(HuntsCompleted+1) - increased based on pops and bumpers / reset each ball
+
+// NOTE: we should display HuntReward value in status
+
 
 // values that carry over from ball-to-ball
 unsigned int DropsRightDownScore[4];      // reward for all right drops down
@@ -384,12 +413,15 @@ void ShowGoldenSaucerLamps() {
     { BSOS_SetLampState(L_6K_GOLDEN, 1); } else { BSOS_SetLampState(L_6K_GOLDEN, 0); }
   if ((GoldenSaucerValue==4) || (GoldenSaucerValue==9)) 
     { BSOS_SetLampState(L_8K_GOLDEN, 1); } else { BSOS_SetLampState(L_8K_GOLDEN, 0); }
-  if ((GoldenSaucerValue>4) && (GoldenSaucerValue<10))
-    { BSOS_SetLampState(L_10K_GOLDEN, 1); } else { BSOS_SetLampState(L_10K_GOLDEN, 0); }
-  if (GoldenSaucerValue==10)
-    { BSOS_SetLampState(L_20K_GOLDEN, 1); } else 
-    { if (GameMode!=GAME_MODE_SKILL_SHOT) BSOS_SetLampState(L_20K_GOLDEN, 0); }
-
+  if ((HuntMode) && (HuntLocation==4)) { // skip if hunt target
+  
+  } else {
+    if ((GoldenSaucerValue>4) && (GoldenSaucerValue<10))
+      { BSOS_SetLampState(L_10K_GOLDEN, 1); } else { BSOS_SetLampState(L_10K_GOLDEN, 0); }
+    if (GoldenSaucerValue==10)
+      { BSOS_SetLampState(L_20K_GOLDEN, 1); } else 
+      { if (GameMode!=GAME_MODE_SKILL_SHOT) BSOS_SetLampState(L_20K_GOLDEN, 0); }
+  }
 }
 
 // ----------------------------------------------------------------
@@ -412,10 +444,18 @@ void ShowAwardLamps() {
   // show some playfield feature lamps 
   
   // Right Drops: 10,15,20,25,30=sp
-  if (DropsRightDownScore[CurrentPlayer]==10000) { BSOS_SetLampState(L_10K_DROPS, 1); } else { BSOS_SetLampState(L_10K_DROPS, 0); }
-  if (DropsRightDownScore[CurrentPlayer]==15000) { BSOS_SetLampState(L_15K_DROPS, 1); } else { BSOS_SetLampState(L_15K_DROPS, 0); }
-  if (DropsRightDownScore[CurrentPlayer]==20000) { BSOS_SetLampState(L_20K_DROPS, 1); } else { BSOS_SetLampState(L_20K_DROPS, 0); }
-  if (DropsRightDownScore[CurrentPlayer]==25000) { BSOS_SetLampState(L_25K_DROPS, 1); } else { BSOS_SetLampState(L_25K_DROPS, 0); }
+  if ((HuntMode) && (HuntLocation==1)) { // don't overrite hunt lamps
+    
+  } else {
+    if (DropsRightDownScore[CurrentPlayer]==10000) { BSOS_SetLampState(L_10K_DROPS, 1); } else { BSOS_SetLampState(L_10K_DROPS, 0); }
+    if (DropsRightDownScore[CurrentPlayer]==15000) { BSOS_SetLampState(L_15K_DROPS, 1); } else { BSOS_SetLampState(L_15K_DROPS, 0); }
+  }
+  if ((HuntMode) && (HuntLocation==3)) { // don't overrite hunt lamps
+    
+  } else {  
+    if (DropsRightDownScore[CurrentPlayer]==20000) { BSOS_SetLampState(L_20K_DROPS, 1); } else { BSOS_SetLampState(L_20K_DROPS, 0); }
+    if (DropsRightDownScore[CurrentPlayer]==25000) { BSOS_SetLampState(L_25K_DROPS, 1); } else { BSOS_SetLampState(L_25K_DROPS, 0); }
+  }
   if (DropsRightDownScore[CurrentPlayer]==30000) { BSOS_SetLampState(L_SPECIAL_DROPS, 1); } else { BSOS_SetLampState(L_SPECIAL_DROPS, 0); }
 
   // Waterfall  0=1k 1=5k, 2=10k 3=special
@@ -429,16 +469,22 @@ void ShowAwardLamps() {
   if (BonusX==5) { BSOS_SetLampState(L_5X_BONUS, 1); } else { BSOS_SetLampState(L_5X_BONUS, 0); }
 
   // treasure
-  if (TreasureValue==2) { BSOS_SetLampState(L_TREASURE_EB, 1); } else { BSOS_SetLampState(L_TREASURE_EB, 0); }
-  if (TreasureValue==3) { BSOS_SetLampState(L_TREASURE_SPECIAL, 1); } else { BSOS_SetLampState(L_TREASURE_SPECIAL, 0); }
-
+  if ((HuntMode) && (HuntLocation==0)) { // don't overrite hunt lamps
+    
+  } else {    
+    if (TreasureValue==2) { BSOS_SetLampState(L_TREASURE_EB, 1); } else { BSOS_SetLampState(L_TREASURE_EB, 0); }
+    if (TreasureValue==3) { BSOS_SetLampState(L_TREASURE_SPECIAL, 1); } else { BSOS_SetLampState(L_TREASURE_SPECIAL, 0); }
+  }
   // Spinner 
-  for (byte x=2; x<6; x++) {
-    if (SpinnerValue>=x) { BSOS_SetLampState(L_SPINNER_1+(x-2), 1); } else { BSOS_SetLampState(L_SPINNER_1+(x-2), 0); }
+  if ((HuntMode) && (HuntLocation==2)) { // don't overrite hunt lamps
+    
+  } else {    
+    for (byte x=2; x<6; x++) {
+      if (SpinnerValue>=x) { BSOS_SetLampState(L_SPINNER_1+(x-2), 1); } else { BSOS_SetLampState(L_SPINNER_1+(x-2), 0); }
+    }
   }
   
-  
-}
+} // end: ShowAwardLamps()
 
 // ----------------------------------------------------------------
 void ShowParagonLamps() {
@@ -448,26 +494,33 @@ void ShowParagonLamps() {
   int z;
   
   // Upper paragon letters
-  if (x&128) { // paragon lit
-    for (y=0; y<7; y++) { BSOS_SetLampState(L_SAUCER_P+y, 1,0,400); }
-    BSOS_SetLampState(L_SAUCER_SPECIAL, 1,0,400);
+  if ((HuntMode) && (HuntLocation==6)) { // don't overrite hunt lamps
     
-  } else { // light p-a-r-a-g-o-n letters
-    for (y=0; y<7; y++) { 
-      if (ParagonValue==y) { BSOS_SetLampState(L_SAUCER_P+y, 1); } else { BSOS_SetLampState(L_SAUCER_P+y, 0); }      
+  } else {    
+    if (x&128) { // paragon lit
+      for (y=0; y<7; y++) { BSOS_SetLampState(L_SAUCER_P+y, 1,0,400); }
+      BSOS_SetLampState(L_SAUCER_SPECIAL, 1,0,400);
+      
+    } else { // light p-a-r-a-g-o-n letters
+      for (y=0; y<7; y++) { 
+        if (ParagonValue==y) { BSOS_SetLampState(L_SAUCER_P+y, 1); } else { BSOS_SetLampState(L_SAUCER_P+y, 0); }      
+      }
+      if (GameMode!=GAME_MODE_SKILL_SHOT)
+        BSOS_SetLampState(L_SAUCER_SPECIAL, 0);
     }
-    if (GameMode!=GAME_MODE_SKILL_SHOT)
-      BSOS_SetLampState(L_SAUCER_SPECIAL, 0);
-
   }
 
   
   // light center paragon letters 
   // this works, bit 1 turns on lamp0, bit 2 lamp1, etc
-  if (MachineState==MACHINE_STATE_NORMAL_GAMEPLAY) {
-    for (y=0; y<7; y++) {
-      BSOS_SetLampState(L_CENTER_P+y, x & (1<<y));
-    }  
+  if ((HuntMode) && (HuntLocation==5)) { // don't overrite hunt lamps
+    
+  } else {    
+    if (MachineState==MACHINE_STATE_NORMAL_GAMEPLAY) {
+      for (y=0; y<7; y++) {
+        BSOS_SetLampState(L_CENTER_P+y, x & (1<<y));
+      }  
+    }
   }
   
   // letter timing
@@ -1473,6 +1526,7 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
       WaterfallValue++;
       if (WaterfallValue>3) WaterfallValue=3;
     }
+    if (!HuntMode) { HuntMode=true; }
   } // end: all drop targets down
   
 } // end: HandleRightDropTargetHit()
@@ -1647,14 +1701,109 @@ void setup() {
 } // END: setup()   Next runs loop()
 
 //-----------------------------------------------------------------
+void HuntSuccess() {
+  CurrentPlayerCurrentScore+=HuntReward*10;
+  CurrentPlayerCurrentScore++; // add 1 for hunts
+  // show some cool light effect and sound
+  HuntMode=false;
+  HuntStartTime=0;
+  HuntsCompleted[CurrentPlayer]++;
+  HuntReward+=1000; // let's add another 10k to hunt reward for every one completed per ball
+  BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true); // why not
+  // psfx
+}
+//-----------------------------------------------------------------
+void HuntFailed() {
+  HuntMode=false;
+  HuntStartTime=0;
+  // psfx
+}
+//-----------------------------------------------------------------
+void HuntMissed() {
+  // psfx you missed
+}
+//-----------------------------------------------------------------
+void RunHunt() {
+  if (HuntStartTime==0) {  // initialization
+    HuntStartTime=CurrentTime;
+    HuntLocation=random(7);    // set the location
+    HuntShotTime=CurrentTime;  // current shot starts now
+    HuntShotLength=HUNT_BASE_SHOT_LENGTH-(500*HuntsCompleted[CurrentPlayer]);
+    if (HuntShotLength<250) HuntShotLength=250;
+    HuntFrozen=false;
+    // psfx
+    
+    return;
+  }
+  if (CurrentTime-HuntStartTime>HUNT_MODE_LENGTH) HuntFailed();
+  else {
+    if (CurrentTime-HuntShotTime>HuntShotLength) { // move shot
+      HuntLastShot=HuntLocation; // for "you missed" sfx
+      HuntLocation++;  
+      if (HuntLocation>6) HuntLocation=0;
+      HuntFrozen=false;  // can freeze this shot
+      HuntShotTime=CurrentTime;
+    }
+  }
+} // end: RunHunt()
+
+//-----------------------------------------------------------------
+void ShowHuntLamps() {
+// animate the Challenge beast shot lamps
+  switch (HuntLocation) {
+    case 0: // inlines.
+//      BSOS_SetLampState(L_TREASURE_5X,1,0,250);
+      BSOS_SetLampState(L_TREASURE_SPECIAL,1,0,250);
+      BSOS_SetLampState(L_TREASURE_EB,1,0,250);
+      break;
+    case 1: // upper drop.
+      BSOS_SetLampState(L_10K_DROPS,1,0,250);
+      BSOS_SetLampState(L_15K_DROPS,1,0,250);
+      break;      
+    case 2: // spinner.
+      BSOS_SetLampState(L_SPINNER_1,1,0,250);
+      BSOS_SetLampState(L_SPINNER_2,1,0,250);
+      BSOS_SetLampState(L_SPINNER_3,1,0,250);            
+      BSOS_SetLampState(L_SPINNER_4,1,0,250);
+      break;
+    case 3: // lower drop.
+      BSOS_SetLampState(L_20K_DROPS,1,0,250);
+      BSOS_SetLampState(L_25K_DROPS,1,0,250); 
+      break;
+    case 4: // golden cliffs.
+      BSOS_SetLampState(L_10K_GOLDEN,1,0,250);
+      BSOS_SetLampState(L_20K_GOLDEN,1,0,250);
+      break;
+    case 5: // standup.
+      BSOS_SetLampState(L_CENTER_G,1,0,250);    
+      break;
+    case 6: // paragon saucer.
+      BSOS_SetLampState(L_SAUCER_R,1,0,250);
+      BSOS_SetLampState(L_SAUCER_AR,1,0,250);
+      BSOS_SetLampState(L_SAUCER_G,1,0,250);    
+  }
+}
+//-----------------------------------------------------------------
+boolean HuntHit(byte sw) {
+// check for hunt switch hits
+
+// NOTE need to debounce spinner so we only count first spinner hit
+  switch (HuntLocation) {
+    case(0):
+      if ((sw==SW_DROP_INLINE_A) || (sw==SW_DROP_INLINE_B) || (sw==SW_DROP_INLINE_C) || (sw==SW_DROP_INLINE_D) || (sw==SW_SAUCER_TREASURE))
+      return(true);
+      break;
+    default:
+      if (HuntSwitches[HuntLocation-1]==sw) return(true);
+  }
+  return(false);
+}
+//-----------------------------------------------------------------
 //-----------------------------------------------------------------
 //-----------------------------------------------------------------
 //-----------------------------------------------------------------
 //-----------------------------------------------------------------
 // zz
-
-
-
 
 
 
@@ -1818,9 +1967,10 @@ if (DEBUG_MESSAGES) {
     MoveParagon=true;
 
     // Initialize game-specific start-of-ball lights & variables    
-    DropTargetClearTime = 0;
+//    DropTargetClearTime = 0;
     ExtraBallCollected = false;
-
+    
+    HuntReward=HUNT_BASE_REWARD*(HuntsCompleted[playerNum]+1);
     
     // reset ball specific ladders
 
@@ -1911,6 +2061,11 @@ int NormalGamePlay() {
   }
 
   if (GameMode==GAME_MODE_SKILL_SHOT) RunSkillShotMode();
+  
+  if (HuntMode) { 
+    RunHunt();
+    ShowHuntLamps();
+  }
   
   // lamp functions
   ShowShootAgainLamp();
@@ -2205,6 +2360,9 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
   byte switchHit;
   while ( (switchHit=BSOS_PullFirstFromSwitchStack())!=SWITCH_STACK_EMPTY ) {
 
+    if (HuntMode) { if (HuntHit(switchHit)) HuntSuccess(); }
+//    if ((HuntMode) && HuntHit(switchHit)) HuntSuccess();  // does short circuit work?
+    
     switch (switchHit) {
       case SW_SELF_TEST_SWITCH:
         returnState = MACHINE_STATE_TEST_LIGHTS;
@@ -2248,6 +2406,11 @@ if (DEBUG_MESSAGES) {
         // Standup targets
         case SW_BOTTOM_STANDUP:
         case SW_TOP_STANDUP:
+          if ((HuntMode) && (!HuntFrozen)) { // handle stunning during the hunt by hitting standups
+            HuntShotTime+=HuntShotLength; 
+            HuntFrozen=true;
+            // sfx stunned beast
+          }
           CurrentPlayerCurrentScore+=10;
           AddToBonus(1);
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;
@@ -2343,6 +2506,7 @@ if (DEBUG_MESSAGES) {
           break;
           
         case SW_SPINNER:  // 100+ every 5 hits add bonus
+// do we want to debounce spinner during hunt mode?  yy        
           CurrentPlayerCurrentScore+=100;
           SpinnerValue++;
           if (SpinnerValue>5) { AddToBonus(1); SpinnerValue=1; }
@@ -2357,13 +2521,19 @@ if (DEBUG_MESSAGES) {
         case SW_RIGHT_SLING:
         case SW_LEFT_SLING:
           CurrentPlayerCurrentScore+=500;
+          HuntReward+=HUNT_SLING_VALUE;
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
           break;          
           
         case SW_BEAST_BUMPER:
+          CurrentPlayerCurrentScore+=100;
+          HuntReward+=HUNT_BEAST_VALUE;          
+          if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
+          break;        
         case SW_CENTER_BUMPER:
         case SW_RIGHT_BUMPER:
-        case SW_LEFT_BUMPER:         
+        case SW_LEFT_BUMPER:
+          HuntReward+=HUNT_POPS_VALUE;        
           CurrentPlayerCurrentScore+=100;
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
           break;  
