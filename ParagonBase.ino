@@ -2407,7 +2407,7 @@ if (DEBUG_MESSAGES) {
         case SW_BOTTOM_STANDUP:
         case SW_TOP_STANDUP:
           if ((HuntMode) && (!HuntFrozen)) { // handle stunning during the hunt by hitting standups
-            HuntShotTime+=HuntShotLength; 
+            HuntShotTime=CurrentTime+HuntShotLength; 
             HuntFrozen=true;
             // sfx stunned beast
           }
