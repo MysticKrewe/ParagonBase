@@ -1750,37 +1750,38 @@ void RunHunt() {
 //-----------------------------------------------------------------
 void ShowHuntLamps() {
 // animate the Challenge beast shot lamps
+  byte anim=10+(((((CurrentTime-HuntShotTime)/500)%8)+1)*10);
   switch (HuntLocation) {
     case 0: // inlines.
-//      BSOS_SetLampState(L_TREASURE_5X,1,0,250);
-      BSOS_SetLampState(L_TREASURE_SPECIAL,1,0,250);
-      BSOS_SetLampState(L_TREASURE_EB,1,0,250);
+//      BSOS_SetLampState(L_TREASURE_5X,1,0,anim);
+      BSOS_SetLampState(L_TREASURE_SPECIAL,1,0,anim);
+      BSOS_SetLampState(L_TREASURE_EB,1,0,anim);
       break;
     case 1: // upper drop.
-      BSOS_SetLampState(L_10K_DROPS,1,0,250);
-      BSOS_SetLampState(L_15K_DROPS,1,0,250);
+      BSOS_SetLampState(L_10K_DROPS,1,0,anim);
+      BSOS_SetLampState(L_15K_DROPS,1,0,anim);
       break;      
     case 2: // spinner.
-      BSOS_SetLampState(L_SPINNER_1,1,0,250);
-      BSOS_SetLampState(L_SPINNER_2,1,0,250);
-      BSOS_SetLampState(L_SPINNER_3,1,0,250);            
-      BSOS_SetLampState(L_SPINNER_4,1,0,250);
+      BSOS_SetLampState(L_SPINNER_1,1,0,anim);
+      BSOS_SetLampState(L_SPINNER_2,1,0,anim);
+      BSOS_SetLampState(L_SPINNER_3,1,0,anim);            
+      BSOS_SetLampState(L_SPINNER_4,1,0,anim);
       break;
     case 3: // lower drop.
-      BSOS_SetLampState(L_20K_DROPS,1,0,250);
-      BSOS_SetLampState(L_25K_DROPS,1,0,250); 
+      BSOS_SetLampState(L_20K_DROPS,1,0,anim);
+      BSOS_SetLampState(L_25K_DROPS,1,0,anim); 
       break;
     case 4: // golden cliffs.
-      BSOS_SetLampState(L_10K_GOLDEN,1,0,250);
-      BSOS_SetLampState(L_20K_GOLDEN,1,0,250);
+      BSOS_SetLampState(L_10K_GOLDEN,1,0,anim);
+      BSOS_SetLampState(L_20K_GOLDEN,1,0,anim);
       break;
     case 5: // standup.
-      BSOS_SetLampState(L_CENTER_G,1,0,250);    
+      BSOS_SetLampState(L_CENTER_G,1,0,anim);    
       break;
     case 6: // paragon saucer.
-      BSOS_SetLampState(L_SAUCER_R,1,0,250);
-      BSOS_SetLampState(L_SAUCER_AR,1,0,250);
-      BSOS_SetLampState(L_SAUCER_G,1,0,250);    
+      BSOS_SetLampState(L_SAUCER_R,1,0,anim);
+      BSOS_SetLampState(L_SAUCER_AR,1,0,anim);
+      BSOS_SetLampState(L_SAUCER_G,1,0,anim);    
   }
 }
 //-----------------------------------------------------------------
