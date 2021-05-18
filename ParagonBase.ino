@@ -1871,6 +1871,8 @@ int InitGamePlay(boolean curStateChanged) {
       GoldenSaucerMem[count]=1;          // zero player golden saucer values
       ParagonLit[count]=0;
       BonusMem[count]=0;                 // 0=none, 1=20k, 2=30k, 3=40k
+      
+      HuntsCompleted[count]=0;
           
     }
     CurrentPlayerCurrentScore=0;        // start with 0
