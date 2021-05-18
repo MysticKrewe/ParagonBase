@@ -1737,7 +1737,7 @@ void RunHunt() {
   }
   if (CurrentTime-HuntStartTime>HUNT_MODE_LENGTH) HuntFailed();
   else {
-    if (CurrentTime-HuntShotTime>HuntShotLength) { // move shot
+    if ((CurrentTime-HuntShotTime)>HuntShotLength) { // move shot
       HuntLastShot=HuntLocation; // for "you missed" sfx
       HuntLocation++;  
       if (HuntLocation>6) HuntLocation=0;
