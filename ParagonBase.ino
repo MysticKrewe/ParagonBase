@@ -2429,7 +2429,7 @@ if (DEBUG_MESSAGES) {
         // Standup targets
         case SW_BOTTOM_STANDUP:
         case SW_TOP_STANDUP:
-          if ((HuntQualified) && (!HuntMode) && (switchHit==SW_TOP_STANDUP)) {
+          if ((HuntQualified) && (!HuntMode) && (switchHit==SW_BOTTOM_STANDUP)) {
             HuntMode=true;  // start hunt mode
           } else if ((HuntMode) && (!HuntFrozen)) { // handle stunning during the hunt by hitting standups
             HuntShotTime=CurrentTime;        
