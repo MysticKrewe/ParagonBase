@@ -1530,7 +1530,10 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
       WaterfallValue++;
       if (WaterfallValue>3) WaterfallValue=3;
     }
-    if (!HuntMode) { HuntMode=true; }
+    if (!HuntMode) { 
+      HuntQualified++; 
+      // psfx hunt mode qualified
+    }  // hunt mode qualified
   } // end: all drop targets down
   
 } // end: HandleRightDropTargetHit()
