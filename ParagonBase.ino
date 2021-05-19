@@ -175,6 +175,7 @@ unsigned long BallFirstSwitchHitTime = 0;
 
 boolean BallSaveUsed = false;
 byte BallSaveNumSeconds = 0;
+byte BallSaveExtend=0;                 // added time if ball detected going through outlane while ball save on to still save it if it takes too long to hit trough
 byte BallsPerGame = 3;
 
 boolean ExtraBallCollected = false;
@@ -431,8 +432,8 @@ void ShowGoldenSaucerLamps() {
 void ShowShootAgainLamp() {
   // turn same player lamps on/off based on ball save time
   // Note: ball save starts once a target has been hit
-  if (!BallSaveUsed && BallSaveNumSeconds>0 && (CurrentTime-BallFirstSwitchHitTime)<((unsigned long)(BallSaveNumSeconds-1)*1000)) {
-    unsigned long msRemaining = ((unsigned long)(BallSaveNumSeconds-1)*1000)-(CurrentTime-BallFirstSwitchHitTime);
+  if (!BallSaveUsed && BallSaveNumSeconds>0 && (CurrentTime-BallFirstSwitchHitTime)<((unsigned long)(BallSaveNumSeconds-1+BallSaveExtend)*1000)) {
+    unsigned long msRemaining = ((unsigned long)(BallSaveNumSeconds-1+BallSaveExtend)*1000)-(CurrentTime-BallFirstSwitchHitTime);
     BSOS_SetLampState(L_SHOOT_AGAIN, 1, 0, (msRemaining<1000)?100:500);
     BSOS_SetLampState(L_BB_SHOOT_AGAIN, 1, 0, (msRemaining<1000)?100:500);    
   } else { // turn off
@@ -1979,6 +1980,7 @@ if (DEBUG_MESSAGES) {
     ShowBonusOnTree(1);
     BonusX = 1;
     BallSaveUsed = false;
+    BallSaveExtend=0;
     BallTimeInTrough = 0;
     NumTiltWarnings = 0;
     LastTiltWarningTime = 0;
@@ -2111,11 +2113,12 @@ int NormalGamePlay() {
         
         // if we haven't used the ball save, and we're under the time limit, then save the ball
         if (  !BallSaveUsed && 
-              ((CurrentTime-BallFirstSwitchHitTime)/1000)<((unsigned long)BallSaveNumSeconds) ) {
+              ((CurrentTime-BallFirstSwitchHitTime)/1000)<((unsigned long)(BallSaveNumSeconds+BallSaveExtend)) ) {
         
           BSOS_PushToTimedSolenoidStack(SOL_OUTHOLE, 4, CurrentTime + 100);
           if (BallFirstSwitchHitTime>0) {
             BallSaveUsed = true;
+            BallSaveExtend=0; // turn off outlane protection
             BSOS_SetLampState(L_SHOOT_AGAIN, 0);
             BSOS_SetLampState(L_BB_SHOOT_AGAIN, 0);
             GameMode=GAME_MODE_UNSTRUCTURED_PLAY;  // turn off any skill shot mode
@@ -2472,6 +2475,7 @@ if (DEBUG_MESSAGES) {
         // lanes
         case SW_RIGHT_OUTLANE:
           CurrentPlayerCurrentScore+=1000;
+          if (  !BallSaveUsed && ((CurrentTime-BallFirstSwitchHitTime)/1000)<((unsigned long)BallSaveNumSeconds) ) {  BallSaveExtend=3; } // add 3 seconds to ball save just in case
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
           break;
         case SW_RIGHT_INLANE:
