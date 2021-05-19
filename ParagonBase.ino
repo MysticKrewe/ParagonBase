@@ -520,7 +520,7 @@ void ShowParagonLamps() {
   } else {    
     if (MachineState==MACHINE_STATE_NORMAL_GAMEPLAY) {
       for (y=0; y<7; y++) {
-        if ((HuntQualified) && (y==4)) { 
+        if ((HuntQualified) && (y==4) && (!HuntMode)) { 
           BSOS_SetLampState(L_CENTER_G,1,0,100); // light qualification lamp        
         } else { BSOS_SetLampState(L_CENTER_P+y, x & (1<<y)); }
       }  
@@ -2429,7 +2429,7 @@ if (DEBUG_MESSAGES) {
         // Standup targets
         case SW_BOTTOM_STANDUP:
         case SW_TOP_STANDUP:
-          if ((HuntQualified) && (!HuntMode) && (switchHit==SW_BOTTOM_STANDUP)) {
+          if ((HuntQualified) && (!HuntMode) && (switchHit==SW_TOP_STANDUP)) {
             HuntMode=true;  // start hunt mode
           } else if ((HuntMode) && (!HuntFrozen)) { // handle stunning during the hunt by hitting standups
             HuntShotTime=CurrentTime;        
