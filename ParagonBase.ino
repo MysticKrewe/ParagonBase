@@ -394,7 +394,7 @@ void AddToBonus(byte bonusAddition) {
 //
 ////////////////////////////////////////////////////////////////////////////
 #if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
-byte CurrentBackgroundSong = SOUND_EFFECT_NONE;
+byte CurrentBackgroundSong = SFX_NONE;
 #endif
 
 
@@ -403,8 +403,8 @@ void PlayBackgroundSong(byte songNum) {
 #if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
   if (MusicLevel > 1) {
     if (CurrentBackgroundSong != songNum) {
-      if (CurrentBackgroundSong != SOUND_EFFECT_NONE) wTrig.trackStop(CurrentBackgroundSong);
-      if (songNum != SOUND_EFFECT_NONE) {
+      if (CurrentBackgroundSong != SFX_NONE) wTrig.trackStop(CurrentBackgroundSong);
+      if (songNum != SFX_NONE) {
 #ifdef USE_WAV_TRIGGER_1p3
         wTrig.trackPlayPoly(songNum, true);
 #else
@@ -434,7 +434,7 @@ void PlaySoundEffect(int soundEffectNum) { // changed from default byte to int
 #if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
 
 #ifndef USE_WAV_TRIGGER_1p3
-  if (  soundEffectNum == SFX_SPINNER ) wTrig.trackStop(soundEffectNum);
+//  if (  soundEffectNum == SFX_SPINNER ) wTrig.trackStop(soundEffectNum);
 #endif
   wTrig.trackPlayPoly(soundEffectNum);
 #endif
@@ -1242,13 +1242,6 @@ int RunSelfTest(int curState, boolean curStateChanged) {
   return returnState;
 } // end: RunSelfTest()
 //-----------------------------------------------------------------
-
-
-
-
-
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////
