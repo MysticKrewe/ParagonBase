@@ -1604,7 +1604,7 @@ void HandleParagonHit() {
     
   } else {
     ParagonLit[CurrentPlayer]=(ParagonLit[CurrentPlayer] |(1 << (ParagonValue))); // turn on
-//    PlaySFX(SFX_P+ParagonValue,1);    // not working
+    PlaySFX(SFX_P+ParagonValue,1);    // not working
     AddToBonus(1);
     // play special sound
   }
@@ -1612,7 +1612,7 @@ void HandleParagonHit() {
     ParagonLit[CurrentPlayer]=255; // special lit
     // play special sound
   }
-  PlaySFX(SFX_P+ParagonValue,1);  
+  
   BSOS_PushToTimedSolenoidStack(SOL_SAUCER_PARAGON, 5, CurrentTime + SAUCER_PARAGON_DURATION);   
 }
 //-----------------------------------------------------------------
@@ -2525,6 +2525,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
           break;
         case SW_RIGHT_INLANE:
           CurrentPlayerCurrentScore+=1000;
+          PlaySFX(SFX_RIGHT_INLANE,SFXC_RIGHT_INLANE);          
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
           break;          
           
@@ -2552,11 +2553,13 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
         case SW_TOP_ROLLOVER:
           CurrentPlayerCurrentScore+=500;
           AddToBonus(1);
+          PlaySFX(SFX_ROLLOVER_TOP,SFXC_ROLLOVER_TOP);          
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
           break;          
           
         case SW_500_REBOUND:
           CurrentPlayerCurrentScore+=500;
+          PlaySFX(SFX_TOP_REBOUND,SFXC_TOP_REBOUND);          
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
           break;
           
@@ -2594,8 +2597,9 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
           break;
           
         case SW_RIGHT_SLING:
+          PlaySFX(SFX_SLING_RIGHT,SFXC_SLING_RIGHT);        
         case SW_LEFT_SLING:
-  PlaySFX(SFX_P+ParagonValue);          
+          if (switchHit==SW_LEFT_SLING) PlaySFX(SFX_SLING_LEFT,SFXC_SLING_LEFT);           
           CurrentPlayerCurrentScore+=500;
           HuntReward+=HUNT_SLING_VALUE;
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        

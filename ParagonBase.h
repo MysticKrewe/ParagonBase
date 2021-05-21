@@ -190,17 +190,17 @@ struct PlayfieldAndCabinetSwitch TriggeredSwitches[] = {
 
 // ---------------------- sound effects
 
-#define SFX_2X                       500
+#define SFX_2X                       500 // +
 #define SFXC_2X                      3
 
-#define SFX_3X                       510
+#define SFX_3X                       510 // +
 #define SFXC_3X                      3
 
 #define SFX_5X                       515  // 5x +
 #define SFXC_5X                      2
 
-#define SFX_GC2K                     520   // golden cliffs awards - sound address SFX_2K+(value*5)
-#define SFXC_GC2K                    3
+#define SFX_GC2K                     520  // +golden cliffs awards - sound address  SFX_2K+(value*5)
+#define SFXC_GC2K                    1
 #define SFX_GC4K                     525
 #define SFXC_GC4K                    2
 #define SFX_GC6K                     530
@@ -275,9 +275,9 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFX_HUNTSUCCESS              620
 #define SFXC_HUNTSUCCESS             5
 
-#define SFX_SLING_RIGHT              420
+#define SFX_SLING_RIGHT              420  // +
 #define SFXC_SLING_RIGHT             1
-#define SFX_SLING_LEFT               430
+#define SFX_SLING_LEFT               430  // +
 #define SFXC_SLING_LEFT              1
 
 #define SFX_SKILLSHOT                630  // generic skill shot
@@ -296,25 +296,25 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFX_TILT                     230  // tilt out 
 #define SFXC_TILT                    2
 
-#define SFX_POP_LEFT                 475
+#define SFX_POP_LEFT                 475  // +
 #define SFXC_POP_LEFT                4
 
-#define SFX_POP_RIGHT                455
+#define SFX_POP_RIGHT                455  // +
 #define SFXC_POP_RIGHT               4
 
-#define SFX_POP_CENTER               450
+#define SFX_POP_CENTER               450  // +
 #define SFXC_POP_CENTER              4
 
-#define SFX_STANDUP_TOP              380
+#define SFX_STANDUP_TOP              380  // +
 #define SFXC_STANDUP_TOP             1
 
-#define SFX_STANDUP_BOTTOM           360
+#define SFX_STANDUP_BOTTOM           360  // +
 #define SFXC_STANDUP_BOTTOM          2
 
-#define SFX_TOP_REBOUND              350  // switch upper left rebound
+#define SFX_TOP_REBOUND              350  // + switch upper left rebound
 #define SFXC_TOP_REBOUND             1
 
-#define SFX_WELCOME                  1    // when game is powered up
+#define SFX_WELCOME                  1    // + when game is powered up
 #define SFXC_WELCOME                 4
 
 #define SFX_TIMEOUT                  650  // 10s left in beast mode
@@ -326,8 +326,14 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFX_BEASTMOVE                670  // when beast shot moves
 #define SFXC_BEASTMOVE               1
 
-#define SFX_RIGHT_OUTLANE            310
+#define SFX_RIGHT_OUTLANE            310  // +
 #define SFXC_RIGHT_OUTLANE           1
+
+#define SFX_ROLLOVER_TOP             340  // +
+#define SFXC_ROLLOVER_TOP            0
+
+#define SFX_RIGHT_INLANE             320  // +
+#define SFXC_RIGHT_INLANE            0
 
 /*
 #define SFX_HUNTSTART
@@ -337,6 +343,20 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFXC_HUNTSTUN
 
 
+#define SFX_
+#define SFXC_
+#define SFX_
+#define SFXC_
+#define SFX_
+#define SFXC_
+#define SFX_
+#define SFXC_
+#define SFX_
+#define SFXC_
+#define SFX_
+#define SFXC_
+#define SFX_
+#define SFXC_
 #define SFX_
 #define SFXC_
 #define SFX_
