@@ -1604,7 +1604,7 @@ void HandleParagonHit() {
     
   } else {
     ParagonLit[CurrentPlayer]=(ParagonLit[CurrentPlayer] |(1 << (ParagonValue))); // turn on
-    PlaySFX(SFX_P+ParagonValue,1);    
+//    PlaySFX(SFX_P+ParagonValue,1);    // not working
     AddToBonus(1);
     // play special sound
   }
@@ -1612,7 +1612,7 @@ void HandleParagonHit() {
     ParagonLit[CurrentPlayer]=255; // special lit
     // play special sound
   }
-  
+  PlaySFX(SFX_P+ParagonValue,1);  
   BSOS_PushToTimedSolenoidStack(SOL_SAUCER_PARAGON, 5, CurrentTime + SAUCER_PARAGON_DURATION);   
 }
 //-----------------------------------------------------------------
@@ -2595,6 +2595,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
           
         case SW_RIGHT_SLING:
         case SW_LEFT_SLING:
+  PlaySFX(SFX_P+ParagonValue);          
           CurrentPlayerCurrentScore+=500;
           HuntReward+=HUNT_SLING_VALUE;
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
