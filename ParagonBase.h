@@ -202,7 +202,7 @@ struct PlayfieldAndCabinetSwitch TriggeredSwitches[] = {
 #define SFX_GC2K                     520   // golden cliffs awards - sound address SFX_2K+(value*5)
 #define SFXC_GC2K                    3
 #define SFX_GC4K                     525
-#define SFXC_GC4K                    3
+#define SFXC_GC4K                    2
 #define SFX_GC6K                     530
 #define SFXC_GC6K                    1
 #define SFX_GC8K                     535

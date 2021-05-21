@@ -1604,7 +1604,7 @@ void HandleParagonHit() {
     
   } else {
     ParagonLit[CurrentPlayer]=(ParagonLit[CurrentPlayer] |(1 << (ParagonValue))); // turn on
-    PlaySFX(SFX_P+ParagonValue);    
+    PlaySFX(SFX_P+ParagonValue,1);    
     AddToBonus(1);
     // play special sound
   }
