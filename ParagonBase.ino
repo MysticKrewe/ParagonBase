@@ -446,6 +446,7 @@ unsigned long NextSFXTime=0;  // time to check for delayed sound
 int NextSFX=0;                // next sound effect number to play
 
 void PlaySFX(int soundNum, byte soundOffset=1, int msDelay=0) {
+  if (soundOffset==0) return; // remove this once all sound fx are installed
   if (soundOffset>1) { soundOffset=random(soundOffset); } else { soundOffset=0; }
   if (msDelay>0) { 
     // NOTE: This doesn't check to see if there's an unplayed sound in the queue, it overrides it - we assume this is unlikely to happen
@@ -2121,6 +2122,7 @@ int NormalGamePlay() {
   ShowAwardLamps();  // waterfall and drops
   ShowParagonLamps();
 
+  CheckSFX();
   
 // new
   ShowPlayerScores(CurrentPlayer, (BallFirstSwitchHitTime==0)?true:false, (BallFirstSwitchHitTime>0 && ((CurrentTime-LastTimeScoreChanged)>2000))?true:false);  
@@ -2405,8 +2407,8 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
     #endif
   } else {
     returnState = MACHINE_STATE_ATTRACT;
-  }
-
+  } 
+  
   // ============ SWITCH HITS ========================================================
   byte switchHit;
   while ( (switchHit=BSOS_PullFirstFromSwitchStack())!=SWITCH_STACK_EMPTY ) {
@@ -2445,7 +2447,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
         case SW_DROP_TOP:
         case SW_DROP_MIDDLE:
         case SW_DROP_BOTTOM:
-
+          PlaySFX(SFX_DROPS,SFXC_DROPS); 
           HandleRightDropTargetHit(switchHit,scoreMultiplier);
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;
           break;      
@@ -2586,12 +2588,14 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
         case SW_SPINNER:  // 100+ every 5 hits add bonus
 // do we want to debounce spinner during hunt mode?  yy        
           CurrentPlayerCurrentScore+=100;
+          PlaySFX(SFX_SPINNER,SFXC_SPINNER);          
           SpinnerValue++;
           if (SpinnerValue>5) { AddToBonus(1); SpinnerValue=1; }
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
           break;       
 
         case SW_STAR_ROLLOVER:  // also rebound behind right drops
+          PlaySFX(SFX_ROLLOVER_TOP,SFXC_ROLLOVER_TOP);        
           CurrentPlayerCurrentScore+=50;
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
           break;
@@ -2612,9 +2616,9 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
           break;        
         case SW_CENTER_BUMPER:
+          PlaySFX(SFX_POP_CENTER,SFXC_POP_CENTER);        
         case SW_RIGHT_BUMPER:
         case SW_LEFT_BUMPER:
-          if (switchHit==SW_CENTER_BUMPER) PlaySFX(SFX_POP_CENTER,SFXC_POP_CENTER);
           if (switchHit==SW_LEFT_BUMPER) PlaySFX(SFX_POP_LEFT,SFXC_POP_LEFT);
           if (switchHit==SW_RIGHT_BUMPER) PlaySFX(SFX_POP_RIGHT,SFXC_POP_RIGHT);
           
