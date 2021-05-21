@@ -252,7 +252,7 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFXC_PARAGON                 2
 
 #define SFX_BALLSAVED                40   // ball save activated
-#define SFXC_BALLSAVED               2
+#define SFXC_BALLSAVED               4
 
 #define SFX_POP_BEAST                440  // beast pop +
 #define SFXC_POP_BEAST               6
@@ -272,7 +272,7 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFX_COINDROP                 10
 #define SFXC_COINDROP                2
 
-#define SFX_HUNTSUCCESS              620
+#define SFX_HUNTSUCCESS              620  // +
 #define SFXC_HUNTSUCCESS             5
 
 #define SFX_SLING_RIGHT              420  // +
@@ -320,7 +320,7 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFX_TIMEOUT                  650  // 10s left in beast mode
 #define SFXC_TIMEOUT                 5
 
-#define SFX_HUNTFAIL                 660  // when hunt times out
+#define SFX_HUNTFAIL                 660  // + when hunt times out
 #define SFXC_HUNTFAIL                4
 
 #define SFX_BEASTMOVE                670  // when beast shot moves
@@ -341,18 +341,26 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFX_DROPS                    300  // drop targets
 #define SFXC_DROPS                   0
 
+#define SFX_HUNTQUALIFIED            690
+#define SFXC_HUNTQUALIFIED           0
+
+#define SFX_HUNTSTART                675
+#define SFXC_HUNTSTART               0
+
+#define SFX_PLAYERUP                 130  // 131=player 2, 132=playe 3, 133=player 4
+
+
 /*
-#define SFX_HUNTSTART
-#define SFXC_HUNTSTART
+
 
 #define SFX_HUNTSTUN
 #define SFXC_HUNTSTUN
 
 
 
-#define SFX_
-#define SFXC_
-#define SFX_
+
+
+#define SFX_PLAYERUP
 #define SFXC_
 #define SFX_
 #define SFXC_

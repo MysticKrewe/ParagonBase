@@ -1557,7 +1557,7 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
     }
     if (!HuntMode) { 
       HuntQualified++; 
-      // psfx hunt mode qualified
+      PlaySFX(SFX_HUNTQUALIFIED,SFXC_HUNTQUALIFIED);
     }  // hunt mode qualified
   } // end: all drop targets down
   
@@ -1746,7 +1746,7 @@ void HuntSuccess() {
   HuntQualified=0;
   HuntsCompleted[CurrentPlayer]++;
   HuntsQualified[CurrentPlayer]=0;
-  // psfx  
+  PlaySFX(SFX_HUNTSUCCESS,SFXC_HUNTSUCCESS);
   HuntReward+=1000; // let's add another 10k (*10) to hunt reward for every one completed per ball
 
 }
@@ -1756,6 +1756,7 @@ void HuntFailed() {
   HuntStartTime=0;
   HuntsQualified[CurrentPlayer]=0;
   HuntQualified=0;  
+  PlaySFX(SFX_HUNTFAIL,SFXC_HUNTFAIL,500);  
   // psfx
 }
 //-----------------------------------------------------------------
@@ -1771,7 +1772,7 @@ void RunHunt() {
     HuntShotLength=HUNT_BASE_SHOT_LENGTH-(500*HuntsCompleted[CurrentPlayer]);
     if (HuntShotLength<500) HuntShotLength=500;
     HuntFrozen=false;
-    // psfx
+    PlaySFX(SFX_HUNTSTART,SFXC_HUNTSTART);      
     
     return;
   }
@@ -1779,6 +1780,7 @@ void RunHunt() {
   else {
     if ((CurrentTime-HuntShotTime)>HuntShotLength) { // move shot
       HuntLastShot=HuntLocation; // for "you missed" sfx
+      PlaySFX(SFX_BEASTMOVE,SFXC_BEASTMOVE);        
       HuntLocation++;  
       if (HuntLocation>6) HuntLocation=0;
       HuntFrozen=false;  // can freeze this shot
@@ -2019,6 +2021,9 @@ if (DEBUG_MESSAGES) {
     HuntReward=HUNT_BASE_REWARD*(HuntsCompleted[playerNum]+1);
     HuntQualified=HuntsQualified[playerNum]; // carry over hunt qualification if available
     
+//    PlaySFX(SFX_PLAYERUP+playerNum,1,500);  
+    if (ballNum==1) PlaySFX(SFX_START_BALL1,SFXC_START_BALL1);  
+    
     // reset ball specific ladders
 
     WaterfallValue=0;
@@ -2122,7 +2127,7 @@ int NormalGamePlay() {
   ShowAwardLamps();  // waterfall and drops
   ShowParagonLamps();
 
-  CheckSFX();
+  CheckSFX();  // check for any delayed sound effects
   
 // new
   ShowPlayerScores(CurrentPlayer, (BallFirstSwitchHitTime==0)?true:false, (BallFirstSwitchHitTime>0 && ((CurrentTime-LastTimeScoreChanged)>2000))?true:false);  
@@ -2141,7 +2146,9 @@ int NormalGamePlay() {
         // if we haven't used the ball save, and we're under the time limit, then save the ball
         if (  !BallSaveUsed && 
               ((CurrentTime-BallFirstSwitchHitTime)/1000)<((unsigned long)(BallSaveNumSeconds+BallSaveExtend)) ) {
-        
+
+          PlaySFX(SFX_BALLSAVED,SFXC_BALLSAVED);
+              
           BSOS_PushToTimedSolenoidStack(SOL_OUTHOLE, 4, CurrentTime + 100);
           if (BallFirstSwitchHitTime>0) {
             BallSaveUsed = true;
