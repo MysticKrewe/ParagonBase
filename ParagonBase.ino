@@ -1576,6 +1576,7 @@ void HandleGoldenSaucerHit() {
   }
 
   CurrentPlayerCurrentScore+=GoldenSaucerValue*2000;
+  PlaySFX(SFX_GC2K+((GoldenSaucerValue-1)*5),GCcounts[GoldenSaucerValue-1]);  
   GoldenSaucerValue++;
   if (GoldenSaucerValue>10) { GoldenSaucerValue=10; } 
  
@@ -1590,7 +1591,7 @@ void HandleParagonHit() {
       SkillSweepPeriod-(SkillShotsCollected[CurrentPlayer]*SKILL_SHOT_DECREASE);      
       AwardSpecial();
       //CurrentPlayerCurrentScore+=GoldenSaucerValue*20000;
-      PlaySoundEffect(SFX_SKILL2); // play skill shot sound
+      PlaySFX(SFX_SKILLSHOT,SFXC_SKILLSHOT); // play skill shot sound
       GameMode=GAME_MODE_UNSTRUCTURED_PLAY;      
     }
   }  
@@ -1608,7 +1609,7 @@ void HandleParagonHit() {
     // play special sound
   }
   if ((ParagonLit[CurrentPlayer]&127)==127) { // Paragon lit
-    ParagonLit[CurrentPlayer]=255; // special list
+    ParagonLit[CurrentPlayer]=255; // special lit
     // play special sound
   }
   
@@ -2608,6 +2609,10 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
         case SW_CENTER_BUMPER:
         case SW_RIGHT_BUMPER:
         case SW_LEFT_BUMPER:
+          if (switchHit==SW_CENTER_BUMPER) PlaySFX(SFX_POP_CENTER,SFXC_POP_CENTER);
+          if (switchHit==SW_LEFT_BUMPER) PlaySFX(SFX_POP_LEFT,SFXC_POP_LEFT);
+          if (switchHit==SW_RIGHT_BUMPER) PlaySFX(SFX_POP_RIGHT,SFXC_POP_RIGHT);
+          
           HuntReward+=HUNT_POPS_VALUE;        
           CurrentPlayerCurrentScore+=100;
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
