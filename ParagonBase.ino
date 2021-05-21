@@ -2582,6 +2582,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
           
         case SW_WATERFALL_ROLLOVER: // 1k, 5k, 10k, special, back to 10k stay per ball
           // waterfall value advanced by right 3-bank drops
+          PlaySFX(SFX_WATERFALL,SFXC_WATERFALL);
           AddToBonus(1);
           switch (WaterfallValue) {
             case 0:
