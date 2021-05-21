@@ -339,7 +339,7 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFXC_RIGHT_INLANE            0
 
 #define SFX_SPINNER                  400
-#define SFXC_SPINNER                 0
+#define SFXC_SPINNER                 3
 
 #define SFX_DROPS                    300  // drop targets
 #define SFXC_DROPS                   0
