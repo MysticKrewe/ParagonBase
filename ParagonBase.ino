@@ -388,6 +388,89 @@ void AddToBonus(byte bonusAddition) {
   if (Bonus > MAX_DISPLAY_BONUS) Bonus = MAX_DISPLAY_BONUS;
 }
 
+////////////////////////////////////////////////////////////////////////////
+//
+//  Audio Output functions
+//
+////////////////////////////////////////////////////////////////////////////
+#if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
+byte CurrentBackgroundSong = SOUND_EFFECT_NONE;
+#endif
+
+
+void PlayBackgroundSong(byte songNum) {
+
+#if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
+  if (MusicLevel > 1) {
+    if (CurrentBackgroundSong != songNum) {
+      if (CurrentBackgroundSong != SOUND_EFFECT_NONE) wTrig.trackStop(CurrentBackgroundSong);
+      if (songNum != SOUND_EFFECT_NONE) {
+#ifdef USE_WAV_TRIGGER_1p3
+        wTrig.trackPlayPoly(songNum, true);
+#else
+        wTrig.trackPlayPoly(songNum);
+#endif
+        wTrig.trackLoop(songNum, true);
+        wTrig.trackGain(songNum, -4);
+      }
+      CurrentBackgroundSong = songNum;
+    }
+  }
+#else
+  byte test = songNum;
+  songNum = test;
+#endif
+
+}
+
+//-----------------------------------------------------------------
+
+//unsigned long NextSoundEffectTime = 0;  // not used
+
+void PlaySoundEffect(int soundEffectNum) { // changed from default byte to int
+
+  if (MusicLevel == 0) return;
+
+#if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
+
+#ifndef USE_WAV_TRIGGER_1p3
+  if (  soundEffectNum == SFX_SPINNER ) wTrig.trackStop(soundEffectNum);
+#endif
+  wTrig.trackPlayPoly(soundEffectNum);
+#endif
+
+}
+//-----------------------------------------------------------------
+
+unsigned long NextSFXTime=0;  // time to check for delayed sound
+int NextSFX=0;                // next sound effect number to play
+
+void PlaySFX(int soundNum, byte soundOffset=1, int msDelay=0) {
+  if (soundOffset>1) { soundOffset=random(soundOffset); } else { soundOffset=0; }
+  if (msDelay>0) { 
+    // NOTE: This doesn't check to see if there's an unplayed sound in the queue, it overrides it - we assume this is unlikely to happen
+    NextSFX=soundNum+soundOffset;
+    NextSFXTime=CurrentTime+msDelay;
+    return;
+  }
+  PlaySoundEffect(soundNum+soundOffset);
+}
+//-----------------------------------------------------------------
+
+void CheckSFX() {
+  // check to see if there is a sound in the queue to play
+  // this should be in main game loop
+  if (NextSFXTime) {
+    if (CurrentTime>=NextSFXTime) {
+      PlaySFX(NextSFX);
+      NextSFXTime=0;
+    }
+  }
+}
+
+//-----------------------------------------------------------------
+
+
 
 //===============================================================================
 ////////////////////////////////////////////////////////////////////////////
@@ -846,6 +929,7 @@ void AwardExtraBall() {
 
   // add additional checks and sound  
   SamePlayerShootsAgain=true;
+  PlaySFX(SFX_EXTRABALL,SFXC_EXTRABALL,500);  
 
 }
 //-----------------------------------------------------------------
@@ -856,7 +940,7 @@ void AwardSpecial() {
   } else {
     AddSpecialCredit();
   }
-
+  PlaySFX(SFX_SPECIAL,SFXC_SPECIAL,500);
   BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true);
 
 }
@@ -1159,60 +1243,6 @@ int RunSelfTest(int curState, boolean curStateChanged) {
 } // end: RunSelfTest()
 //-----------------------------------------------------------------
 
-
-////////////////////////////////////////////////////////////////////////////
-//
-//  Audio Output functions
-//
-////////////////////////////////////////////////////////////////////////////
-#if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
-byte CurrentBackgroundSong = SOUND_EFFECT_NONE;
-#endif
-
-
-void PlayBackgroundSong(byte songNum) {
-
-#if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
-  if (MusicLevel > 1) {
-    if (CurrentBackgroundSong != songNum) {
-      if (CurrentBackgroundSong != SOUND_EFFECT_NONE) wTrig.trackStop(CurrentBackgroundSong);
-      if (songNum != SOUND_EFFECT_NONE) {
-#ifdef USE_WAV_TRIGGER_1p3
-        wTrig.trackPlayPoly(songNum, true);
-#else
-        wTrig.trackPlayPoly(songNum);
-#endif
-        wTrig.trackLoop(songNum, true);
-        wTrig.trackGain(songNum, -4);
-      }
-      CurrentBackgroundSong = songNum;
-    }
-  }
-#else
-  byte test = songNum;
-  songNum = test;
-#endif
-
-}
-
-//-----------------------------------------------------------------
-
-unsigned long NextSoundEffectTime = 0;
-
-void PlaySoundEffect(byte soundEffectNum) {
-
-  if (MusicLevel == 0) return;
-
-#if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
-
-#ifndef USE_WAV_TRIGGER_1p3
-  if (  soundEffectNum == SFX_SPINNER ) wTrig.trackStop(soundEffectNum);
-#endif
-  wTrig.trackPlayPoly(soundEffectNum);
-#endif
-
-}
-//-----------------------------------------------------------------
 
 
 
@@ -1579,9 +1609,8 @@ void HandleParagonHit() {
     ParagonLit[CurrentPlayer]=0;  // reset this
     
   } else {
-//    ParagonLit[CurrentPlayer]=(ParagonLit[CurrentPlayer] & ~(1 << (ParagonValue - 1))); // turn off 
     ParagonLit[CurrentPlayer]=(ParagonLit[CurrentPlayer] |(1 << (ParagonValue))); // turn on
-    
+    PlaySFX(SFX_P+ParagonValue);    
     AddToBonus(1);
     // play special sound
   }
@@ -1598,14 +1627,16 @@ void HandleTreasureSaucerHit() {
       case 1:
         CurrentPlayerCurrentScore+=5000;
         BonusX=5;
+        PlaySFX(SFX_5X,SFXC_5X,1500);        
         break;
       case 2:
-        AwardExtraBall();
+        AwardExtraBall();        
         break;
       case 3:
         AwardSpecial();
         reset_inline();
   }
+  PlaySFX(SFX_SAUCER_TREASURE,SFXC_SAUCER_TREASURE);
   TreasureValue++;
   if (TreasureValue>3) TreasureValue=1;
  
@@ -2397,6 +2428,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
       case SW_COIN_1:
       case SW_COIN_2:
       case SW_COIN_3:
+        PlaySFX(SFX_COINDROP,SFXC_COINDROP);
         AddCredit();
         BSOS_SetDisplayCredits(Credits, true);
         break;
@@ -2419,27 +2451,34 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
         case SW_DROP_TOP:
         case SW_DROP_MIDDLE:
         case SW_DROP_BOTTOM:
-/*        
-if (DEBUG_MESSAGES) { 
-      char buf[128];
-      sprintf(buf, "Right Drop (%d) [%d]\n\r", switchHit,CurrentDropTargetsValid);
-      Serial.write(buf);
-} */    
+
           HandleRightDropTargetHit(switchHit,scoreMultiplier);
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;
           break;      
           
         // Standup targets
         case SW_BOTTOM_STANDUP:
-        case SW_TOP_STANDUP:
-          if ((HuntQualified) && (!HuntMode) && (switchHit==SW_BOTTOM_STANDUP)) {
+          PlaySFX(SFX_STANDUP_BOTTOM,SFXC_STANDUP_BOTTOM);        
+          if ((HuntQualified) && (!HuntMode)) {
             HuntMode=true;  // start hunt mode
+//            PlaySFX(SFX_HUNTSTART,SFXC_HUNTSTART,500); // play hunt begins
           } else if ((HuntMode) && (!HuntFrozen)) { // handle stunning during the hunt by hitting standups
             HuntShotTime=CurrentTime;        
             HuntFrozen=true;
             // sfx stunned beast
+//            PlaySFX(SFX_HUNTSTUN,SFXC_HUNTSTUN,250);            
           }
- 
+          CurrentPlayerCurrentScore+=10;
+          AddToBonus(1);
+          if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
+          break;
+        case SW_TOP_STANDUP:       
+          if ((HuntMode) && (!HuntFrozen)) { // handle stunning during the hunt by hitting standups
+            HuntShotTime=CurrentTime;        
+            HuntFrozen=true;
+//            PlaySFX(SFX_HUNTSTUN,SFXC_HUNTSTUN,250);             
+          }
+          PlaySFX(SFX_STANDUP_TOP,SFXC_STANDUP_TOP); 
           CurrentPlayerCurrentScore+=10;
           AddToBonus(1);
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;
@@ -2447,35 +2486,47 @@ if (DEBUG_MESSAGES) {
           
         // inline drops
         // NOTE - not keeping track of target masks because really doesn't matter they have to be hit in sequential order anyway
-        case SW_DROP_INLINE_A:
+        case SW_DROP_INLINE_A:        
           CurrentPlayerCurrentScore+=1000;
           AddToBonus(1);
+          PlaySFX(SFX_INLINES,SFXC_INLINES);          
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;
           break;
         case SW_DROP_INLINE_B:
           CurrentPlayerCurrentScore+=1000;
           AddToBonus(1);
+          PlaySFX(SFX_INLINES,SFXC_INLINES);           
           // no BallFirstSwitchHitTime because shouldn't be hittable 
           break;        
         case SW_DROP_INLINE_C: // 2x
           if (BonusX>4) { // already maxxed multiplier
             CurrentPlayerCurrentScore+=1000;
             AddToBonus(1);            
-          } else { BonusX=2; }
+            PlaySFX(SFX_INLINES,SFXC_INLINES);             
+          } else { BonusX=2; 
+            PlaySFX(SFX_2X,SFXC_2X);           
+          }
           // no BallFirstSwitchHitTime because shouldn't be hittable 
           break;                
         case SW_DROP_INLINE_D: // 3x
           if (BonusX>4) { // already maxxed multiplier
             CurrentPlayerCurrentScore+=1000;
-            AddToBonus(1);            
-          } else { BonusX=3; }
+            AddToBonus(1);
+            PlaySFX(SFX_INLINES,SFXC_INLINES);             
+          } else { BonusX=3; 
+            PlaySFX(SFX_3X,SFXC_3X);           
+          }
           // no BallFirstSwitchHitTime because shouldn't be hittable 
           break;   
 
         // lanes
         case SW_RIGHT_OUTLANE:
           CurrentPlayerCurrentScore+=1000;
-          if (  !BallSaveUsed && ((CurrentTime-BallFirstSwitchHitTime)/1000)<((unsigned long)BallSaveNumSeconds) ) {  BallSaveExtend=3; } // add 3 seconds to ball save just in case
+          if ((  !BallSaveUsed && ((CurrentTime-BallFirstSwitchHitTime)/1000)<((unsigned long)BallSaveNumSeconds)) ) {  
+            BallSaveExtend=3; 
+          } else {
+            PlaySFX(SFX_RIGHT_OUTLANE,SFXC_RIGHT_OUTLANE);             
+          }            // add 3 seconds to ball save just in case
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
           break;
         case SW_RIGHT_INLANE:
@@ -2557,7 +2608,8 @@ if (DEBUG_MESSAGES) {
           
         case SW_BEAST_BUMPER:
           CurrentPlayerCurrentScore+=100;
-          HuntReward+=HUNT_BEAST_VALUE;          
+          HuntReward+=HUNT_BEAST_VALUE;     
+          PlaySFX(SFX_POP_BEAST,SFXC_POP_BEAST);
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
           break;        
         case SW_CENTER_BUMPER:
