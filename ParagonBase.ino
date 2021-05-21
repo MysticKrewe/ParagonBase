@@ -1877,11 +1877,11 @@ int InitGamePlay(boolean curStateChanged) {
 
   
   if (curStateChanged) { // run once/first-time    
-
+  
   if (DEBUG_MESSAGES) {
     Serial.write("InitGamePlay - state changed, runonce\n\r");
   }    
-  
+    randomSeed(millis());
 #if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
     wTrig.stopAllTracks();
     wTrig.samplerateOffset(0);
