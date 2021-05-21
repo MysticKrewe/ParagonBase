@@ -1980,8 +1980,7 @@ if (DEBUG_MESSAGES) {
   Serial.write("InitNewBall(curStateChanged)\r\n");
 }         
     
-    BallFirstSwitchHitTime = 0;
-    SamePlayerShootsAgain = false;
+
 
     BSOS_SetDisableFlippers(false);
     BSOS_EnableSolenoidStack(); 
@@ -2024,7 +2023,9 @@ if (DEBUG_MESSAGES) {
     HuntQualified=HuntsQualified[playerNum]; // carry over hunt qualification if available
     
 //    PlaySFX(SFX_PLAYERUP+playerNum,1,500);  
-    if (ballNum==1) PlaySFX(SFX_START_BALL1,SFXC_START_BALL1);  
+    if (SamePlayerShootsAgain) {
+      PlaySFX(SFX_SHOOT_AGAIN,SFXC_SHOOT_AGAIN); 
+    } else if (ballNum==1) PlaySFX(SFX_START_BALL1,SFXC_START_BALL1);  
     
     // reset ball specific ladders
 
@@ -2068,6 +2069,9 @@ if (DEBUG_MESSAGES) {
     GameModeStartTime=CurrentTime;
     GameMode=GAME_MODE_SKILL_SHOT;
     EnableSkillFx=true;
+
+    BallFirstSwitchHitTime = 0;
+    SamePlayerShootsAgain = false;
     
   } // end new ball init
 
@@ -2209,6 +2213,8 @@ int CountdownBonus(boolean curStateChanged) {
       // Only give sound & score if this isn't a tilt
       if (NumTiltWarnings <= MaxTiltWarnings) {
 //        PlaySoundEffect(SOUND_EFFECT_BONUS_COUNT + (BonusX-1));
+// yy change this to vary based on multiplier later
+        PlaySFX(SFX_BONUSCOUNT,SFXC_BONUSCOUNT);
         CurrentPlayerCurrentScore += 1000*((unsigned long)BonusX);
       }
 

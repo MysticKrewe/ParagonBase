@@ -272,6 +272,9 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFX_COINDROP                 10
 #define SFXC_COINDROP                2
 
+#define SFX_BONUSCOUNT               80
+#define SFXC_BONUSCOUNT              3
+
 #define SFX_HUNTSUCCESS              620  // +
 #define SFXC_HUNTSUCCESS             5
 
