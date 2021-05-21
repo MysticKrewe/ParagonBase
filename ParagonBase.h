@@ -199,10 +199,10 @@ struct PlayfieldAndCabinetSwitch TriggeredSwitches[] = {
 #define SFX_5X                       515  // 5x +
 #define SFXC_5X                      2
 
-#define SFX_GC2K                       520   // golden cliffs awards - sound address SFX_2K+(value*5)
-#define SFXC_GC2K                      3
-#define SFX_GC4K                       525
-#define SFXC_GC4K                      3
+#define SFX_GC2K                     520   // golden cliffs awards - sound address SFX_2K+(value*5)
+#define SFXC_GC2K                    3
+#define SFX_GC4K                     525
+#define SFXC_GC4K                    3
 #define SFX_GC6K                     530
 #define SFXC_GC6K                    1
 #define SFX_GC8K                     535
@@ -240,7 +240,7 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFX_P                        595  // P-A-R-A-G-O-N  Letter lites +
 #define SFX_A                        596
 #define SFX_R                        597
-#define SFX_A                        598
+#define SFX_A2                       598
 #define SFX_G                        599
 #define SFX_O                        600
 #define SFX_N                        601
