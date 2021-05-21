@@ -1499,6 +1499,7 @@ void SetHoldBonus(byte hbonus) {
   if (hbonus>=30) { bset=bset|2; hbonus-=30; }
   if (hbonus>=20) { bset=bset|1; }
   BonusMem[CurrentPlayer]=bset;
+  if (bset>0) PlaySFX(SFX_BONUS_HELD,SFXC_BONUS_HELD);
 }
 //-----------------------------------------------------------------
 
@@ -1571,7 +1572,8 @@ void HandleGoldenSaucerHit() {
       SkillShotsCollected[CurrentPlayer]++;   // need to save to player info
       SkillSweepPeriod-(SkillShotsCollected[CurrentPlayer]*SKILL_SHOT_DECREASE);
       CurrentPlayerCurrentScore+=GoldenSaucerValue*20000;
-      PlaySoundEffect(SFX_SKILL1); // play skill shot sound
+      PlaySFX(SFX_SKILLSHOT,SFXC_SKILLSHOT);
+//      PlaySoundEffect(SFX_SKILL1); // play skill shot sound
       GameMode=GAME_MODE_UNSTRUCTURED_PLAY;      
     }
   }

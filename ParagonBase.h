@@ -403,8 +403,8 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFX_BEAST2                   41
 #define SFX_BEAST3                   42
 
-#define SFX_SKILL1                   50 // skill shot awarded
-#define SFX_SKILL2                   51
+//#define SFX_SKILL1                   50 // skill shot awarded
+//#define SFX_SKILL2                   51
 
 /*
 
