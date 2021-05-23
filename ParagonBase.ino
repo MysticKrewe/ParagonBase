@@ -417,7 +417,7 @@ void PlayBackgroundSong(int songNum,byte soundVer=1) {
         wTrig.trackPlayPoly(songNum);
 #endif
         wTrig.trackLoop(songNum, true);
-        wTrig.trackGain(songNum, -4);
+        wTrig.trackGain(songNum, -2);
       }
       CurrentBackgroundSong = songNum;
     }
@@ -539,17 +539,17 @@ void ShowAwardLamps() {
   // Right Drops: 10,15,20,25,30=sp
   if ((HuntMode) && (HuntLocation==1)) { // don't overrite hunt lamps
     
-  } else {
-    if (DropsRightDownScore[CurrentPlayer]==10000) { BSOS_SetLampState(L_10K_DROPS, 1); } else { BSOS_SetLampState(L_10K_DROPS, 0); }
-    if (DropsRightDownScore[CurrentPlayer]==15000) { BSOS_SetLampState(L_15K_DROPS, 1); } else { BSOS_SetLampState(L_15K_DROPS, 0); }
+  } else { // don't show award lights in hunt mode 
+    if ((DropsRightDownScore[CurrentPlayer]==10000) && (!HuntMode)) { BSOS_SetLampState(L_10K_DROPS, 1); } else { BSOS_SetLampState(L_10K_DROPS, 0); }
+    if ((DropsRightDownScore[CurrentPlayer]==15000) && (!HuntMode)) { BSOS_SetLampState(L_15K_DROPS, 1); } else { BSOS_SetLampState(L_15K_DROPS, 0); }
   }
   if ((HuntMode) && (HuntLocation==3)) { // don't overrite hunt lamps
     
   } else {  
-    if (DropsRightDownScore[CurrentPlayer]==20000) { BSOS_SetLampState(L_20K_DROPS, 1); } else { BSOS_SetLampState(L_20K_DROPS, 0); }
-    if (DropsRightDownScore[CurrentPlayer]==25000) { BSOS_SetLampState(L_25K_DROPS, 1); } else { BSOS_SetLampState(L_25K_DROPS, 0); }
+    if ((DropsRightDownScore[CurrentPlayer]==20000) && (!HuntMode)) { BSOS_SetLampState(L_20K_DROPS, 1); } else { BSOS_SetLampState(L_20K_DROPS, 0); }
+    if ((DropsRightDownScore[CurrentPlayer]==25000) && (!HuntMode)) { BSOS_SetLampState(L_25K_DROPS, 1); } else { BSOS_SetLampState(L_25K_DROPS, 0); }
   }
-  if (DropsRightDownScore[CurrentPlayer]==30000) { BSOS_SetLampState(L_SPECIAL_DROPS, 1); } else { BSOS_SetLampState(L_SPECIAL_DROPS, 0); }
+  if ((DropsRightDownScore[CurrentPlayer]==30000) && (!HuntMode)) { BSOS_SetLampState(L_SPECIAL_DROPS, 1); } else { BSOS_SetLampState(L_SPECIAL_DROPS, 0); }
 
   // Waterfall  0=1k 1=5k, 2=10k 3=special
   if (WaterfallValue==1) { BSOS_SetLampState(L_5K_WATER, 1,0,300); } else { BSOS_SetLampState(L_5K_WATER, 0); }
@@ -1515,6 +1515,11 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
 // more efficient?  byte switchMask = 1<<(SW_DROP_TARGET_1-switchHit);
 //   PlaySoundEffect(SOUND_EFFECT_DT_SKILL_SHOT);
 
+  if (HuntMode) {
+    reset_3bank();  // goes right back up in hunt mode and doesn't count
+// psfx?    
+    return;
+  }
   // checking in reverse order in case 2+ hit at same time, so can't get sequential credit
   if (BSOS_ReadSingleSwitchState(SW_DROP_TOP) && (CurrentDropTargetsValid & 4)) {
     CurrentPlayerCurrentScore += 500;
