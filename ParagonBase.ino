@@ -394,13 +394,15 @@ void AddToBonus(byte bonusAddition) {
 //
 ////////////////////////////////////////////////////////////////////////////
 #if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
-byte CurrentBackgroundSong = SFX_NONE;
+int CurrentBackgroundSong = SFX_NONE;
 #endif
-
 
 void PlayBackgroundSong(int songNum,byte soundVer=1) {
 
-  if (soundVer==0) return; // remove this once all sound fx are installed
+  if (soundVer==0) { 
+    wTrig.trackStop(songNum); // can be called with 0 parm to stop bg music
+    return;
+  }
   if (soundVer>1) { soundVer=random(soundVer); } else { soundVer=0; }
   songNum=songNum+soundVer;
 
@@ -2219,6 +2221,10 @@ int CountdownBonus(boolean curStateChanged) {
 
   // If this is the first time through the countdown loop
   if (curStateChanged) {
+    
+    PlayBackgroundSong(CurrentBackgroundSong,0); // turn off BG music    
+    CurrentBackgroundSong=SFX_NONE;
+    
     BSOS_SetLampState(BALL_IN_PLAY, 1, 0, 250);
 
     CountdownStartTime = CurrentTime;
