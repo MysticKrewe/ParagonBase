@@ -315,7 +315,7 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFXC_STANDUP_TOP             1
 
 #define SFX_STANDUP_BOTTOM           360  // +
-#define SFXC_STANDUP_BOTTOM          1
+#define SFXC_STANDUP_BOTTOM          2
 
 #define SFX_TOP_REBOUND              350  // + switch upper left rebound
 #define SFXC_TOP_REBOUND             1
@@ -355,7 +355,7 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 
 #define SFX_PLAYERUP                 130  // 131=player 2, 132=playe 3, 133=player 4
 
-#define SFX_WATERFALL                360  // waterfall star
+#define SFX_WATERFALL                355  // waterfall star
 #define SFXC_WATERFALL               1
 
 #define GP_TIER1_SCORE               30000
