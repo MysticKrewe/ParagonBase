@@ -398,7 +398,11 @@ byte CurrentBackgroundSong = SFX_NONE;
 #endif
 
 
-void PlayBackgroundSong(byte songNum) {
+void PlayBackgroundSong(int songNum,byte soundVer=1) {
+
+  if (soundVer==0) return; // remove this once all sound fx are installed
+  if (soundVer>1) { soundVer=random(soundVer); } else { soundVer=0; }
+  songNum=songNum+soundVer;
 
 #if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)
   if (MusicLevel > 1) {
@@ -417,17 +421,15 @@ void PlayBackgroundSong(byte songNum) {
     }
   }
 #else
-  byte test = songNum;
-  songNum = test;
+
+  // no background sounds without wav trigger
+  
 #endif
 
 }
 
 //-----------------------------------------------------------------
-
-//unsigned long NextSoundEffectTime = 0;  // not used
-
-void PlaySoundEffect(int soundEffectNum) { // changed from default byte to int
+void PlaySoundEffect(int soundEffectNum,int volumeOffset=0,boolean playSolo=false) { // changed from default byte to int
 
   if (MusicLevel == 0) return;
 
@@ -436,7 +438,9 @@ void PlaySoundEffect(int soundEffectNum) { // changed from default byte to int
 #ifndef USE_WAV_TRIGGER_1p3
 //  if (  soundEffectNum == SFX_SPINNER ) wTrig.trackStop(soundEffectNum);
 #endif
-  wTrig.trackPlayPoly(soundEffectNum);
+  if (playSolo) wTrig.trackPlaySolo(soundEffectNum);
+  else wTrig.trackPlayPoly(soundEffectNum);
+  if (volumeOffset) wTrig.trackGain(soundEffectNum,volumeOffset); // volume override
 #endif
 
 }
@@ -445,16 +449,16 @@ void PlaySoundEffect(int soundEffectNum) { // changed from default byte to int
 unsigned long NextSFXTime=0;  // time to check for delayed sound
 int NextSFX=0;                // next sound effect number to play
 
-void PlaySFX(int soundNum, byte soundOffset=1, int msDelay=0) {
-  if (soundOffset==0) return; // remove this once all sound fx are installed
-  if (soundOffset>1) { soundOffset=random(soundOffset); } else { soundOffset=0; }
+void PlaySFX(int soundNum, byte soundVer=1, int msDelay=0) {
+  if (soundVer==0) return; // remove this once all sound fx are installed
+  if (soundVer>1) { soundVer=random(soundVer); } else { soundVer=0; }
   if (msDelay>0) { 
     // NOTE: This doesn't check to see if there's an unplayed sound in the queue, it overrides it - we assume this is unlikely to happen
-    NextSFX=soundNum+soundOffset;
+    NextSFX=soundNum+soundVer;
     NextSFXTime=CurrentTime+msDelay;
     return;
   }
-  PlaySoundEffect(soundNum+soundOffset);
+  PlaySoundEffect(soundNum+soundVer);
 }
 //-----------------------------------------------------------------
 
@@ -1848,6 +1852,22 @@ boolean HuntHit(byte sw) {
 //-----------------------------------------------------------------
 //-----------------------------------------------------------------
 //-----------------------------------------------------------------
+void EndOfGameComment() {
+  // play snarky end of game comment
+  if (CurrentPlayerCurrentScore<GP_TIER1_SCORE) {
+    PlaySFX(SFX_GP_TIER1,SFXC_GP_TIER1);
+  } else
+    if (CurrentPlayerCurrentScore<GP_TIER2_SCORE) {
+      PlaySFX(SFX_GP_TIER2,SFXC_GP_TIER2);
+    } else  
+      if (CurrentPlayerCurrentScore<GP_TIER3_SCORE) {
+      PlaySFX(SFX_GP_TIER3,SFXC_GP_TIER3);
+    } else
+      if (CurrentPlayerCurrentScore<GP_TIER4_SCORE) {
+        PlaySFX(SFX_GP_TIER4,SFXC_GP_TIER4);
+      } else PlaySFX(SFX_GP_TIER5,SFXC_GP_TIER5);
+
+}
 //-----------------------------------------------------------------
 // zz
 
@@ -2072,6 +2092,8 @@ if (DEBUG_MESSAGES) {
 
     BallFirstSwitchHitTime = 0;
     SamePlayerShootsAgain = false;
+    
+    PlayBackgroundSong(SFX_BG_MUSIC,SFXC_BG_MUSIC);
     
   } // end new ball init
 

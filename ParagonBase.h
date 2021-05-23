@@ -293,6 +293,9 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFX_SHOOT_AGAIN              110  // same player shoot again
 #define SFXC_SHOOT_AGAIN             1
 
+#define SFX_BG_MUSIC                 170  // background music from 170-199
+#define SFXC_BG_MUSIC                10
+
 #define SFX_SPECIAL                  210 // +
 #define SFXC_SPECIAL                 3
 
@@ -354,6 +357,22 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 
 #define SFX_WATERFALL                360  // waterfall star
 #define SFXC_WATERFALL               1
+
+#define GP_TIER1_SCORE               30000
+#define GP_TIER2_SCORE               50000
+#define GP_TIER3_SCORE               100000
+#define GP_TIER4_SCORE               300000
+#define GP_TIER5_SCORE               500000  // not checked... anything over 300k is nice
+#define SFX_GP_TIER1                 700
+#define SFXC_GP_TIER1                0
+#define SFX_GP_TIER2                 710
+#define SFXC_GP_TIER2                0
+#define SFX_GP_TIER3                 720
+#define SFXC_GP_TIER3                0
+#define SFX_GP_TIER4                 730
+#define SFXC_GP_TIER4                0
+#define SFX_GP_TIER5                 740     // highest level of compliment
+#define SFXC_GP_TIER5                0
 
 /*
 
