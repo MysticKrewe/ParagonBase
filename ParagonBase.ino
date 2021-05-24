@@ -1439,6 +1439,7 @@ int RunAttractMode(int curState, boolean curStateChanged) {
 //      AddCoinToAudit(switchHit);      
 //      AddCredit(true, 1);  // is this a newer version that incorporates bsos_setdisplaycredits?
 // above instead of below
+      PlaySFX(SFX_COINDROP,SFXC_COINDROP);
       AddCredit();
       BSOS_SetDisplayCredits(Credits, true);
       
@@ -2435,6 +2436,10 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
       GoldenSaucerValue=GoldenSaucerMem[CurrentPlayer];
       
       if (CurrentBallInPlay>BallsPerGame) {
+
+        EndOfGameComment();
+        
+        
         CheckHighScores();
 //        PlaySoundEffect(SOUND_EFFECT_GAME_OVER);
 //        SetPlayerLamps(0);
@@ -2643,8 +2648,8 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
           break;       
 
-        case SW_STAR_ROLLOVER:  // also rebound behind right drops
-          PlaySFX(SFX_ROLLOVER_TOP,SFXC_ROLLOVER_TOP);        
+        case SW_STAR_ROLLOVER:  // also rebound behind right drops - upper right
+          PlaySFX(SFX_UPPER_RIGHT_STAR,SFXC_UPPER_RIGHT_STAR);        
           CurrentPlayerCurrentScore+=50;
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;        
           break;
