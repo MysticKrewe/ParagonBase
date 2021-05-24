@@ -214,6 +214,7 @@ byte DropSequence=0;                      // 1-3 # right drops hit in sequence
 
 // special modes
 boolean HuntMode=false;                // true if hunt underway (Challenge)
+boolean HuntWarned=false;              // true if timeout message played
 byte HuntQualified=0;
 byte HuntsCompleted[4]={0, 0, 0, 0};   // # hunts completed per player
 byte HuntsQualified[4]={0, 0, 0, 0};   // # hunts completed per player
@@ -232,6 +233,8 @@ byte HuntSwitches[6]={                 // switch # for hit location
 };
 byte HuntLastShot=0;                  // previous location for hunt
 #define HUNT_MODE_LENGTH  45000       // 45 seconds
+#define HUNT_WARNING_TIME 10000       // # of ms left to say warning
+
 #define HUNT_BASE_SHOT_LENGTH  4000   // 4 sec max time default per shot
 unsigned int HuntShotLength=0;        // length of time the shot actually stays dep on hunts
 #define HUNT_BASE_REWARD  2500        // base reward level (x10)
@@ -417,7 +420,7 @@ void PlayBackgroundSong(int songNum,byte soundVer=1) {
         wTrig.trackPlayPoly(songNum);
 #endif
         wTrig.trackLoop(songNum, true);
-        wTrig.trackGain(songNum, -2);
+        wTrig.trackGain(songNum, -1);
       }
       CurrentBackgroundSong = songNum;
     }
@@ -1506,7 +1509,8 @@ void SetHoldBonus(byte hbonus) {
   if (hbonus>=30) { bset=bset|2; hbonus-=30; }
   if (hbonus>=20) { bset=bset|1; }
   BonusMem[CurrentPlayer]=bset;
-  if (bset>0) PlaySFX(SFX_BONUS_HELD,SFXC_BONUS_HELD);
+  if ((bset>0) && (CurrentBallInPlay<BallsPerGame)) PlaySFX(SFX_BONUS_HELD,SFXC_BONUS_HELD,500);
+  // see if delay for sound is wanted?
 }
 //-----------------------------------------------------------------
 
@@ -1781,13 +1785,14 @@ void HuntMissed() {
 void RunHunt() {
   if (HuntStartTime==0) {  // initialization
     HuntStartTime=CurrentTime;
+    HuntWarned=false;
     HuntLocation=random(7);    // set the location
     HuntShotTime=CurrentTime;  // current shot starts now
     HuntShotLength=HUNT_BASE_SHOT_LENGTH-(500*HuntsCompleted[CurrentPlayer]);
     if (HuntShotLength<500) HuntShotLength=500;
     HuntFrozen=false;
     PlaySFX(SFX_HUNTSTART,SFXC_HUNTSTART);      
-    
+    reset_3bank();    
     return;
   }
   if (CurrentTime-HuntStartTime>HUNT_MODE_LENGTH) HuntFailed();
@@ -1800,6 +1805,10 @@ void RunHunt() {
       HuntFrozen=false;  // can freeze this shot
       HuntShotTime=CurrentTime;
     }
+  }
+  if ((!HuntWarned) && ((CurrentTime-HuntStartTime)>(HUNT_MODE_LENGTH-HUNT_WARNING_TIME))) {
+    PlaySFX(SFX_TIMEOUT,SFXC_TIMEOUT);
+    HuntWarned=true;
   }
 } // end: RunHunt()
 
