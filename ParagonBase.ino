@@ -1575,7 +1575,7 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
     }
     if (!HuntMode) { 
       HuntQualified++; 
-      PlaySFX(SFX_HUNTQUALIFIED,SFXC_HUNTQUALIFIED);
+      PlaySFX(SFX_HUNTQUALIFIED,SFXC_HUNTQUALIFIED,350);
     }  // hunt mode qualified
   } // end: all drop targets down
   
@@ -1765,7 +1765,8 @@ void HuntSuccess() {
   HuntQualified=0;
   HuntsCompleted[CurrentPlayer]++;
   HuntsQualified[CurrentPlayer]=0;
-  PlaySFX(SFX_HUNTSUCCESS,SFXC_HUNTSUCCESS);
+  PlaySFX(SFX_HUNTKILL,SFXC_HUNTKILL);  // beast dying sound
+  PlaySFX(SFX_HUNTSUCCESS,SFXC_HUNTSUCCESS,400); // call out
   HuntReward+=1000; // let's add another 10k (*10) to hunt reward for every one completed per ball
 
 }
@@ -1775,7 +1776,7 @@ void HuntFailed() {
   HuntStartTime=0;
   HuntsQualified[CurrentPlayer]=0;
   HuntQualified=0;  
-  PlaySFX(SFX_HUNTFAIL,SFXC_HUNTFAIL,500);  
+  PlaySFX(SFX_HUNTFAIL,SFXC_HUNTFAIL);  
   // psfx
 }
 //-----------------------------------------------------------------
@@ -2518,12 +2519,12 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
           PlaySFX(SFX_STANDUP_BOTTOM,SFXC_STANDUP_BOTTOM);        
           if ((HuntQualified) && (!HuntMode)) {
             HuntMode=true;  // start hunt mode
-//            PlaySFX(SFX_HUNTSTART,SFXC_HUNTSTART,500); // play hunt begins
+            PlaySFX(SFX_HUNTSTART,SFXC_HUNTSTART,250); // play hunt begins
           } else if ((HuntMode) && (!HuntFrozen)) { // handle stunning during the hunt by hitting standups
             HuntShotTime=CurrentTime;        
             HuntFrozen=true;
             // sfx stunned beast
-//            PlaySFX(SFX_HUNTSTUN,SFXC_HUNTSTUN,250);            
+            PlaySFX(SFX_HUNTSTUN,SFXC_HUNTSTUN);            
           }
           CurrentPlayerCurrentScore+=10;
           AddToBonus(1);

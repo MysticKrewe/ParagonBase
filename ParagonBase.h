@@ -352,13 +352,19 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 //#define SFXC_DROPS                   3
 
 #define SFX_HUNTQUALIFIED            690
-#define SFXC_HUNTQUALIFIED           0
+#define SFXC_HUNTQUALIFIED           1
 
 #define SFX_HUNTSTART                675
-#define SFXC_HUNTSTART               0
+#define SFXC_HUNTSTART               1
+
+#define SFX_HUNTSTUN                 680
+#define SFXC_HUNTSTUN                2
 
 #define SFX_HUNTMISSED               800
 #define SFXC_HUNTMISSED              3
+
+#define SFX_HUNTKILL                 810
+#define SFXC_HUNTKILL                1
 
 #define SFX_PLAYERUP                 130  // 131=player 2, 132=playe 3, 133=player 4
 
@@ -385,9 +391,6 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 
 /*
 
-
-#define SFX_HUNTSTUN
-#define SFXC_HUNTSTUN
 
 
 
