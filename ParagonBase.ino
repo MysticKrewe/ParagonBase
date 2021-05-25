@@ -2345,6 +2345,7 @@ int ShowMatchSequence(boolean curStateChanged) {
       MatchDigit += 1;
       if (MatchDigit > 9) MatchDigit = 0;
       //PlaySoundEffect(10+(MatchDigit%2));
+      PlaySFX(SFX_MATCH,1);
 //      PlaySoundEffect(SOUND_EFFECT_MATCH_SPIN);
       BSOS_SetDisplayBallInPlay((int)MatchDigit * 10);
       MatchDelay += 50 + 4 * NumMatchSpins;

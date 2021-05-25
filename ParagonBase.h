@@ -362,6 +362,8 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 
 #define SFX_PLAYERUP                 130  // 131=player 2, 132=playe 3, 133=player 4
 
+#define SFX_MATCH                    220  // only 1 sound for now
+
 #define SFX_WATERFALL                355  // waterfall star
 #define SFXC_WATERFALL               1
 
