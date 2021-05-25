@@ -1509,7 +1509,7 @@ void SetHoldBonus(byte hbonus) {
   if (hbonus>=30) { bset=bset|2; hbonus-=30; }
   if (hbonus>=20) { bset=bset|1; }
   BonusMem[CurrentPlayer]=bset;
-  if ((bset>0) && (CurrentBallInPlay<BallsPerGame)) PlaySFX(SFX_BONUS_HELD,SFXC_BONUS_HELD,500);
+  if ((bset>0) && (CurrentBallInPlay<BallsPerGame)) PlaySFX(SFX_BONUS_HELD,SFXC_BONUS_HELD,1000);
   // see if delay for sound is wanted?
 }
 //-----------------------------------------------------------------
@@ -2173,8 +2173,6 @@ int NormalGamePlay() {
   ShowBonusLamps();
   ShowAwardLamps();  // waterfall and drops
   ShowParagonLamps();
-
-  CheckSFX();  // check for any delayed sound effects
   
 // new
   ShowPlayerScores(CurrentPlayer, (BallFirstSwitchHitTime==0)?true:false, (BallFirstSwitchHitTime>0 && ((CurrentTime-LastTimeScoreChanged)>2000))?true:false);  
@@ -2411,6 +2409,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
 
   unsigned long scoreMultiplier = 1;  // currently not implemented
   
+  CheckSFX(); // play any delayed sound clips
   
   // Very first time into gameplay loop
   if (curState==MACHINE_STATE_INIT_GAMEPLAY) {
