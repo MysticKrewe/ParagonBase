@@ -1793,7 +1793,7 @@ void RunHunt() {
     HuntShotLength=HUNT_BASE_SHOT_LENGTH-(500*HuntsCompleted[CurrentPlayer]);
     if (HuntShotLength<500) HuntShotLength=500;
     HuntFrozen=false;
-    PlaySFX(SFX_HUNTSTART,SFXC_HUNTSTART);      
+    PlaySFX(SFX_HUNTSTART,SFXC_HUNTSTART,200);      
     reset_3bank();    
     return;
   }
@@ -2519,7 +2519,6 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
           PlaySFX(SFX_STANDUP_BOTTOM,SFXC_STANDUP_BOTTOM);        
           if ((HuntQualified) && (!HuntMode)) {
             HuntMode=true;  // start hunt mode
-            PlaySFX(SFX_HUNTSTART,SFXC_HUNTSTART,250); // play hunt begins
           } else if ((HuntMode) && (!HuntFrozen)) { // handle stunning during the hunt by hitting standups
             HuntShotTime=CurrentTime;        
             HuntFrozen=true;
