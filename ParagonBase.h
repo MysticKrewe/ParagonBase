@@ -202,23 +202,23 @@ struct PlayfieldAndCabinetSwitch TriggeredSwitches[] = {
 #define SFX_GC2K                     520  // +golden cliffs awards - sound address  SFX_2K+(value*5)
 #define SFXC_GC2K                    1
 #define SFX_GC4K                     525
-#define SFXC_GC4K                    2
+#define SFXC_GC4K                    3
 #define SFX_GC6K                     530
-#define SFXC_GC6K                    1
+#define SFXC_GC6K                    3
 #define SFX_GC8K                     535
-#define SFXC_GC8K                    1
+#define SFXC_GC8K                    3
 #define SFX_GC10K                    540
-#define SFXC_GC10K                   2
+#define SFXC_GC10K                   4
 #define SFX_GC12K                    545
-#define SFXC_GC12K                   1
+#define SFXC_GC12K                   5
 #define SFX_GC14K                    550
-#define SFXC_GC14K                   2
+#define SFXC_GC14K                   5
 #define SFX_GC16K                    555
-#define SFXC_GC16K                   1
+#define SFXC_GC16K                   4
 #define SFX_GC18K                    560
-#define SFXC_GC18K                   1
+#define SFXC_GC18K                   3
 #define SFX_GC20K                    565
-#define SFXC_GC20K                   1
+#define SFXC_GC20K                   3
 
 byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K,SFXC_GC14K,SFXC_GC16K,SFXC_GC18K,SFXC_GC20K};   // array to hold counts for random sound
 
@@ -337,25 +337,28 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFXC_BEASTMOVE               1
 
 #define SFX_RIGHT_OUTLANE            310  // +
-#define SFXC_RIGHT_OUTLANE           1
+#define SFXC_RIGHT_OUTLANE           4
 
 #define SFX_ROLLOVER_TOP             340  // +  top star rollover
-#define SFXC_ROLLOVER_TOP            0
+#define SFXC_ROLLOVER_TOP            3
 
 #define SFX_RIGHT_INLANE             320  // +
-#define SFXC_RIGHT_INLANE            0
+#define SFXC_RIGHT_INLANE            1
 
 #define SFX_SPINNER                  400
 #define SFXC_SPINNER                 3
 
-#define SFX_DROPS                    300  // drop targets
-#define SFXC_DROPS                   0
+#define SFX_DROPS                    300  // drop targets - 1 sound for each target 300-302
+//#define SFXC_DROPS                   3
 
 #define SFX_HUNTQUALIFIED            690
 #define SFXC_HUNTQUALIFIED           0
 
 #define SFX_HUNTSTART                675
 #define SFXC_HUNTSTART               0
+
+#define SFX_HUNTMISSED               800
+#define SFXC_HUNTMISSED              3
 
 #define SFX_PLAYERUP                 130  // 131=player 2, 132=playe 3, 133=player 4
 
@@ -368,15 +371,15 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define GP_TIER4_SCORE               300000
 #define GP_TIER5_SCORE               500000  // not checked... anything over 300k is nice
 #define SFX_GP_TIER1                 700
-#define SFXC_GP_TIER1                5
+#define SFXC_GP_TIER1                11
 #define SFX_GP_TIER2                 720
-#define SFXC_GP_TIER2                7
+#define SFXC_GP_TIER2                13
 #define SFX_GP_TIER3                 740
-#define SFXC_GP_TIER3                6
+#define SFXC_GP_TIER3                10
 #define SFX_GP_TIER4                 760
-#define SFXC_GP_TIER4                6
+#define SFXC_GP_TIER4                8
 #define SFX_GP_TIER5                 780     // highest level of compliment
-#define SFXC_GP_TIER5                3
+#define SFXC_GP_TIER5                4
 
 /*
 

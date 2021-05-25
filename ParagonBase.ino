@@ -1522,7 +1522,7 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
 
   if (HuntMode) {
     reset_3bank();  // goes right back up in hunt mode and doesn't count
-// psfx?    
+    PlaySFX(SFX_HUNTMISSED,SFXC_HUNTMISSED);
     return;
   }
   // checking in reverse order in case 2+ hit at same time, so can't get sequential credit
@@ -1544,6 +1544,7 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
     else { DropSequence=0; }
   }
 
+  
   // --------------------- check to see if all drops down
   if (BSOS_ReadSingleSwitchState(SW_DROP_BOTTOM) && BSOS_ReadSingleSwitchState(SW_DROP_MIDDLE) && BSOS_ReadSingleSwitchState(SW_DROP_TOP)) {
     
@@ -2445,10 +2446,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
       GoldenSaucerValue=GoldenSaucerMem[CurrentPlayer];
       
       if (CurrentBallInPlay>BallsPerGame) {
-
-        EndOfGameComment();
-        
-        
+        EndOfGameComment();                
         CheckHighScores();
 //        PlaySoundEffect(SOUND_EFFECT_GAME_OVER);
 //        SetPlayerLamps(0);
@@ -2509,7 +2507,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
         case SW_DROP_TOP:
         case SW_DROP_MIDDLE:
         case SW_DROP_BOTTOM:
-          PlaySFX(SFX_DROPS,SFXC_DROPS); 
+          PlaySFX(SFX_DROPS+(switchHit-SW_DROP_BOTTOM),1);  // 1 sound for each target
           HandleRightDropTargetHit(switchHit,scoreMultiplier);
           if (BallFirstSwitchHitTime == 0) BallFirstSwitchHitTime = CurrentTime;
           break;      
