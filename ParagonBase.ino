@@ -2268,7 +2268,7 @@ int CountdownBonus(boolean curStateChanged) {
     } else if (BonusCountDownEndTime == 0xFFFFFFFF) {
 //      PlaySoundEffect(SOUND_EFFECT_BALL_OVER);
       BSOS_SetLampState(L_1K_BONUS, 0);
-      BonusCountDownEndTime = CurrentTime + 1000;
+      BonusCountDownEndTime = CurrentTime + POST_BALL_DELAY; // yy this may be place to delay after ball
     }
     LastCountdownReportTime = CurrentTime;
   }
