@@ -935,22 +935,22 @@ void AddCredit(boolean playSound = false, byte numToAdd = 1) {
   }
 } // end: AddCredit()
 //-----------------------------------------------------------------
-void AwardExtraBall() {
+void AwardExtraBall(int extraDelay=0) {
 
   // add additional checks and sound  
   SamePlayerShootsAgain=true;
-  PlaySFX(SFX_EXTRABALL,SFXC_EXTRABALL,500);  
+  PlaySFX(SFX_EXTRABALL,SFXC_EXTRABALL,500+extraDelay);  
 
 }
 //-----------------------------------------------------------------
-void AwardSpecial() {
+void AwardSpecial(int extraDelay=0) {
 
   if (TournamentScoring) {
     CurrentPlayerCurrentScore += SpecialValue;
   } else {
     AddSpecialCredit();
   }
-  PlaySFX(SFX_SPECIAL,SFXC_SPECIAL,500);
+  PlaySFX(SFX_SPECIAL,SFXC_SPECIAL,500+extraDelay);
   BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true);
 
 }
@@ -1641,13 +1641,13 @@ void HandleTreasureSaucerHit() {
       case 1:
         CurrentPlayerCurrentScore+=5000;
         BonusX=5;
-        PlaySFX(SFX_5X,SFXC_5X,1500);        
+        PlaySFX(SFX_5X,SFXC_5X,2500);        
         break;
       case 2:
-        AwardExtraBall();        
+        AwardExtraBall(2000);        
         break;
       case 3:
-        AwardSpecial();
+        AwardSpecial(2000);
         reset_inline();
   }
   PlaySFX(SFX_SAUCER_TREASURE,SFXC_SAUCER_TREASURE);
@@ -2437,6 +2437,12 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
     if (SamePlayerShootsAgain) {
       returnState = MACHINE_STATE_INIT_NEW_BALL;
     } else {  // ---- new player
+	
+      if (CurrentBallInPlay==BallsPerGame) {  // This plays on last ball for each player
+        EndOfGameComment();                // 
+      } 	
+	
+	
       CurrentPlayer+=1;
       if (CurrentPlayer>=CurrentNumPlayers) {
         CurrentPlayer = 0;
@@ -2446,8 +2452,8 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
       CurrentPlayerCurrentScore=CurrentScores[CurrentPlayer];
       GoldenSaucerValue=GoldenSaucerMem[CurrentPlayer];
       
-      if (CurrentBallInPlay>BallsPerGame) {
-        EndOfGameComment();                
+
+	  if (CurrentBallInPlay>BallsPerGame) {  // end of game for all players
         CheckHighScores();
 //        PlaySoundEffect(SOUND_EFFECT_GAME_OVER);
 //        SetPlayerLamps(0);

@@ -188,7 +188,7 @@ struct PlayfieldAndCabinetSwitch TriggeredSwitches[] = {
   { SW_RIGHT_SLING, SOL_RIGHT_SLING, 4 },
 };
 
-#define POST_BALL_DELAY              2500   // # ms to delay after bonus countdown
+#define POST_BALL_DELAY              200   // # ms to delay after bonus countdown
 
 // ---------------------- sound effects
 
