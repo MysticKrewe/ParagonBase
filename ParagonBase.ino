@@ -1789,6 +1789,7 @@ void RunHunt() {
     HuntStartTime=CurrentTime;
     HuntWarned=false;
     HuntLocation=random(7);    // set the location
+    if (HuntLocation==5) HuntLocation=6;  // Can't start on the standup or it can trigger kill immediately
     HuntShotTime=CurrentTime;  // current shot starts now
     HuntShotLength=HUNT_BASE_SHOT_LENGTH-(500*HuntsCompleted[CurrentPlayer]);
     if (HuntShotLength<500) HuntShotLength=500;
@@ -1802,8 +1803,10 @@ void RunHunt() {
     if ((CurrentTime-HuntShotTime)>HuntShotLength) { // move shot
       HuntLastShot=HuntLocation; // for "you missed" sfx
       PlaySFX(SFX_BEASTMOVE,SFXC_BEASTMOVE);        
-      HuntLocation++;  
-      if (HuntLocation>6) HuntLocation=0;
+      HuntLocation=random(7);
+      while (HuntLocation==HuntLastShot) { HuntLocation=random(7); } // not the same location twice
+      // HuntLocation++;  
+//      if (HuntLocation>6) HuntLocation=0;
       HuntFrozen=false;  // can freeze this shot
       HuntShotTime=CurrentTime;
     }

@@ -300,7 +300,7 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFXC_SHOOT_AGAIN             1
 
 #define SFX_BG_MUSIC                 170  // background music from 170-199
-#define SFXC_BG_MUSIC                10
+#define SFXC_BG_MUSIC                11
 
 #define SFX_SPECIAL                  210 // +
 #define SFXC_SPECIAL                 3
