@@ -141,6 +141,8 @@ byte CurrentNumPlayers = 0;
 unsigned long CurrentScores[4];
 boolean SamePlayerShootsAgain = false;
 
+#define TILT_WARNING_DEBOUNCE_TIME      1000
+
 // from Trident - ino
 unsigned long CurrentPlayerCurrentScore = 0;
 byte Bonus;
@@ -2056,7 +2058,7 @@ if (DEBUG_MESSAGES) {
     BallSaveUsed = false;
     BallSaveExtend=0;
     BallTimeInTrough = 0;
-    NumTiltWarnings = 0;
+    NumTiltWarnings = 0;  // reset tilt
     LastTiltWarningTime = 0;
     MoveParagon=true;
 
@@ -2482,14 +2484,32 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
     returnState = MACHINE_STATE_ATTRACT;
   } 
   
+  
+  
   // ============ SWITCH HITS ========================================================
   byte switchHit;
+if (NumTiltWarnings <= MaxTiltWarnings) {  
   while ( (switchHit=BSOS_PullFirstFromSwitchStack())!=SWITCH_STACK_EMPTY ) {
 
     if (HuntMode) { if (HuntHit(switchHit)) HuntSuccess(); }
 //    if ((HuntMode) && HuntHit(switchHit)) HuntSuccess();  // does short circuit work?
     
     switch (switchHit) {
+      case SW_TILT:
+          if ((CurrentTime - LastTiltWarningTime) > TILT_WARNING_DEBOUNCE_TIME) {
+            LastTiltWarningTime = CurrentTime;
+            NumTiltWarnings += 1;
+            if (NumTiltWarnings > MaxTiltWarnings) {
+              BSOS_DisableSolenoidStack();
+              BSOS_SetDisableFlippers(true);
+              BSOS_TurnOffAllLamps();
+              BSOS_SetLampState(TILT, 1);
+              PlaySoundEffect(SFX_TILT,SFXC_TILT);              
+            } else {
+              PlaySoundEffect(SFX_TILT_WARNING,SFXC_TILT_WARNING);                
+            }
+          } 
+          break;      
       case SW_SELF_TEST_SWITCH:
         returnState = MACHINE_STATE_TEST_LIGHTS;
         SetLastSelfTestChangedTime(CurrentTime);
@@ -2713,7 +2733,8 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
           
     }
   } // while switch hit
-  
+} // if not tilted
+
   // Let's check for things to un-freeze - should this be moved to showParagon?
   if ((CurrentTime-SaucerHitTime)>SAUCER_HOLD_TIME) MoveParagon=true;  
 

@@ -306,7 +306,10 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFXC_SPECIAL                 3
 
 #define SFX_TILT                     230  // tilt out 
-#define SFXC_TILT                    2
+#define SFXC_TILT                    5
+
+#define SFX_TILT_WARNING             240
+#define SFXC_TILT_WARNING            1
 
 #define SFX_POP_LEFT                 475  // +
 #define SFXC_POP_LEFT                4
