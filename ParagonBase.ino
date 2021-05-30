@@ -26,7 +26,7 @@ Things to do:
 #include <EEPROM.h>          // needed for EEPROM.read() etc.
 
 #define MAJOR_VERSION  2021  // update TRIDENT2020_MAJOR_VERSION references to just this
-#define MINOR_VERSION  1
+#define MINOR_VERSION  2
 
 #define DEBUG_MESSAGES  1    // enable serial debug logging
 
@@ -235,7 +235,9 @@ byte HuntLastShot=0;                  // previous location for hunt
 #define HUNT_MODE_LENGTH  45000       // 45 seconds
 #define HUNT_WARNING_TIME 10000       // # of ms left to say warning
 
-#define HUNT_BASE_SHOT_LENGTH  4000   // 4 sec max time default per shot
+#define HUNT_BASE_SHOT_LENGTH  5000   // 5 sec max time default per shot
+#define HUNT_STUN_TIME         4000   // 4 sec stun time
+#define HUNT_SHOT_TIME_REDUCE  500
 unsigned int HuntShotLength=0;        // length of time the shot actually stays dep on hunts
 #define HUNT_BASE_REWARD  2500        // base reward level (x10)
 #define HUNT_SLING_VALUE  5           // amount to add to hunt reward based on slings
@@ -1791,8 +1793,8 @@ void RunHunt() {
     HuntLocation=random(7);    // set the location
     if (HuntLocation==5) HuntLocation=6;  // Can't start on the standup or it can trigger kill immediately
     HuntShotTime=CurrentTime;  // current shot starts now
-    HuntShotLength=HUNT_BASE_SHOT_LENGTH-(500*HuntsCompleted[CurrentPlayer]);
-    if (HuntShotLength<500) HuntShotLength=500;
+    HuntShotLength=HUNT_BASE_SHOT_LENGTH-(HUNT_SHOT_TIME_REDUCE*HuntsCompleted[CurrentPlayer]);
+    if (HuntShotLength<HUNT_SHOT_TIME_REDUCE) HuntShotLength=HUNT_SHOT_TIME_REDUCE;
     HuntFrozen=false;
     PlaySFX(SFX_HUNTSTART,SFXC_HUNTSTART,200);      
     reset_3bank();    
@@ -1802,7 +1804,8 @@ void RunHunt() {
   else {
     if ((CurrentTime-HuntShotTime)>HuntShotLength) { // move shot
       HuntLastShot=HuntLocation; // for "you missed" sfx
-      PlaySFX(SFX_BEASTMOVE,SFXC_BEASTMOVE);        
+      PlaySFX(SFX_BEASTMOVE,SFXC_BEASTMOVE);
+            
       HuntLocation=random(7);
       while (HuntLocation==HuntLastShot) { HuntLocation=random(7); } // not the same location twice
       // HuntLocation++;  
@@ -2528,7 +2531,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
           if ((HuntQualified) && (!HuntMode)) {
             HuntMode=true;  // start hunt mode
           } else if ((HuntMode) && (!HuntFrozen)) { // handle stunning during the hunt by hitting standups
-            HuntShotTime=CurrentTime;        
+            HuntShotTime=CurrentTime; // reset shot clock (mod this line and one under top standup if you want to make the freeze time shorter than shot time, by say subtracting 500-1000 from CurrentTime
             HuntFrozen=true;
             // sfx stunned beast
             PlaySFX(SFX_HUNTSTUN,SFXC_HUNTSTUN);            
@@ -2539,7 +2542,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
           break;
         case SW_TOP_STANDUP:       
           if ((HuntMode) && (!HuntFrozen)) { // handle stunning during the hunt by hitting standups
-            HuntShotTime=CurrentTime;        
+            HuntShotTime=CurrentTime; // reset shot clock 
             HuntFrozen=true;
 //            PlaySFX(SFX_HUNTSTUN,SFXC_HUNTSTUN,250);             
           }
