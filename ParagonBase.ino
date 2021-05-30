@@ -1763,7 +1763,7 @@ void setup() {
 //-----------------------------------------------------------------
 void HuntSuccess() {
   if ((CurrentTime-HuntEndTime)>HUNT_RESTART_PERIOD) { // 6s has to pass before counts again
-    CurrentPlayerCurrentScore+=(HuntReward*10)*(unsigned int) HuntQualified; // HuntQualified is an extra multiplier
+    CurrentPlayerCurrentScore+=(unsigned long)HuntReward*10)*(unsigned long)HuntQualified; // HuntQualified is an extra multiplier
     CurrentPlayerCurrentScore++; // add 1 for hunts
     BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true); // why not
     
@@ -2674,7 +2674,7 @@ if (NumTiltWarnings <= MaxTiltWarnings) {
               break;
             case 1:
             case 2:
-              CurrentPlayerCurrentScore+=WaterfallValue*5000;
+              CurrentPlayerCurrentScore+=(unsigned long)WaterfallValue*5000;
               break;
             case 3:
               AwardSpecial();
