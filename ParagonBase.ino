@@ -221,6 +221,8 @@ byte HuntQualified=0;
 byte HuntsCompleted[4]={0, 0, 0, 0};   // # hunts completed per player
 byte HuntsQualified[4]={0, 0, 0, 0};   // # hunts completed per player
 unsigned long HuntStartTime=0;
+unsigned long HuntEndTime=0;           // debounce for re-starting hunt
+
 //unsigned long HuntFreezeTime=0;        
 unsigned long HuntShotTime=0;          // freeze will add
 boolean HuntFrozen=false;              // whether been frozen in this position or not, only allowed once per location
@@ -239,6 +241,7 @@ byte HuntLastShot=0;                  // previous location for hunt
 
 #define HUNT_BASE_SHOT_LENGTH  5000   // 5 sec max time default per shot
 #define HUNT_STUN_TIME         4000   // 4 sec stun time
+#define HUNT_RESTART_PERIOD    6000  // amount of time before hunt can be re-started
 #define HUNT_SHOT_TIME_REDUCE  500
 unsigned int HuntShotLength=0;        // length of time the shot actually stays dep on hunts
 #define HUNT_BASE_REWARD  2500        // base reward level (x10)
@@ -1116,7 +1119,7 @@ int RunSelfTest(int curState, boolean curStateChanged) {
       TempValue = 0;
 
       switch (curState) {
-        case MACHINE_STATE_ADJUST_FREEPLAY:
+        case MACHINE_STATE_ADJUST_FREEPLAY:  // 17
           CurrentAdjustmentByte = (byte *)&FreePlayMode;
           CurrentAdjustmentStorageByte = EEPROM_FREE_PLAY_BYTE;
           break;
@@ -1130,28 +1133,28 @@ int RunSelfTest(int curState, boolean curStateChanged) {
           CurrentAdjustmentByte = &BallSaveNumSeconds;
           CurrentAdjustmentStorageByte = EEPROM_BALL_SAVE_BYTE;
           break;
-        case MACHINE_STATE_ADJUST_MUSIC_LEVEL:
+        case MACHINE_STATE_ADJUST_MUSIC_LEVEL: // 19
           AdjustmentType = ADJ_TYPE_MIN_MAX_DEFAULT;
           AdjustmentValues[1] = 3;
           CurrentAdjustmentByte = &MusicLevel;
           CurrentAdjustmentStorageByte = EEPROM_MUSIC_LEVEL_BYTE;
           break;
-        case MACHINE_STATE_ADJUST_TOURNAMENT_SCORING:
+        case MACHINE_STATE_ADJUST_TOURNAMENT_SCORING: // 20
           CurrentAdjustmentByte = (byte *)&TournamentScoring;
           CurrentAdjustmentStorageByte = EEPROM_TOURNAMENT_SCORING_BYTE;
           break;
-        case MACHINE_STATE_ADJUST_TILT_WARNING:
+        case MACHINE_STATE_ADJUST_TILT_WARNING: // 21
           AdjustmentValues[1] = 2;
           CurrentAdjustmentByte = &MaxTiltWarnings;
           CurrentAdjustmentStorageByte = EEPROM_TILT_WARNING_BYTE;
           break;
-        case MACHINE_STATE_ADJUST_AWARD_OVERRIDE:
+        case MACHINE_STATE_ADJUST_AWARD_OVERRIDE: // 22
           AdjustmentType = ADJ_TYPE_MIN_MAX_DEFAULT;
           AdjustmentValues[1] = 7;
           CurrentAdjustmentByte = &ScoreAwardReplay;
           CurrentAdjustmentStorageByte = EEPROM_AWARD_OVERRIDE_BYTE;
           break;
-        case MACHINE_STATE_ADJUST_BALLS_OVERRIDE:
+        case MACHINE_STATE_ADJUST_BALLS_OVERRIDE: // 23
           AdjustmentType = ADJ_TYPE_LIST;
           NumAdjustmentValues = 3;
           AdjustmentValues[0] = 3;
@@ -1759,23 +1762,26 @@ void setup() {
 
 //-----------------------------------------------------------------
 void HuntSuccess() {
-  CurrentPlayerCurrentScore+=(HuntReward*10)*HuntQualified; // HuntQualified is an extra multiplier
-  CurrentPlayerCurrentScore++; // add 1 for hunts
-  BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true); // why not
-  
-  // show some cool light effect and sound
-  HuntMode=false;
-  HuntStartTime=0;
-  HuntQualified=0;
-  HuntsCompleted[CurrentPlayer]++;
-  HuntsQualified[CurrentPlayer]=0;
-  PlaySFX(SFX_HUNTKILL,SFXC_HUNTKILL);  // beast dying sound
-  PlaySFX(SFX_HUNTSUCCESS,SFXC_HUNTSUCCESS,400); // call out
-  HuntReward+=1000; // let's add another 10k (*10) to hunt reward for every one completed per ball
-
+  if ((CurrentTime-HuntEndTime)>HUNT_RESTART_PERIOD) { // 6s has to pass before counts again
+    CurrentPlayerCurrentScore+=(HuntReward*10)*HuntQualified; // HuntQualified is an extra multiplier
+    CurrentPlayerCurrentScore++; // add 1 for hunts
+    BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true); // why not
+    
+    // show some cool light effect and sound
+    HuntMode=false;
+    HuntStartTime=0;
+    HuntEndTime=CurrentTime;
+    HuntQualified=0;
+    HuntsCompleted[CurrentPlayer]++;
+    HuntsQualified[CurrentPlayer]=0;
+    PlaySFX(SFX_HUNTKILL,SFXC_HUNTKILL);  // beast dying sound
+    PlaySFX(SFX_HUNTSUCCESS,SFXC_HUNTSUCCESS,400); // call out
+    HuntReward+=1000; // let's add another 10k (*10) to hunt reward for every one completed per ball
+  }
 }
 //-----------------------------------------------------------------
 void HuntFailed() {
+  HuntEndTime=CurrentTime;
   HuntMode=false;
   HuntStartTime=0;
   HuntsQualified[CurrentPlayer]=0;
@@ -2066,6 +2072,7 @@ if (DEBUG_MESSAGES) {
 //    DropTargetClearTime = 0;
     ExtraBallCollected = false;
     
+    HuntEndTime=0;
     HuntReward=HUNT_BASE_REWARD*(HuntsCompleted[playerNum]+1);
     HuntQualified=HuntsQualified[playerNum]; // carry over hunt qualification if available
     
@@ -2548,7 +2555,7 @@ if (NumTiltWarnings <= MaxTiltWarnings) {
         // Standup targets
         case SW_BOTTOM_STANDUP:
           PlaySFX(SFX_STANDUP_BOTTOM,SFXC_STANDUP_BOTTOM);        
-          if ((HuntQualified) && (!HuntMode)) {
+          if ((HuntQualified) && (!HuntMode) && ((CurrentTime-HuntEndTime)>HUNT_RESTART_PERIOD)) {
             HuntMode=true;  // start hunt mode
           } else if ((HuntMode) && (!HuntFrozen)) { // handle stunning during the hunt by hitting standups
             HuntShotTime=CurrentTime; // reset shot clock (mod this line and one under top standup if you want to make the freeze time shorter than shot time, by say subtracting 500-1000 from CurrentTime
