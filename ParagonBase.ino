@@ -1763,7 +1763,7 @@ void setup() {
 //-----------------------------------------------------------------
 void HuntSuccess() {
   if ((CurrentTime-HuntEndTime)>HUNT_RESTART_PERIOD) { // 6s has to pass before counts again
-    CurrentPlayerCurrentScore+=(unsigned long)HuntReward*10)*(unsigned long)HuntQualified; // HuntQualified is an extra multiplier
+    CurrentPlayerCurrentScore+=((unsigned long)HuntReward*10)*(unsigned long)HuntQualified; // HuntQualified is an extra multiplier
     CurrentPlayerCurrentScore++; // add 1 for hunts
     BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true); // why not
     
@@ -1777,6 +1777,7 @@ void HuntSuccess() {
     PlaySFX(SFX_HUNTKILL,SFXC_HUNTKILL);  // beast dying sound
     PlaySFX(SFX_HUNTSUCCESS,SFXC_HUNTSUCCESS,400); // call out
     HuntReward+=1000; // let's add another 10k (*10) to hunt reward for every one completed per ball
+    reset_3bank();
   }
 }
 //-----------------------------------------------------------------
@@ -1788,6 +1789,7 @@ void HuntFailed() {
   HuntQualified=0;  
   PlaySFX(SFX_HUNTFAIL,SFXC_HUNTFAIL);  
   // psfx
+  reset_3bank();
 }
 //-----------------------------------------------------------------
 void HuntMissed() {
