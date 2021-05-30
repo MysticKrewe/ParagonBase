@@ -1763,7 +1763,7 @@ void setup() {
 //-----------------------------------------------------------------
 void HuntSuccess() {
   if ((CurrentTime-HuntEndTime)>HUNT_RESTART_PERIOD) { // 6s has to pass before counts again
-    CurrentPlayerCurrentScore+=(HuntReward*10)*HuntQualified; // HuntQualified is an extra multiplier
+    CurrentPlayerCurrentScore+=(HuntReward*10)*(unsigned int) HuntQualified; // HuntQualified is an extra multiplier
     CurrentPlayerCurrentScore++; // add 1 for hunts
     BSOS_PushToTimedSolenoidStack(SOL_KNOCKER, 3, CurrentTime, true); // why not
     
