@@ -2425,11 +2425,6 @@ int ShowMatchSequence(boolean curStateChanged) {
 }
 #endif // ENABLE_MATCH
 //====================================================
-boolean BallNotInTrough() {
-  if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) return(false); 
-  else return(true);
-}
-//====================================================
 void EjectHoles(boolean disableStack=true) {
   // sense if ball in troughs and kick out
   if (CurrentTime-CoilFireTime>MIN_COIL_FIRE_TIME) { // limit firing to once every 2s
@@ -2437,19 +2432,19 @@ void EjectHoles(boolean disableStack=true) {
       if (disableStack) BSOS_EnableSolenoidStack();
       BSOS_PushToTimedSolenoidStack(SOL_SAUCER_GOLDEN, 5, CurrentTime);
       CoilFireTime=CurrentTime;
-//      if (disableStack) BSOS_DisableSolenoidStack();
+      if (disableStack) BSOS_DisableSolenoidStack();
     }
     if (BSOS_ReadSingleSwitchState(SW_SAUCER_PARAGON)) {
       if (disableStack) BSOS_EnableSolenoidStack();
-      BSOS_PushToTimedSolenoidStack(SOL_SAUCER_PARAGON, 5, CurrentTime+20);
+      BSOS_PushToTimedSolenoidStack(SOL_SAUCER_PARAGON, 5, CurrentTime);
       CoilFireTime=CurrentTime;    
-//      if (disableStack) BSOS_DisableSolenoidStack();
+      if (disableStack) BSOS_DisableSolenoidStack();
     }
     if (BSOS_ReadSingleSwitchState(SW_SAUCER_TREASURE)) {
       if (disableStack) BSOS_EnableSolenoidStack();
-      BSOS_PushToTimedSolenoidStack(SOL_SAUCER_TREASURE, 5, CurrentTime+30);
+      BSOS_PushToTimedSolenoidStack(SOL_SAUCER_TREASURE, 5, CurrentTime);
       CoilFireTime=CurrentTime;    
-//      if (disableStack) BSOS_DisableSolenoidStack();
+      if (disableStack) BSOS_DisableSolenoidStack();
     }
   } // minimum time has passed to fire coils
 }
@@ -2469,7 +2464,7 @@ int TiltMode(){
   } 
 //  while (BSOS_PullFirstFromSwitchStack()!=SWITCH_STACK_EMPTY ) { } // empty switch stack  
 //  if (BallNotInTrough()) { // maybe also add timeout here
-  while (BSOS_PullFirstFromSwitchStack()!=SW_OUTHOLE ) { // empty switch stack  
+  if (BSOS_PullFirstFromSwitchStack()!=SW_OUTHOLE ) { // empty switch stack  
   
     EjectHoles();
   } else {
