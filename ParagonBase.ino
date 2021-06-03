@@ -2437,19 +2437,19 @@ void EjectHoles(boolean disableStack=true) {
       if (disableStack) BSOS_EnableSolenoidStack();
       BSOS_PushToTimedSolenoidStack(SOL_SAUCER_GOLDEN, 5, CurrentTime);
       CoilFireTime=CurrentTime;
-      if (disableStack) BSOS_DisableSolenoidStack();
+//      if (disableStack) BSOS_DisableSolenoidStack();
     }
     if (BSOS_ReadSingleSwitchState(SW_SAUCER_PARAGON)) {
       if (disableStack) BSOS_EnableSolenoidStack();
       BSOS_PushToTimedSolenoidStack(SOL_SAUCER_PARAGON, 5, CurrentTime+20);
       CoilFireTime=CurrentTime;    
-      if (disableStack) BSOS_DisableSolenoidStack();
+//      if (disableStack) BSOS_DisableSolenoidStack();
     }
     if (BSOS_ReadSingleSwitchState(SW_SAUCER_TREASURE)) {
       if (disableStack) BSOS_EnableSolenoidStack();
       BSOS_PushToTimedSolenoidStack(SOL_SAUCER_TREASURE, 5, CurrentTime+30);
       CoilFireTime=CurrentTime;    
-      if (disableStack) BSOS_DisableSolenoidStack();
+//      if (disableStack) BSOS_DisableSolenoidStack();
     }
   } // minimum time has passed to fire coils
 }
@@ -2463,12 +2463,14 @@ int TiltMode(){
     CoilFireTime=0;
     BSOS_SetDisableFlippers(true);
     BSOS_TurnOffAllLamps();
-    while (BSOS_PullFirstFromSwitchStack()!=SWITCH_STACK_EMPTY ) { } // empty switch stack
     BSOS_SetLampState(TILT, 1);
     PlaySoundEffect(SFX_TILT,SFXC_TILT);
     TiltModeStart=CurrentTime;
   } 
-  if (BallNotInTrough()) { // maybe also add timeout here
+//  while (BSOS_PullFirstFromSwitchStack()!=SWITCH_STACK_EMPTY ) { } // empty switch stack  
+//  if (BallNotInTrough()) { // maybe also add timeout here
+  while (BSOS_PullFirstFromSwitchStack()!=SW_OUTHOLE ) { // empty switch stack  
+  
     EjectHoles();
   } else {
     if ((CurrentTime-TiltModeStart)>TILT_TIMEOUT) return MACHINE_STATE_BALL_OVER;
