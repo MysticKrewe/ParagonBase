@@ -51,6 +51,7 @@ boolean MachineStateChanged = true;
 #define MACHINE_STATE_INIT_NEW_BALL   2
 #define MACHINE_STATE_UNVALIDATED     3
 #define MACHINE_STATE_NORMAL_GAMEPLAY 4
+#define MACHINE_STATE_TILT            10
 #define MACHINE_STATE_COUNTDOWN_BONUS 90
 #define MACHINE_STATE_MATCH_MODE      95
 #define MACHINE_STATE_BALL_OVER       100
@@ -75,10 +76,11 @@ boolean MachineStateChanged = true;
 #define GAME_MODE_UNSTRUCTURED_PLAY             1
 #define GAME_MODE_MINI_GAME_QUALIFIED           2  // not used?
 
-#define TIME_TO_WAIT_FOR_BALL         100
+#define TIME_TO_WAIT_FOR_BALL           100
+#define TILT_TIMEOUT                    6000  // six seconds tilt timeout
 
 // game specific timing
-#define SAUCER_PARAGON_DURATION         2000
+#define SAUCER_PARAGON_DURATION         700
 
 // enhanced settings copied from Trident2020 ---------------------
 
@@ -120,6 +122,7 @@ byte DropsHit = 0;              // holds mask value indicating which of drops ha
 
 #define MAX_DISPLAY_BONUS               100 // for trident: 55
 #define TILT_WARNING_DEBOUNCE_TIME      1000
+#define MIN_COIL_FIRE_TIME              2000 // don't fire certain diagnostic coils more than this interval
 
 
 /*********************************************************************
@@ -166,6 +169,8 @@ unsigned long LastSpinnerHitTime = 0;
 unsigned long GameModeStartTime = 0;
 unsigned long GameModeEndTime = 0;
 unsigned long LastTiltWarningTime = 0;
+unsigned long TiltModeStart=0;
+unsigned long CoilFireTime=0;          // used to keep coils from repeatedly firing
 
 byte GameMode=GAME_MODE_SKILL_SHOT;
 byte MaxTiltWarnings = 2;
@@ -264,16 +269,17 @@ byte BonusHeld[4];                        // bits: 1=20k, 2=30k, 4=40k
 ////////////////////////////////////////////////////////////////////////////
 
 // ----------------------------------------------------------------
+/*
 void RunDemo() {
 /* 
     BSOS_PushToTimedSolenoidStack(SOL_CENTER_BUMPER, 4, CurrentTime+5000);
     BSOS_PushToTimedSolenoidStack(SOL_LEFT_BUMPER, 4, CurrentTime+5200);
     BSOS_PushToTimedSolenoidStack(SOL_RIGHT_BUMPER, 4, CurrentTime+5400);
-/**/  
+/*  
 
  
 }
-
+*/
 // ----------------------------------------------------------------
 void RunSkillShotMode() {
   if (GameMode==GAME_MODE_SKILL_SHOT) {
@@ -2009,7 +2015,7 @@ int InitGamePlay(boolean curStateChanged) {
 
 
 
-RunDemo();
+//RunDemo();
     
   } // end run-once moving on
 
@@ -2059,6 +2065,7 @@ if (DEBUG_MESSAGES) {
 
     reset_3bank();  // reset right 3-bank
     reset_inline(); // reset inline drops
+    
 
     Bonus = 1;
     ShowBonusOnTree(1);
@@ -2067,6 +2074,7 @@ if (DEBUG_MESSAGES) {
     BallSaveExtend=0;
     BallTimeInTrough = 0;
     NumTiltWarnings = 0;  // reset tilt
+    TiltModeStart=0;      // reset tilt    
     LastTiltWarningTime = 0;
     MoveParagon=true;
 
@@ -2416,6 +2424,55 @@ int ShowMatchSequence(boolean curStateChanged) {
 }
 #endif // ENABLE_MATCH
 //====================================================
+boolean BallNotInTrough() {
+  if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) return(false); 
+  else return(true);
+}
+//====================================================
+void EjectHoles(boolean disableStack=true) {
+  // sense if ball in troughs and kick out
+  if (CurrentTime-CoilFireTime>MIN_COIL_FIRE_TIME) { // limit firing to once every 2s
+    if (BSOS_ReadSingleSwitchState(SW_SAUCER_GOLDEN)) {
+      if (disableStack) BSOS_EnableSolenoidStack();
+      BSOS_PushToTimedSolenoidStack(SOL_SAUCER_GOLDEN, 5, CurrentTime);
+      CoilFireTime=CurrentTime;
+      if (disableStack) BSOS_DisableSolenoidStack();
+    }
+    if (BSOS_ReadSingleSwitchState(SW_SAUCER_PARAGON)) {
+      if (disableStack) BSOS_EnableSolenoidStack();
+      BSOS_PushToTimedSolenoidStack(SOL_SAUCER_PARAGON, 5, CurrentTime+20);
+      CoilFireTime=CurrentTime;    
+      if (disableStack) BSOS_DisableSolenoidStack();
+    }
+    if (BSOS_ReadSingleSwitchState(SW_SAUCER_TREASURE)) {
+      if (disableStack) BSOS_EnableSolenoidStack();
+      BSOS_PushToTimedSolenoidStack(SOL_SAUCER_TREASURE, 5, CurrentTime+30);
+      CoilFireTime=CurrentTime;    
+      if (disableStack) BSOS_DisableSolenoidStack();
+    }
+  } // minimum time has passed to fire coils
+}
+//====================================================
+int TiltMode(){
+  if (TiltModeStart==0) {
+    #if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)              
+       wTrig.stopAllTracks();
+    #endif        
+    BSOS_DisableSolenoidStack();
+    BSOS_SetDisableFlippers(true);
+    BSOS_TurnOffAllLamps();
+    BSOS_SetLampState(TILT, 1);
+    PlaySoundEffect(SFX_TILT,SFXC_TILT);
+    TiltModeStart=CurrentTime;
+  } 
+  if (BallNotInTrough()) { // maybe also add timeout here
+    EjectHoles();
+  } else {
+    if ((CurrentTime-TiltModeStart)>TILT_TIMEOUT) return MACHINE_STATE_BALL_OVER;
+  }
+  return MACHINE_STATE_TILT;   // stay in tilt until timed out
+}
+//====================================================
 
 int RunGamePlayMode(int curState, boolean curStateChanged) {
   int returnState = curState;
@@ -2434,13 +2491,17 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
   } else if (curState==MACHINE_STATE_INIT_NEW_BALL) {
     returnState = InitNewBall(curStateChanged, CurrentPlayer, CurrentBallInPlay);
   } else if (curState==MACHINE_STATE_NORMAL_GAMEPLAY) {
+    // this also checks ball trough end of ball and exit from tilt
     returnState = NormalGamePlay(); // also includes skill shot/modes
   } else if (curState==MACHINE_STATE_COUNTDOWN_BONUS) {
     //   Do not put one-time end of ball stuff here - this loops
     returnState = CountdownBonus(curStateChanged);
     ShowPlayerScores(CurrentPlayer, (BallFirstSwitchHitTime==0)?true:false, (BallFirstSwitchHitTime>0 && ((CurrentTime-LastTimeScoreChanged)>2000))?true:false);
 
-//    returnState = MACHINE_STATE_BALL_OVER; // disable this when countdown enabled
+  } else if (curState==MACHINE_STATE_TILT) {
+
+    return(TiltMode());  
+
     
   } else if (curState==MACHINE_STATE_BALL_OVER) {    
 
@@ -2508,12 +2569,21 @@ if (NumTiltWarnings <= MaxTiltWarnings) {
           if ((CurrentTime - LastTiltWarningTime) > TILT_WARNING_DEBOUNCE_TIME) {
             LastTiltWarningTime = CurrentTime;
             NumTiltWarnings += 1;
-            if (NumTiltWarnings > MaxTiltWarnings) {
+            if (NumTiltWarnings > MaxTiltWarnings) { // ===== TRIGGER TILT
+            
+              returnState = MACHINE_STATE_TILT;
+/*              
+#if defined(USE_WAV_TRIGGER) || defined(USE_WAV_TRIGGER_1p3)            
+              wTrig.stopAllTracks();
+#endif        
               BSOS_DisableSolenoidStack();
               BSOS_SetDisableFlippers(true);
               BSOS_TurnOffAllLamps();
               BSOS_SetLampState(TILT, 1);
-              PlaySoundEffect(SFX_TILT,SFXC_TILT);              
+              PlaySoundEffect(SFX_TILT,SFXC_TILT);
+//returnState = MACHINE_STATE_BALLSEARCH;              // zz need to kick balls out of holes
+//returnState = MACHINE_STATE_BALL_OVER; // skip bonus
+*/
             } else {
               PlaySoundEffect(SFX_TILT_WARNING,SFXC_TILT_WARNING);                
             }
