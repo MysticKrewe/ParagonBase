@@ -2068,6 +2068,7 @@ if (DEBUG_MESSAGES) {
     
 
     Bonus = 1;
+    CoilFireTime=0;
     ShowBonusOnTree(1);
     BonusX = 1;
     BallSaveUsed = false;
@@ -2425,8 +2426,8 @@ int ShowMatchSequence(boolean curStateChanged) {
 #endif // ENABLE_MATCH
 //====================================================
 boolean BallNotInTrough() {
-  if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) return(false); 
-  else return(true);
+  if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) return(true); 
+  else return(false);
 }
 //====================================================
 void EjectHoles(boolean disableStack=true) {
@@ -2459,6 +2460,7 @@ int TiltMode(){
        wTrig.stopAllTracks();
     #endif        
     BSOS_DisableSolenoidStack();
+    CoilFireTime=0;
     BSOS_SetDisableFlippers(true);
     BSOS_TurnOffAllLamps();
     BSOS_SetLampState(TILT, 1);
