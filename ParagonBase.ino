@@ -2426,8 +2426,8 @@ int ShowMatchSequence(boolean curStateChanged) {
 #endif // ENABLE_MATCH
 //====================================================
 boolean BallNotInTrough() {
-  if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) return(true); 
-  else return(false);
+  if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) return(false); 
+  else return(true);
 }
 //====================================================
 void EjectHoles(boolean disableStack=true) {
