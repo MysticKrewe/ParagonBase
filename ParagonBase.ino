@@ -2463,6 +2463,7 @@ int TiltMode(){
     CoilFireTime=0;
     BSOS_SetDisableFlippers(true);
     BSOS_TurnOffAllLamps();
+    while (BSOS_PullFirstFromSwitchStack()!=SWITCH_STACK_EMPTY ) { } // empty switch stack
     BSOS_SetLampState(TILT, 1);
     PlaySoundEffect(SFX_TILT,SFXC_TILT);
     TiltModeStart=CurrentTime;
