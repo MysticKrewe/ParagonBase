@@ -2432,21 +2432,23 @@ void EjectHoles(boolean disableStack=true) {
       if (disableStack) BSOS_EnableSolenoidStack();
       BSOS_PushToTimedSolenoidStack(SOL_SAUCER_GOLDEN, 5, CurrentTime);
       CoilFireTime=CurrentTime;
-      if (disableStack) BSOS_DisableSolenoidStack();
+//      if (disableStack) BSOS_DisableSolenoidStack();
     }
     if (BSOS_ReadSingleSwitchState(SW_SAUCER_PARAGON)) {
       if (disableStack) BSOS_EnableSolenoidStack();
       BSOS_PushToTimedSolenoidStack(SOL_SAUCER_PARAGON, 5, CurrentTime);
       CoilFireTime=CurrentTime;    
-      if (disableStack) BSOS_DisableSolenoidStack();
+//      if (disableStack) BSOS_DisableSolenoidStack();
     }
     if (BSOS_ReadSingleSwitchState(SW_SAUCER_TREASURE)) {
       if (disableStack) BSOS_EnableSolenoidStack();
       BSOS_PushToTimedSolenoidStack(SOL_SAUCER_TREASURE, 5, CurrentTime);
       CoilFireTime=CurrentTime;    
-      if (disableStack) BSOS_DisableSolenoidStack();
+
     }
-  } // minimum time has passed to fire coils
+  } else if (CurrentTime-CoilFireTime>200) { // minimum time has passed to fire coils
+      if (disableStack) BSOS_DisableSolenoidStack();  
+  }
 }
 //====================================================
 int TiltMode(){
