@@ -57,6 +57,8 @@ boolean MachineStateChanged = true;
 #define MACHINE_STATE_BALL_OVER       100
 #define MACHINE_STATE_GAME_OVER       110
 
+#define MACHINE_STATE_NEXT_PLAYER_UP  11  // used for new player announcements
+
 // from Trident
 #define MACHINE_STATE_ADJUST_FREEPLAY           -17
 #define MACHINE_STATE_ADJUST_BALL_SAVE          -18
@@ -140,7 +142,7 @@ boolean FreePlayMode = false;
 
 byte CurrentPlayer = 0;
 byte CurrentBallInPlay = 1;
-byte CurrentNumPlayers = 0;
+byte CurrentNumPlayers = 0;           // 1-4
 unsigned long CurrentScores[4];
 boolean SamePlayerShootsAgain = false;
 
@@ -171,6 +173,7 @@ unsigned long GameModeEndTime = 0;
 unsigned long LastTiltWarningTime = 0;
 unsigned long TiltModeStart=0;
 unsigned long CoilFireTime=0;          // used to keep coils from repeatedly firing
+unsigned long PlayerUpTime=0;          // keep track of delay during new player up callout
 
 byte GameMode=GAME_MODE_SKILL_SHOT;
 byte MaxTiltWarnings = 2;
@@ -939,7 +942,7 @@ void AddCredit(boolean playSound = false, byte numToAdd = 1) {
     Credits += numToAdd;
     if (Credits > MaximumCredits) Credits = MaximumCredits;
     BSOS_WriteByteToEEProm(BSOS_CREDITS_EEPROM_BYTE, Credits);
-    if (playSound) PlaySoundEffect(SFX_ADD_CREDIT);
+    if (playSound) PlaySFX(SFX_COINDROP,SFXC_COINDROP);
     BSOS_SetDisplayCredits(Credits);
     BSOS_SetCoinLockout(false);
   } else {
@@ -1991,7 +1994,7 @@ int InitGamePlay(boolean curStateChanged) {
       }
       BSOS_EnableSolenoidStack();
       BSOS_SetDisableFlippers(false);
-      returnState = MACHINE_STATE_INIT_NEW_BALL;
+      returnState = MACHINE_STATE_INIT_NEW_BALL;  // could call machine_state_next_player_up but not for ball1 player 1
     } else {
 
       if (DEBUG_MESSAGES) {
@@ -2025,14 +2028,31 @@ int InitGamePlay(boolean curStateChanged) {
   if ((CurrentTime-InitGameStartTime)>TIME_TO_WAIT_FOR_BALL || BSOS_ReadSingleSwitchState(SW_OUTHOLE)) {
     BSOS_EnableSolenoidStack();
     BSOS_SetDisableFlippers(false);
-    returnState = MACHINE_STATE_INIT_NEW_BALL;
+    returnState = MACHINE_STATE_INIT_NEW_BALL;  // could call machine_state_next_player_up but not for ball1 player 1
   }
   
   return returnState;  
 }
 
 //==================================================== zz
-//
+int NextPlayerUp(bool curStateChanged, byte playerNum, int ballNum) {
+  if (curStateChanged) { 
+    if (CurrentNumPlayers==1) return MACHINE_STATE_INIT_NEW_BALL; // no call-outs for single player game
+  
+    // could differentiate between next player and shoot again if wanted here.
+    // check: if (SamePlayerShootsAgain)
+    
+    PlayerUpTime=CurrentTime;
+    PlaySFX(SFX_PLAYERUP+playerNum*5,SFXC_PLAYERUP);
+    
+  } else {
+ 
+    if (CurrentTime-PlayerUpTime>NEW_PLAYER_TIME) return MACHINE_STATE_INIT_NEW_BALL;  // init new ball after delay for player callout
+  }
+  return MACHINE_STATE_NEXT_PLAYER_UP;
+}
+//==================================================== zz
+
 int InitNewBall(bool curStateChanged, byte playerNum, int ballNum) {  
 
   if (curStateChanged) {
@@ -2040,8 +2060,6 @@ int InitNewBall(bool curStateChanged, byte playerNum, int ballNum) {
 if (DEBUG_MESSAGES) { 
   Serial.write("InitNewBall(curStateChanged)\r\n");
 }         
-    
-
 
     BSOS_SetDisableFlippers(false);
     BSOS_EnableSolenoidStack(); 
@@ -2490,7 +2508,9 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
   // Very first time into gameplay loop
   if (curState==MACHINE_STATE_INIT_GAMEPLAY) {
     returnState = InitGamePlay(curStateChanged);    
-  } else if (curState==MACHINE_STATE_INIT_NEW_BALL) {
+  } else if (curState==MACHINE_STATE_NEXT_PLAYER_UP) {
+    returnState = NextPlayerUp(curStateChanged, CurrentPlayer, CurrentBallInPlay);
+  } else if (curState==MACHINE_STATE_INIT_NEW_BALL) {    
     returnState = InitNewBall(curStateChanged, CurrentPlayer, CurrentBallInPlay);
   } else if (curState==MACHINE_STATE_NORMAL_GAMEPLAY) {
     // this also checks ball trough end of ball and exit from tilt
@@ -2515,7 +2535,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
     // SetHoldBonus done before countdown bonus
   
     if (SamePlayerShootsAgain) {
-      returnState = MACHINE_STATE_INIT_NEW_BALL;
+      returnState = MACHINE_STATE_INIT_NEW_BALL;  // if we want special call outs for "shoot again" send this to machine_state_next_player_up and
     } else {  // ---- new player
 	
       if (CurrentBallInPlay==BallsPerGame) {  // This plays on last ball for each player
@@ -2543,7 +2563,9 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
 
         returnState = MACHINE_STATE_MATCH_MODE;
       }
-      else returnState = MACHINE_STATE_INIT_NEW_BALL;
+//      else returnState = MACHINE_STATE_INIT_NEW_BALL;
+      else returnState = MACHINE_STATE_NEXT_PLAYER_UP;
+      
     } // new ball/player?
     
   } else if (curState==MACHINE_STATE_MATCH_MODE) {

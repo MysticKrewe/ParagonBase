@@ -189,8 +189,105 @@ struct PlayfieldAndCabinetSwitch TriggeredSwitches[] = {
 };
 
 #define POST_BALL_DELAY              200   // # ms to delay after bonus countdown
-
+#define NEW_PLAYER_TIME              2000  // time to delay for new player up SFX
 // ---------------------- sound effects
+
+
+#define SFX_NONE                     0
+
+#define SFX_GAME_INTRO               1  // intro when game boots
+#define SFXC_GAME_INTRO              3  // number of different sound effects in this category
+
+#define SFX_COINDROP                 10
+#define SFXC_COINDROP                2
+
+#define SFX_START_BALL1              20   // game start player ball 1
+#define SFXC_START_BALL1             15
+
+
+#define SFX_BALLSAVED                40   // ball save activated
+#define SFXC_BALLSAVED               4
+
+
+#define SFX_BONUSCOUNT               80
+#define SFXC_BONUSCOUNT              3
+
+#define SFX_SHOOT_AGAIN              110  // same player shoot again
+#define SFXC_SHOOT_AGAIN             1
+
+#define SFX_PLAYERUP                 120  // +playerNum*5   120,125,130,135 - up to 5 of each
+#define SFXC_PLAYERUP                2    // how many of each must be equal, 1=normal calls, 2= add put-downs
+
+#define SFX_BG_MUSIC                 170  // background music from 170-199
+#define SFXC_BG_MUSIC                10
+
+
+#define SFX_EXTRABALL                200 // +
+#define SFXC_EXTRABALL               3
+
+#define SFX_SPECIAL                  210 // +
+#define SFXC_SPECIAL                 3
+
+#define SFX_TILT                     230  // tilt out 
+#define SFXC_TILT                    5
+
+#define SFX_TILT_WARNING             240
+#define SFXC_TILT_WARNING            1
+
+
+#define SFX_RIGHT_OUTLANE            310  // +
+#define SFXC_RIGHT_OUTLANE           4
+
+#define SFX_RIGHT_INLANE             320  // +
+#define SFXC_RIGHT_INLANE            1
+
+#define SFX_ROLLOVER_TOP             340  // +  top star rollover
+#define SFXC_ROLLOVER_TOP            3
+
+
+#define SFX_TOP_REBOUND              350  // + switch upper left rebound
+#define SFXC_TOP_REBOUND             1
+
+#define SFX_STANDUP_BOTTOM           360  // +
+#define SFXC_STANDUP_BOTTOM          2
+
+
+#define SFX_STANDUP_TOP              380  // +
+#define SFXC_STANDUP_TOP             1
+
+
+#define SFX_SAUCER_GOLDEN            390
+#define SFXC_SAUCER_GOLDEN           1
+
+#define SFX_SPINNER                  400
+#define SFXC_SPINNER                 3
+
+#define SFX_UPPER_RIGHT_STAR         410
+#define SFXC_UPPER_RIGHT_STAR        1
+
+#define SFX_SLING_RIGHT              420  // +
+#define SFXC_SLING_RIGHT             1
+#define SFX_SLING_LEFT               430  // +
+#define SFXC_SLING_LEFT              1
+
+#define SFX_POP_BEAST                440  // beast pop +
+#define SFXC_POP_BEAST               6
+
+#define SFX_POP_CENTER               450  // +
+#define SFXC_POP_CENTER              4
+
+#define SFX_POP_RIGHT                455  // +
+#define SFXC_POP_RIGHT               4
+
+#define SFX_INLINES                  460
+#define SFXC_INLINES                 7
+
+#define SFX_SAUCER_TREASURE          470
+#define SFXC_SAUCER_TREASURE         1
+
+#define SFX_POP_LEFT                 475  // +
+#define SFXC_POP_LEFT                4
+
 
 #define SFX_2X                       500 // +
 #define SFXC_2X                      3
@@ -225,11 +322,6 @@ struct PlayfieldAndCabinetSwitch TriggeredSwitches[] = {
 byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K,SFXC_GC14K,SFXC_GC16K,SFXC_GC18K,SFXC_GC20K};   // array to hold counts for random sound
 
 // bonus held amounts
-
-#define SFX_UPPER_RIGHT_STAR         410
-#define SFXC_UPPER_RIGHT_STAR        1
-
-
 #define SFX_20K_BONUS                570
 #define SFXC_20K_BONUS               1
 #define SFX_30K_BONUS                575
@@ -251,43 +343,12 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFX_O                        600
 #define SFX_N                        601
 
-#define SFX_START_BALL1              20   // game start player ball 1
-#define SFXC_START_BALL1             15
 
 #define SFX_PARAGON                  610  // paragon lit
 #define SFXC_PARAGON                 2
 
-#define SFX_BALLSAVED                40   // ball save activated
-#define SFXC_BALLSAVED               4
-
-#define SFX_POP_BEAST                440  // beast pop +
-#define SFXC_POP_BEAST               6
-
-#define SFX_INLINES                  460
-#define SFXC_INLINES                 7
-
-#define SFX_SAUCER_TREASURE          470
-#define SFXC_SAUCER_TREASURE         1
-
-#define SFX_EXTRABALL                200 // +
-#define SFXC_EXTRABALL               3
-
-#define SFX_SAUCER_GOLDEN            390
-#define SFXC_SAUCER_GOLDEN           1
-
-#define SFX_COINDROP                 10
-#define SFXC_COINDROP                2
-
-#define SFX_BONUSCOUNT               80
-#define SFXC_BONUSCOUNT              3
-
 #define SFX_HUNTSUCCESS              620  // +
 #define SFXC_HUNTSUCCESS             5
-
-#define SFX_SLING_RIGHT              420  // +
-#define SFXC_SLING_RIGHT             1
-#define SFX_SLING_LEFT               430  // +
-#define SFXC_SLING_LEFT              1
 
 #define SFX_SKILLSHOT                630  // generic skill shot
 #define SFXC_SKILLSHOT               3
@@ -296,41 +357,7 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFX_SS_GOLDEN                645  // skill shot golden cliffs 20k + 2k
 #define SFXC_SS_GOLDEN               1
 
-#define SFX_SHOOT_AGAIN              110  // same player shoot again
-#define SFXC_SHOOT_AGAIN             1
 
-#define SFX_BG_MUSIC                 170  // background music from 170-199
-#define SFXC_BG_MUSIC                10
-
-#define SFX_SPECIAL                  210 // +
-#define SFXC_SPECIAL                 3
-
-#define SFX_TILT                     230  // tilt out 
-#define SFXC_TILT                    5
-
-#define SFX_TILT_WARNING             240
-#define SFXC_TILT_WARNING            1
-
-#define SFX_POP_LEFT                 475  // +
-#define SFXC_POP_LEFT                4
-
-#define SFX_POP_RIGHT                455  // +
-#define SFXC_POP_RIGHT               4
-
-#define SFX_POP_CENTER               450  // +
-#define SFXC_POP_CENTER              4
-
-#define SFX_STANDUP_TOP              380  // +
-#define SFXC_STANDUP_TOP             1
-
-#define SFX_STANDUP_BOTTOM           360  // +
-#define SFXC_STANDUP_BOTTOM          2
-
-#define SFX_TOP_REBOUND              350  // + switch upper left rebound
-#define SFXC_TOP_REBOUND             1
-
-#define SFX_WELCOME                  1    // + when game is powered up
-#define SFXC_WELCOME                 4
 
 #define SFX_TIMEOUT                  650  // 10s left in beast mode
 #define SFXC_TIMEOUT                 5
@@ -341,17 +368,6 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFX_BEASTMOVE                670  // when beast shot moves
 #define SFXC_BEASTMOVE               1
 
-#define SFX_RIGHT_OUTLANE            310  // +
-#define SFXC_RIGHT_OUTLANE           4
-
-#define SFX_ROLLOVER_TOP             340  // +  top star rollover
-#define SFXC_ROLLOVER_TOP            3
-
-#define SFX_RIGHT_INLANE             320  // +
-#define SFXC_RIGHT_INLANE            1
-
-#define SFX_SPINNER                  400
-#define SFXC_SPINNER                 3
 
 #define SFX_DROPS                    300  // drop targets - 1 sound for each target 300-302
 //#define SFXC_DROPS                   3
@@ -371,7 +387,6 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 #define SFX_HUNTKILL                 810
 #define SFXC_HUNTKILL                1
 
-#define SFX_PLAYERUP                 130  // 131=player 2, 132=playe 3, 133=player 4
 
 #define SFX_MATCH                    220  // only 1 sound for now
 
@@ -417,34 +432,6 @@ byte GCcounts[10]={SFXC_GC2K,SFXC_GC4K,SFXC_GC6K,SFXC_GC8K,SFXC_GC10K,SFXC_GC12K
 
 // base defines
 
-#define SFX_NONE                     0
-#define SFXC_GAME_INTRO              3  // number of different sound effects in this category
-#define SFX_GAME_INTRO               1  // intro when game boots
-#define SFX_GAME_INTRO2              2
-#define SFX_GAME_INTRO3              3
-
-#define SFXC_ADD_CREDIT              3
-#define SFX_ADD_CREDIT               10
-#define SFX_ADD_CREDIT2              11
-#define SFX_ADD_CREDIT3              12
-
-#define SFX_START_GAME1              20
-#define SFX_START_GAME2              21
-#define SFX_START_GAME3              22
-#define SFX_START_GAME4              23
-#define SFX_START_GAME5              24
-#define SFX_START_GAME6              26
-
-#define SFX_ADD_PLAYER2              30
-#define SFX_ADD_PLAYER3              31
-#define SFX_ADD_PLAYER4              32
-
-#define SFX_BEAST1                   40
-#define SFX_BEAST2                   41
-#define SFX_BEAST3                   42
-
-//#define SFX_SKILL1                   50 // skill shot awarded
-//#define SFX_SKILL2                   51
 
 /*
 
