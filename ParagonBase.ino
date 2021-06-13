@@ -26,7 +26,7 @@ Things to do:
 #include <EEPROM.h>          // needed for EEPROM.read() etc.
 
 #define MAJOR_VERSION  2021  // update TRIDENT2020_MAJOR_VERSION references to just this
-#define MINOR_VERSION  2
+#define MINOR_VERSION  3
 
 #define DEBUG_MESSAGES  1    // enable serial debug logging
 
@@ -1675,8 +1675,12 @@ void HandleTreasureSaucerHit() {
 //-----------------------------------------------------------------
 
 void setup() {
+  
+  // add 2 second delay for Alltek
+  //delay(2000);
+  
   if (DEBUG_MESSAGES) {
-    Serial.begin(115200);
+    Serial.begin(57600);  // match this to soundcard 57600
   }
 
   // Start out with everything tri-state, in case the original
