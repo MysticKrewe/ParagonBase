@@ -2046,8 +2046,9 @@ int NextPlayerUp(bool curStateChanged, byte playerNum, int ballNum) {
   if (curStateChanged) { // setup
   
     if (CurrentNumPlayers==1) return MACHINE_STATE_INIT_NEW_BALL; // no call-outs for single player game
+
     playSFX=true;    
-    if ((ballNum==3) && (playerNum>1)) { // engage predelay
+    if ((ballNum==3) && (playerNum>0)) { // engage predelay
       PlayerUpTime=CurrentTime;
       preDelay=true;
     } else preDelay=false;
