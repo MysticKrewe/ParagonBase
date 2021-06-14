@@ -2041,20 +2041,33 @@ int InitGamePlay(boolean curStateChanged) {
 
 //==================================================== zz
 int NextPlayerUp(bool curStateChanged, byte playerNum, int ballNum) {
-  if (curStateChanged) { 
-    if (CurrentNumPlayers==1) return MACHINE_STATE_INIT_NEW_BALL; // no call-outs for single player game
+  static boolean preDelay;
+  static boolean playSFX;
+  if (curStateChanged) { // setup
   
-    // could differentiate between next player and shoot again if wanted here.
-    // check: if (SamePlayerShootsAgain)
+    if (CurrentNumPlayers==1) return MACHINE_STATE_INIT_NEW_BALL; // no call-outs for single player game
+    playSFX=true;    
+    if ((ballNum==3) && (playerNum>1)) { // engage predelay
+      PlayerUpTime=CurrentTime;
+      preDelay=true;
+    } else preDelay=false;
     
-    PlayerUpTime=CurrentTime;
-    PlaySFX(SFX_PLAYERUP+playerNum*5,SFXC_PLAYERUP);
-    
-  } else {
+  } else if (preDelay) {
+    if (CurrentTime-PlayerUpTime>3000) { // times up
+      preDelay=false;
+    }
  
-    if (CurrentTime-PlayerUpTime>(NEW_PLAYER_TIME+(ballNum==3?3000:0))) return MACHINE_STATE_INIT_NEW_BALL;  // init new ball after delay for player callout
+  } else { // post delay
+    if (playSFX) {
+      PlaySFX(SFX_PLAYERUP+playerNum*5,SFXC_PLAYERUP); // play "Player X you're up!"
+      playSFX=false; // only run one time
+      PlayerUpTime=CurrentTime;      
+    }
+    if (CurrentTime-PlayerUpTime>NEW_PLAYER_TIME) return MACHINE_STATE_INIT_NEW_BALL;  // init new ball after delay for player callout   
+    
   }
-  return MACHINE_STATE_NEXT_PLAYER_UP;
+  return MACHINE_STATE_NEXT_PLAYER_UP; 
+  
 }
 //==================================================== zz
 
@@ -2558,7 +2571,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
       GoldenSaucerValue=GoldenSaucerMem[CurrentPlayer];
       
 
-	  if (CurrentBallInPlay>BallsPerGame) {  // end of game for all players
+  	  if (CurrentBallInPlay>BallsPerGame) {  // end of game for all players
         CheckHighScores();
 //        PlaySoundEffect(SOUND_EFFECT_GAME_OVER);
 //        SetPlayerLamps(0);
