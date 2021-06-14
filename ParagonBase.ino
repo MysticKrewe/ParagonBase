@@ -562,16 +562,16 @@ void ShowAwardLamps() {
   if ((HuntMode) && (HuntLocation==1)) { // don't overrite hunt lamps
     
   } else { // don't show award lights in hunt mode 
-    if ((DropsRightDownScore[CurrentPlayer]==10000) && (!HuntMode)) { BSOS_SetLampState(L_10K_DROPS, 1,(SequenceOnTrack?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_10K_DROPS, 0); }
-    if ((DropsRightDownScore[CurrentPlayer]==15000) && (!HuntMode)) { BSOS_SetLampState(L_15K_DROPS, 1,(SequenceOnTrack?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_15K_DROPS, 0); }
+    if ((DropsRightDownScore[CurrentPlayer]==10000) && (!HuntMode)) { BSOS_SetLampState(L_10K_DROPS, 1,(SequenceOnTrack==true?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_10K_DROPS, 0); }
+    if ((DropsRightDownScore[CurrentPlayer]==15000) && (!HuntMode)) { BSOS_SetLampState(L_15K_DROPS, 1,(SequenceOnTrack==true?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_15K_DROPS, 0); }
   }
   if ((HuntMode) && (HuntLocation==3)) { // don't overrite hunt lamps
     
   } else {  
-    if ((DropsRightDownScore[CurrentPlayer]==20000) && (!HuntMode)) { BSOS_SetLampState(L_20K_DROPS, 1,(SequenceOnTrack?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_20K_DROPS, 0); }
-    if ((DropsRightDownScore[CurrentPlayer]==25000) && (!HuntMode)) { BSOS_SetLampState(L_25K_DROPS, 1,(SequenceOnTrack?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_25K_DROPS, 0); }
+    if ((DropsRightDownScore[CurrentPlayer]==20000) && (!HuntMode)) { BSOS_SetLampState(L_20K_DROPS, 1,(SequenceOnTrack==true?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_20K_DROPS, 0); }
+    if ((DropsRightDownScore[CurrentPlayer]==25000) && (!HuntMode)) { BSOS_SetLampState(L_25K_DROPS, 1,(SequenceOnTrack==true?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_25K_DROPS, 0); }
   }
-  if ((DropsRightDownScore[CurrentPlayer]==30000) && (!HuntMode)) { BSOS_SetLampState(L_SPECIAL_DROPS, 1,(SequenceOnTrack?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_SPECIAL_DROPS, 0); }
+  if ((DropsRightDownScore[CurrentPlayer]==30000) && (!HuntMode)) { BSOS_SetLampState(L_SPECIAL_DROPS, 1,(SequenceOnTrack==true?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_SPECIAL_DROPS, 0); }
 
   // Waterfall  0=1k 1=5k, 2=10k 3=special
   if (WaterfallValue==1) { BSOS_SetLampState(L_5K_WATER, 1,0,300); } else { BSOS_SetLampState(L_5K_WATER, 0); }
