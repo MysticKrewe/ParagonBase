@@ -10,6 +10,7 @@
   
   version
   0.002 - stable version with 3 attract modes
+  1.004 - now with delay on ball 3
 
 
 Things to do:
@@ -26,7 +27,7 @@ Things to do:
 #include <EEPROM.h>          // needed for EEPROM.read() etc.
 
 #define MAJOR_VERSION  2021  // update TRIDENT2020_MAJOR_VERSION references to just this
-#define MINOR_VERSION  3
+#define MINOR_VERSION  4
 
 #define DEBUG_MESSAGES  1    // enable serial debug logging
 
@@ -2051,7 +2052,7 @@ int NextPlayerUp(bool curStateChanged, byte playerNum, int ballNum) {
     
   } else {
  
-    if (CurrentTime-PlayerUpTime>NEW_PLAYER_TIME) return MACHINE_STATE_INIT_NEW_BALL;  // init new ball after delay for player callout
+    if (CurrentTime-PlayerUpTime>(NEW_PLAYER_TIME+(ballNum==3?3000:0)) return MACHINE_STATE_INIT_NEW_BALL;  // init new ball after delay for player callout
   }
   return MACHINE_STATE_NEXT_PLAYER_UP;
 }
