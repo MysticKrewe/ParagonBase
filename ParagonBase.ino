@@ -2091,6 +2091,7 @@ int NextPlayerUp(bool curStateChanged, byte playerNum, int ballNum) {
     if (CurrentTime-PlayerUpTime>NEW_PLAYER_TIME) return MACHINE_STATE_INIT_NEW_BALL;  // init new ball after delay for player callout   
     
   }
+  ShowPlayerScores(0xFF, false, false);  
   return MACHINE_STATE_NEXT_PLAYER_UP; 
   
 }
