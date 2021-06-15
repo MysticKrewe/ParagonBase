@@ -58,7 +58,7 @@ boolean MachineStateChanged = true;
 #define MACHINE_STATE_BALL_OVER       100
 #define MACHINE_STATE_GAME_OVER       110
 
-#define MACHINE_STATE_NEXT_PLAYER_UP  11  // used for new player announcements
+#define MACHINE_STATE_NEXT_PLAYER_UP  11  // used for new player announcements to delay slightly
 
 // from Trident
 #define MACHINE_STATE_ADJUST_FREEPLAY           -17
@@ -997,7 +997,7 @@ boolean AddPlayer(boolean resetNumPlayers=false) {
   BSOS_SetDisplayBlank(CurrentNumPlayers-1, 0x30);
   
   if (CurrentNumPlayers>1) // only do this for 2,3,4
-    PlaySFX(SFX_PLAYERADDED+CurrentNumPlayers-1,1); // 2-player game, 3-player game, etc
+    PlaySFX(SFX_PLAYERADDED+CurrentNumPlayers-2,1); // 2-player game, 3-player game, etc
   
   
   if (!FreePlayMode) {

@@ -201,7 +201,7 @@ struct PlayfieldAndCabinetSwitch TriggeredSwitches[] = {
 #define SFX_COINDROP                 10
 #define SFXC_COINDROP                2
 
-#define SFX_NOCREDIT                 15
+#define SFX_NOCREDIT                 15   // "loins, mead or coins - no-one plays for free!"
 #define SFXC_NOCREDIT                1
 
 #define SFX_START_BALL1              20   // game start player ball 1
