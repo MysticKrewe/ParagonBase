@@ -142,7 +142,7 @@ int MaximumCredits = 50;
 boolean FreePlayMode = false;
 
 byte CurrentPlayer = 0;
-byte CurrentBallInPlay = 1;
+byte CurrentBallInPlay = 1;           // 1-3 ?
 byte CurrentNumPlayers = 0;           // 1-4
 unsigned long CurrentScores[4];
 boolean SamePlayerShootsAgain = false;
@@ -985,14 +985,21 @@ void AddSpecialCredit() {
 //-----------------------------------------------------------------
 boolean AddPlayer(boolean resetNumPlayers=false) {
 
-  if (Credits<1 && !FreePlayMode) return false;
+  if (Credits<1 && !FreePlayMode) {  
+    PlaySFX(SFX_NOCREDIT,SFXC_NOCREDIT);
+    return false;
+  }
   if (resetNumPlayers) CurrentNumPlayers = 0;  
   if (CurrentNumPlayers>=4) return false;
 
   CurrentNumPlayers += 1;
   BSOS_SetDisplay(CurrentNumPlayers-1, 0);
   BSOS_SetDisplayBlank(CurrentNumPlayers-1, 0x30);
-
+  
+  if (CurrentNumPlayers>1) // only do this for 2,3,4
+    PlaySFX(SFX_PLAYERADDED+CurrentNumPlayers-1,1); // 2-player game, 3-player game, etc
+  
+  
   if (!FreePlayMode) {
     Credits -= 1;
     BSOS_WriteByteToEEProm(BSOS_CREDITS_EEPROM_BYTE, Credits);
