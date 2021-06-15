@@ -222,7 +222,7 @@ byte BonusMem[4];                      // carried over bonus scoring
 // Written in by Mike - yy
 byte CurrentDropTargetsValid = 0;      // bitmask showing which drop targets up right:b,m,t, inline 1-4 1-64 bits
 byte DropSequence=0;                   // 1-3 # right drops hit in sequence
-boolean SequenceOnTrack=false;         // 1=drop sequence on track
+boolean SequenceOnTrack=true;          // 1=drop sequence on track
 #define SEQUENCE_BLINK 200             // blink time for drop targets in sequence
 
 // special modes
@@ -562,16 +562,16 @@ void ShowAwardLamps() {
   if ((HuntMode) && (HuntLocation==1)) { // don't overrite hunt lamps
     
   } else { // don't show award lights in hunt mode 
-    if ((DropsRightDownScore[CurrentPlayer]==10000) && (!HuntMode)) { BSOS_SetLampState(L_10K_DROPS, 1,(SequenceOnTrack==true?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_10K_DROPS, 0); }
-    if ((DropsRightDownScore[CurrentPlayer]==15000) && (!HuntMode)) { BSOS_SetLampState(L_15K_DROPS, 1,(SequenceOnTrack==true?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_15K_DROPS, 0); }
+    if ((DropsRightDownScore[CurrentPlayer]==10000) && (!HuntMode)) { BSOS_SetLampState(L_10K_DROPS, 1,(SequenceOnTrack?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_10K_DROPS, 0); }
+    if ((DropsRightDownScore[CurrentPlayer]==15000) && (!HuntMode)) { BSOS_SetLampState(L_15K_DROPS, 1,(SequenceOnTrack?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_15K_DROPS, 0); }
   }
   if ((HuntMode) && (HuntLocation==3)) { // don't overrite hunt lamps
     
   } else {  
-    if ((DropsRightDownScore[CurrentPlayer]==20000) && (!HuntMode)) { BSOS_SetLampState(L_20K_DROPS, 1,(SequenceOnTrack==true?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_20K_DROPS, 0); }
-    if ((DropsRightDownScore[CurrentPlayer]==25000) && (!HuntMode)) { BSOS_SetLampState(L_25K_DROPS, 1,(SequenceOnTrack==true?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_25K_DROPS, 0); }
+    if ((DropsRightDownScore[CurrentPlayer]==20000) && (!HuntMode)) { BSOS_SetLampState(L_20K_DROPS, 1,(SequenceOnTrack?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_20K_DROPS, 0); }
+    if ((DropsRightDownScore[CurrentPlayer]==25000) && (!HuntMode)) { BSOS_SetLampState(L_25K_DROPS, 1,(SequenceOnTrack?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_25K_DROPS, 0); }
   }
-  if ((DropsRightDownScore[CurrentPlayer]==30000) && (!HuntMode)) { BSOS_SetLampState(L_SPECIAL_DROPS, 1,(SequenceOnTrack==true?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_SPECIAL_DROPS, 0); }
+  if ((DropsRightDownScore[CurrentPlayer]==30000) && (!HuntMode)) { BSOS_SetLampState(L_SPECIAL_DROPS, 1,(SequenceOnTrack?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_SPECIAL_DROPS, 0); }
 
   // Waterfall  0=1k 1=5k, 2=10k 3=special
   if (WaterfallValue==1) { BSOS_SetLampState(L_5K_WATER, 1,0,300); } else { BSOS_SetLampState(L_5K_WATER, 0); }
@@ -1539,6 +1539,14 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
 // more efficient?  byte switchMask = 1<<(SW_DROP_TARGET_1-switchHit);
 //   PlaySoundEffect(SOUND_EFFECT_DT_SKILL_SHOT);
 
+#if (DEBUG_MESSAGES)
+      char buf[128];
+      sprintf(buf, "\nDrop target %d, sequence: %d\n", switchHit,SequenceOnTrack);
+      buf[127]=0;
+      Serial.write(buf);
+#endif   
+
+
   if (HuntMode) {
     reset_3bank();  // goes right back up in hunt mode and doesn't count
     PlaySFX(SFX_HUNTMISSED,SFXC_HUNTMISSED);
@@ -1547,7 +1555,7 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
   // checking in reverse order in case 2+ hit at same time, so can't get sequential credit
   if (BSOS_ReadSingleSwitchState(SW_DROP_TOP) && (CurrentDropTargetsValid & 4)) {
     CurrentPlayerCurrentScore += 500;
-    if ((CurrentDropTargetsValid & 7)==4) { DropSequence++; SequenceOnTrack=true; } else SequenceOnTrack=false; // sequence working if only top up
+    if ((CurrentDropTargetsValid & 7)==4) { DropSequence++; SequenceOnTrack=true; } else { SequenceOnTrack=false; } // sequence working if only top up
     CurrentDropTargetsValid = CurrentDropTargetsValid & 123; // 127-bit value: turn off bit position value 4
   }  
   if (BSOS_ReadSingleSwitchState(SW_DROP_MIDDLE) && (CurrentDropTargetsValid & 2)) {
