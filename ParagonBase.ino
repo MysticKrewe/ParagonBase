@@ -11,13 +11,13 @@
   version
   0.002 - stable version with 3 attract modes
   1.004 - now with delay on ball 3
+  1.005 - new animation to show right drops in sequence
 
 
 Things to do:
 
- * create paragon_award(PSaucerValue);  // 1-8 p-a-r-a-g-o-n special and corresponding show_paragon_lights()
- * manually fire 3-bank during diagnostic coil test (which # coil?) 
-   
+  add sound for: no credit, add game player 2,3,4
+  update sounds: tilt/warning, attract, beast, beast move
 
 */
 #include "BallySternOS.h"
@@ -27,7 +27,7 @@ Things to do:
 #include <EEPROM.h>          // needed for EEPROM.read() etc.
 
 #define MAJOR_VERSION  2021  // update TRIDENT2020_MAJOR_VERSION references to just this
-#define MINOR_VERSION  4
+#define MINOR_VERSION  5
 
 #define DEBUG_MESSAGES  1    // enable serial debug logging
 
@@ -104,9 +104,10 @@ boolean MachineStateChanged = true;
 
 // playfield items
 
-#define TARGET1_MASK     0x01   // keeps track of drop targets that are down, binary masks for DropsHit
+#define TARGET1_MASK     0x01   // keeps track of drop targets that are down, binary masks for CurrentDropTargetsValid
 #define TARGET2_MASK     0x02
 #define TARGET3_MASK     0x04
+//byte DropsHit = 0;              // holds mask value indicating which of drops have been hit - not used
 
 #define INLINE1_MASK     0x08   // inlines 1-4
 #define INLINE2_MASK     0x16   // inlines 1-4
@@ -117,15 +118,14 @@ boolean MachineStateChanged = true;
 #define SAUCER_HOLD_TIME 1000   // amount to freeze letter when hit
 #define PARAGON_TIMING   250    // ms to change paragon letters in saucer
 
-byte DropsHit = 0;              // holds mask value indicating which of drops have been hit
-
 // mode times & game limits
 
-#define SKILL_SHOT_DURATION             15
+//#define SKILL_SHOT_DURATION             15  // not used
 
 #define MAX_DISPLAY_BONUS               100 // for trident: 55
 #define TILT_WARNING_DEBOUNCE_TIME      1000
 #define MIN_COIL_FIRE_TIME              2000 // don't fire certain diagnostic coils more than this interval
+#define ENDGAME_DELAY                   3000 // amount of time to wait after saying end-of-game critique message (before next player up)
 
 
 /*********************************************************************
@@ -202,8 +202,6 @@ unsigned int SkillSweepPeriod=SKILL_SHOT_SWEEP_TIME; // variable that changes
 
 // game specific
 
-//unsigned long DropTargetClearTime = 0; // not used
-
 unsigned long SaucerHitTime = 0;       // used for debouncing saucer hit
 byte ParagonValue = 0;                 // 1-8 p-a-r-a-g-o-n special
 byte ParagonLit[4];                    // which paragon letters are lit, bits 1-7 or 8
@@ -219,7 +217,8 @@ byte TreasureValue=1;                  // 5000 + 5x bonus multiplier, extra ball
 
 byte BonusMem[4];                      // carried over bonus scoring
 
-// Written in by Mike - yy
+// Written in by Mike 
+
 byte CurrentDropTargetsValid = 0;      // bitmask showing which drop targets up right:b,m,t, inline 1-4 1-64 bits
 byte DropSequence=0;                   // 1-3 # right drops hit in sequence
 boolean SequenceOnTrack=true;          // 1=drop sequence on track
@@ -316,6 +315,7 @@ void reset_3bank() {
   }
   CurrentDropTargetsValid = CurrentDropTargetsValid | 7; // turn on bits 1-3
   DropSequence=0;  
+  SequenceOnTrack=true;
 }
 // ----------------------------------------------------------------
 /* trick to print binary of byte
@@ -1537,12 +1537,10 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
   
 // Needs to be optimized 
 // more efficient?  byte switchMask = 1<<(SW_DROP_TARGET_1-switchHit);
-//   PlaySoundEffect(SOUND_EFFECT_DT_SKILL_SHOT);
-
-
 
   if (HuntMode) {
     reset_3bank();  // goes right back up in hunt mode and doesn't count
+    SequenceOnTrack=false;  // not available during hunt
     PlaySFX(SFX_HUNTMISSED,SFXC_HUNTMISSED);
     return;
   }
@@ -1570,13 +1568,12 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
       SequenceOnTrack=false;
     }
   }
-
   
   // --------------------- check to see if all drops down
   if (BSOS_ReadSingleSwitchState(SW_DROP_BOTTOM) && BSOS_ReadSingleSwitchState(SW_DROP_MIDDLE) && BSOS_ReadSingleSwitchState(SW_DROP_TOP)) {
     
     if (DropSequence==3) { // were they done in squence?
-//   PlaySoundEffect();
+//   PlaySoundEffect();    // this might stomp on the beast mode intro sound
     } else { 
 //   PlaySoundEffect();      
     }
@@ -1593,7 +1590,6 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
     if (DropsRightDownScore[CurrentPlayer]==35000) DropsRightDownScore[CurrentPlayer]=10000; // reset score tree after special
     // reset drops
     reset_3bank();  
-    SequenceOnTrack=true;    
  
     // handle waterfall ladder
     if (WaterfallSpecialAwarded) { WaterfallValue=2; }
@@ -1607,14 +1603,14 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
     }  // hunt mode qualified
   } // end: all drop targets down
 
-
+/*
 #if (DEBUG_MESSAGES)
       char buf[128];
       sprintf(buf, "\nDrop target %d, sequence: %d\n", switchHit,SequenceOnTrack);
       buf[127]=0;
       Serial.write(buf);
 #endif   
-
+*/
   
 } // end: HandleRightDropTargetHit()
 
@@ -1827,7 +1823,7 @@ void HuntFailed() {
 }
 //-----------------------------------------------------------------
 void HuntMissed() {
-  // psfx you missed
+  // psfx you missed - not used - was going to sense if beast moved right before shot was made and taunt player
 }
 //-----------------------------------------------------------------
 void RunHunt() {
@@ -1841,7 +1837,8 @@ void RunHunt() {
     if (HuntShotLength<HUNT_SHOT_TIME_REDUCE) HuntShotLength=HUNT_SHOT_TIME_REDUCE;
     HuntFrozen=false;
     PlaySFX(SFX_HUNTSTART,SFXC_HUNTSTART,200);      
-    reset_3bank();    
+    reset_3bank();
+    SequenceOnTrack=false;
     return;
   }
   if (CurrentTime-HuntStartTime>HUNT_MODE_LENGTH) HuntFailed();
@@ -2068,13 +2065,13 @@ int NextPlayerUp(bool curStateChanged, byte playerNum, int ballNum) {
     if (CurrentNumPlayers==1) return MACHINE_STATE_INIT_NEW_BALL; // no call-outs for single player game
 
     playSFX=true;    
-    if ((ballNum==3) && (playerNum>0)) { // engage predelay
+    if ((ballNum==3) && (playerNum>0)) { // engage pre-delay
       PlayerUpTime=CurrentTime;
       preDelay=true;
     } else preDelay=false;
     
   } else if (preDelay) {
-    if (CurrentTime-PlayerUpTime>3000) { // times up
+    if (CurrentTime-PlayerUpTime>ENDGAME_DELAY) { // times up
       preDelay=false;
     }
  
@@ -2137,8 +2134,7 @@ if (DEBUG_MESSAGES) {
     MoveParagon=true;
 
     // Initialize game-specific start-of-ball lights & variables    
-//    DropTargetClearTime = 0;
-    ExtraBallCollected = false;
+    ExtraBallCollected = false;  // not currently used but could be used to limit # of extra balls awarded
     
     HuntEndTime=0;
     HuntReward=HUNT_BASE_REWARD*(HuntsCompleted[playerNum]+1);
@@ -2158,15 +2154,8 @@ if (DEBUG_MESSAGES) {
     TreasureValue=1;
 
 // new ball setups
-/*
-    CurrentPlayerCurrentScore = CurrentScores[CurrentPlayer]; // Reset score at top 
-    CurrentStandupsHit = StandupsHit[CurrentPlayer]; // not used
-    GoldenSaucerValue=GoldenSaucerMem[CurrentPlayer]; // Carries from ball to ball
-    GetHoldBonus(BonusMem[CurrentPlayer]);
-*/
 
     CurrentPlayerCurrentScore=CurrentScores[playerNum]; // Reset score at top 
-//  CurrentStandupsHit=StandupsHit[playerNum]; // not used
     GoldenSaucerValue=GoldenSaucerMem[playerNum]; // Carries from ball to ball
     GetHoldBonus(BonusMem[playerNum]);    
 
@@ -2218,8 +2207,6 @@ if (DEBUG_MESSAGES) {
   }
   
 }
-
-
 //====================================================
 
 boolean PlayerUpLightBlinking = false;
