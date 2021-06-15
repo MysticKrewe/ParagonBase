@@ -562,7 +562,7 @@ void ShowAwardLamps() {
   if ((HuntMode) && (HuntLocation==1)) { // don't overrite hunt lamps
     
   } else { // don't show award lights in hunt mode 
-    if ((DropsRightDownScore[CurrentPlayer]==10000) && (!HuntMode)) { BSOS_SetLampState(L_10K_DROPS, 1,(SequenceOnTrack?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_10K_DROPS, 0); }
+    if ((DropsRightDownScore[CurrentPlayer]==10000) && (!HuntMode)) { BSOS_SetLampState(L_10K_DROPS, 1,200); } else { BSOS_SetLampState(L_10K_DROPS, 0); }
     if ((DropsRightDownScore[CurrentPlayer]==15000) && (!HuntMode)) { BSOS_SetLampState(L_15K_DROPS, 1,(SequenceOnTrack?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_15K_DROPS, 0); }
   }
   if ((HuntMode) && (HuntLocation==3)) { // don't overrite hunt lamps
@@ -1539,12 +1539,6 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
 // more efficient?  byte switchMask = 1<<(SW_DROP_TARGET_1-switchHit);
 //   PlaySoundEffect(SOUND_EFFECT_DT_SKILL_SHOT);
 
-#if (DEBUG_MESSAGES)
-      char buf[128];
-      sprintf(buf, "\nDrop target %d, sequence: %d\n", switchHit,SequenceOnTrack);
-      buf[127]=0;
-      Serial.write(buf);
-#endif   
 
 
   if (HuntMode) {
@@ -1555,13 +1549,13 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
   // checking in reverse order in case 2+ hit at same time, so can't get sequential credit
   if (BSOS_ReadSingleSwitchState(SW_DROP_TOP) && (CurrentDropTargetsValid & 4)) {
     CurrentPlayerCurrentScore += 500;
-    if ((CurrentDropTargetsValid & 7)==4) { DropSequence++; SequenceOnTrack=true; } else { SequenceOnTrack=false; } // sequence working if only top up
+    if ((CurrentDropTargetsValid & 7)==4) { DropSequence++;  } else { SequenceOnTrack=false; } // sequence working if only top up
     CurrentDropTargetsValid = CurrentDropTargetsValid & 123; // 127-bit value: turn off bit position value 4
   }  
   if (BSOS_ReadSingleSwitchState(SW_DROP_MIDDLE) && (CurrentDropTargetsValid & 2)) {
     CurrentPlayerCurrentScore += 500;
     CurrentDropTargetsValid = CurrentDropTargetsValid & 125; // 127-bit value: turn off bit 2
-    if ((CurrentDropTargetsValid & 5)==4) { DropSequence=2; SequenceOnTrack=true; }  // sequence working if only top still up
+    if ((CurrentDropTargetsValid & 5)==4) { DropSequence=2; }  // sequence working if only top still up
     else { 
       DropSequence=0; 
       SequenceOnTrack=false;
@@ -1598,7 +1592,8 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
     DropsRightDownScore[CurrentPlayer]+=5000; // need to activate special & check boundaries
     if (DropsRightDownScore[CurrentPlayer]==35000) DropsRightDownScore[CurrentPlayer]=10000; // reset score tree after special
     // reset drops
-    reset_3bank();    
+    reset_3bank();  
+    SequenceOnTrack=true;    
  
     // handle waterfall ladder
     if (WaterfallSpecialAwarded) { WaterfallValue=2; }
@@ -1611,6 +1606,15 @@ void HandleRightDropTargetHit(byte switchHit, unsigned long scoreMultiplier) {
       PlaySFX(SFX_HUNTQUALIFIED,SFXC_HUNTQUALIFIED,350);
     }  // hunt mode qualified
   } // end: all drop targets down
+
+
+#if (DEBUG_MESSAGES)
+      char buf[128];
+      sprintf(buf, "\nDrop target %d, sequence: %d\n", switchHit,SequenceOnTrack);
+      buf[127]=0;
+      Serial.write(buf);
+#endif   
+
   
 } // end: HandleRightDropTargetHit()
 
