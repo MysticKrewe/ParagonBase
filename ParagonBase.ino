@@ -2660,10 +2660,13 @@ if (NumTiltWarnings <= MaxTiltWarnings) {
       case SW_CREDIT_RESET:
         if (CurrentBallInPlay<2) {  // If we haven't finished the first ball, we can add players     
           AddPlayer();
-        } else {
-          if (Credits>0) { // restart game
-            Credits -= 1;
-            BSOS_WriteByteToEEProm(BSOS_CREDITS_EEPROM_BYTE, Credits);
+        } else {          
+          if ((Credits>0) || (FreePlayMode)) { // restart game
+            if (!FreePlayMode) {
+              Credits -= 1;
+              BSOS_WriteByteToEEProm(BSOS_CREDITS_EEPROM_BYTE, Credits);
+              BSOS_SetDisplayCredits(Credits);            
+            }
             returnState = MACHINE_STATE_INIT_GAMEPLAY;
           } else { // no credits to restart game
             PlaySFX(SFX_NOCREDIT,SFXC_NOCREDIT);         
