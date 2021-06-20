@@ -12,6 +12,7 @@
   0.002 - stable version with 3 attract modes
   1.004 - now with delay on ball 3
   1.005 - new animation to show right drops in sequence
+  1.006 - fixed start game after ball 1, added drop sequence blink increase
 
 
 Things to do:
@@ -27,9 +28,9 @@ Things to do:
 #include <EEPROM.h>          // needed for EEPROM.read() etc.
 
 #define MAJOR_VERSION  2021  // update TRIDENT2020_MAJOR_VERSION references to just this
-#define MINOR_VERSION  5
+#define MINOR_VERSION  6
 
-#define DEBUG_MESSAGES  1    // enable serial debug logging
+#define DEBUG_MESSAGES  0    // enable serial debug logging
 
 #define ENABLE_MATCH         // enable match mode (uses 2% program space)
 #define ENABLE_ATTRACT       // enable additional attract mode code (for debugging)
@@ -77,7 +78,6 @@ boolean MachineStateChanged = true;
 // Eventually game mode definitions will go here
 #define GAME_MODE_SKILL_SHOT                    0
 #define GAME_MODE_UNSTRUCTURED_PLAY             1
-#define GAME_MODE_MINI_GAME_QUALIFIED           2  // not used?
 
 #define TIME_TO_WAIT_FOR_BALL           100
 #define TILT_TIMEOUT                    6000  // six seconds tilt timeout
@@ -107,7 +107,6 @@ boolean MachineStateChanged = true;
 #define TARGET1_MASK     0x01   // keeps track of drop targets that are down, binary masks for CurrentDropTargetsValid
 #define TARGET2_MASK     0x02
 #define TARGET3_MASK     0x04
-//byte DropsHit = 0;              // holds mask value indicating which of drops have been hit - not used
 
 #define INLINE1_MASK     0x08   // inlines 1-4
 #define INLINE2_MASK     0x16   // inlines 1-4
@@ -119,8 +118,6 @@ boolean MachineStateChanged = true;
 #define PARAGON_TIMING   250    // ms to change paragon letters in saucer
 
 // mode times & game limits
-
-//#define SKILL_SHOT_DURATION             15  // not used
 
 #define MAX_DISPLAY_BONUS               100 // for trident: 55
 #define TILT_WARNING_DEBOUNCE_TIME      1000
@@ -556,27 +553,29 @@ void ShowShootAgainLamp() {
 
 // ----------------------------------------------------------------
 void ShowAwardLamps() {
+
   // show some playfield feature lamps 
-  
+
+  int sb=(SequenceOnTrack?(DropSequence==2?SEQUENCE_BLINK-50:SEQUENCE_BLINK):0); // set blink time for drop sequence
   // Right Drops: 10,15,20,25,30=sp
   if ((HuntMode) && (HuntLocation==1)) { // don't overrite hunt lamps
     
   } else { // don't show award lights in hunt mode 
-    if ((DropsRightDownScore[CurrentPlayer]==10000) && (!HuntMode)) { BSOS_SetLampState(L_10K_DROPS, 1,0,(SequenceOnTrack?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_10K_DROPS, 0); }
-    if ((DropsRightDownScore[CurrentPlayer]==15000) && (!HuntMode)) { BSOS_SetLampState(L_15K_DROPS, 1,0,(SequenceOnTrack?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_15K_DROPS, 0); }
+    if ((DropsRightDownScore[CurrentPlayer]==10000) && (!HuntMode)) { BSOS_SetLampState(L_10K_DROPS,1,0,sb); } else { BSOS_SetLampState(L_10K_DROPS,0); }
+    if ((DropsRightDownScore[CurrentPlayer]==15000) && (!HuntMode)) { BSOS_SetLampState(L_15K_DROPS,1,0,sb); } else { BSOS_SetLampState(L_15K_DROPS,0); }
   }
   if ((HuntMode) && (HuntLocation==3)) { // don't overrite hunt lamps
     
   } else {  
-    if ((DropsRightDownScore[CurrentPlayer]==20000) && (!HuntMode)) { BSOS_SetLampState(L_20K_DROPS, 1,0,(SequenceOnTrack?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_20K_DROPS, 0); }
-    if ((DropsRightDownScore[CurrentPlayer]==25000) && (!HuntMode)) { BSOS_SetLampState(L_25K_DROPS, 1,0,(SequenceOnTrack?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_25K_DROPS, 0); }
+    if ((DropsRightDownScore[CurrentPlayer]==20000) && (!HuntMode)) { BSOS_SetLampState(L_20K_DROPS,1,0,sb); } else { BSOS_SetLampState(L_20K_DROPS,0); }
+    if ((DropsRightDownScore[CurrentPlayer]==25000) && (!HuntMode)) { BSOS_SetLampState(L_25K_DROPS,1,0,sb); } else { BSOS_SetLampState(L_25K_DROPS,0); }
   }
-  if ((DropsRightDownScore[CurrentPlayer]==30000) && (!HuntMode)) { BSOS_SetLampState(L_SPECIAL_DROPS, 1,0,(SequenceOnTrack?SEQUENCE_BLINK:0)); } else { BSOS_SetLampState(L_SPECIAL_DROPS, 0); }
+  if ((DropsRightDownScore[CurrentPlayer]==30000) && (!HuntMode)) { BSOS_SetLampState(L_SPECIAL_DROPS,1,0,sb); } else { BSOS_SetLampState(L_SPECIAL_DROPS,0); }
 
   // Waterfall  0=1k 1=5k, 2=10k 3=special
-  if (WaterfallValue==1) { BSOS_SetLampState(L_5K_WATER, 1,0,300); } else { BSOS_SetLampState(L_5K_WATER, 0); }
-  if (WaterfallValue==2) { BSOS_SetLampState(L_10K_WATER, 1,0,250); } else { BSOS_SetLampState(L_10K_WATER, 0); }
-  if (WaterfallValue==3) { BSOS_SetLampState(L_WATER_SPECIAL, 1,0,200); } else { BSOS_SetLampState(L_WATER_SPECIAL, 0); }
+  if (WaterfallValue==1) { BSOS_SetLampState(L_5K_WATER,1,0,300); } else { BSOS_SetLampState(L_5K_WATER,0); }
+  if (WaterfallValue==2) { BSOS_SetLampState(L_10K_WATER,1,0,250); } else { BSOS_SetLampState(L_10K_WATER,0); }
+  if (WaterfallValue==3) { BSOS_SetLampState(L_WATER_SPECIAL,1,0,200); } else { BSOS_SetLampState(L_WATER_SPECIAL,0); }
   
   // bonusX
   if (BonusX==2) { BSOS_SetLampState(L_2X_BONUS, 1); } else { BSOS_SetLampState(L_2X_BONUS, 0); }
@@ -1468,7 +1467,7 @@ int RunAttractMode(int curState, boolean curStateChanged) {
 //      AddCoinToAudit(switchHit);      
 //      AddCredit(true, 1);  // is this a newer version that incorporates bsos_setdisplaycredits?
 // above instead of below
-      PlaySFX(SFX_COINDROP,SFXC_COINDROP);
+//      PlaySFX(SFX_COINDROP,SFXC_COINDROP); // should happen in addcredit
       AddCredit();
       BSOS_SetDisplayCredits(Credits, true);
       
@@ -2654,17 +2653,21 @@ if (NumTiltWarnings <= MaxTiltWarnings) {
       case SW_COIN_1:
       case SW_COIN_2:
       case SW_COIN_3:
-        PlaySFX(SFX_COINDROP,SFXC_COINDROP);
+//       PlaySFX(SFX_COINDROP,SFXC_COINDROP);
         AddCredit();
         BSOS_SetDisplayCredits(Credits, true);
         break;
       case SW_CREDIT_RESET:
-        if (CurrentBallInPlay<2) {
-          // If we haven't finished the first ball, we can add players
+        if (CurrentBallInPlay<2) {  // If we haven't finished the first ball, we can add players     
           AddPlayer();
         } else {
-          // If the first ball is over, pressing start again resets the game
-          returnState = MACHINE_STATE_INIT_GAMEPLAY;
+          if (Credits>0) { // restart game
+            Credits -= 1;
+            BSOS_WriteByteToEEProm(BSOS_CREDITS_EEPROM_BYTE, Credits);
+            returnState = MACHINE_STATE_INIT_GAMEPLAY;
+          } else { // no credits to restart game
+            PlaySFX(SFX_NOCREDIT,SFXC_NOCREDIT);         
+          }
         }
         if (DEBUG_MESSAGES) {
           Serial.write("Start game button pressed\n\r");
