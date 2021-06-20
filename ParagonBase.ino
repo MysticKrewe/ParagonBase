@@ -2660,17 +2660,8 @@ if (NumTiltWarnings <= MaxTiltWarnings) {
       case SW_CREDIT_RESET:
         if (CurrentBallInPlay<2) {  // If we haven't finished the first ball, we can add players     
           AddPlayer();
-        } else {          
-          if ((Credits>0) || (FreePlayMode)) { // restart game
-            if (!FreePlayMode) {
-              Credits -= 1;
-              BSOS_WriteByteToEEProm(BSOS_CREDITS_EEPROM_BYTE, Credits);
-              BSOS_SetDisplayCredits(Credits);            
-            }
-            returnState = MACHINE_STATE_INIT_GAMEPLAY;
-          } else { // no credits to restart game
-            PlaySFX(SFX_NOCREDIT,SFXC_NOCREDIT);         
-          }
+        } else {        // start new game
+          if (AddPlayer(true)) { returnState = MACHINE_STATE_INIT_GAMEPLAY; } // true parm = reset number of players, addplayer() has sfx and credit checks
         }
         if (DEBUG_MESSAGES) {
           Serial.write("Start game button pressed\n\r");
