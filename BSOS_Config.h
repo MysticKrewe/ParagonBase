@@ -26,6 +26,13 @@
 
 ***/
 
+
+// Hardware Rev 1 generally uses an Arduino Nano & (option) 74125
+// Hardware Rev 2 uses an Arduino Nano, a 74155, and a 74240
+// Hardware Rev 3 uses Arduino Mega & V3 board
+#define BALLY_STERN_OS_HARDWARE_REV   3
+
+
 //#define BALLY_STERN_OS_USE_DIP_SWITCHES 
 //#define BALLY_STERN_OS_USE_SQUAWK_AND_TALK
 //#define BALLY_STERN_OS_USE_SB100
@@ -35,7 +42,7 @@
 //#define BALLY_STERN_OS_USE_AUX_LAMPS
 //#define BALLY_STERN_OS_USE_7_DIGIT_DISPLAYS
 //#define BALLY_STERN_OS_USE_6_DIGIT_CREDIT_DISPLAY_WITH_7_DIGIT_DISPLAYS
-#define BALLY_STERN_OS_HARDWARE_REV       1
+//#define BALLY_STERN_OS_HARDWARE_REV       1
 #define BALLY_STERN_OS_SOFTWARE_DISPLAY_INTERRUPT
 //#define BALLY_STERN_OS_ADJUSTABLE_DISPLAY_INTERRUPT
 
