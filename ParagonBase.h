@@ -5,11 +5,7 @@
  Switch, solenoid, light definitions
  
  Version 0.1.0 - 04/03/21
- 
- 
- 
 
- 
  
  */
 

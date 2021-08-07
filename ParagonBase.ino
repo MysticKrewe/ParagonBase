@@ -13,6 +13,7 @@
   1.004 - now with delay on ball 3
   1.005 - new animation to show right drops in sequence
   1.006 - fixed start game after ball 1, added drop sequence blink increase
+  1.007 08/07/21 - fixed credit sounds, added 2s delay at game start up for  mega2560
 
 
 Things to do:
@@ -28,7 +29,7 @@ Things to do:
 #include <EEPROM.h>          // needed for EEPROM.read() etc.
 
 #define MAJOR_VERSION  2021  // update TRIDENT2020_MAJOR_VERSION references to just this
-#define MINOR_VERSION  6
+#define MINOR_VERSION  107
 
 #define DEBUG_MESSAGES  0    // enable serial debug logging
 
@@ -1468,7 +1469,7 @@ int RunAttractMode(int curState, boolean curStateChanged) {
 //      AddCredit(true, 1);  // is this a newer version that incorporates bsos_setdisplaycredits?
 // above instead of below
 //      PlaySFX(SFX_COINDROP,SFXC_COINDROP); // should happen in addcredit
-      AddCredit();
+      AddCredit(true);
       BSOS_SetDisplayCredits(Credits, true);
       
     } else if (switchHit==SW_SELF_TEST_SWITCH && (CurrentTime-GetLastSelfTestChangedTime())>250) {  // 1/2 switch debounce?
@@ -1700,7 +1701,7 @@ void HandleTreasureSaucerHit() {
 void setup() {
   
   // add 2 second delay for Alltek
-  //delay(2000);
+  delay(2000);
   
   if (DEBUG_MESSAGES) {
     Serial.begin(57600);  // match this to soundcard 57600
@@ -2654,7 +2655,7 @@ if (NumTiltWarnings <= MaxTiltWarnings) {
       case SW_COIN_2:
       case SW_COIN_3:
 //       PlaySFX(SFX_COINDROP,SFXC_COINDROP);
-        AddCredit();
+        AddCredit(true);
         BSOS_SetDisplayCredits(Credits, true);
         break;
       case SW_CREDIT_RESET:
