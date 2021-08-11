@@ -6,6 +6,8 @@
  
  Version 0.1.0 - 04/03/21
 
+ Sound version 1.07
+
  
  */
 
@@ -198,7 +200,7 @@ struct PlayfieldAndCabinetSwitch TriggeredSwitches[] = {
 #define SFXC_COINDROP                2
 
 #define SFX_NOCREDIT                 15   // "loins, mead or coins - no-one plays for free!"
-#define SFXC_NOCREDIT                1
+#define SFXC_NOCREDIT                2
 
 #define SFX_START_BALL1              20   // game start player ball 1
 #define SFXC_START_BALL1             15

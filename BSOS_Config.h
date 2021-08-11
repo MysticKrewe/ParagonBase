@@ -28,9 +28,12 @@
 
 
 // Hardware Rev 1 generally uses an Arduino Nano & (option) 74125
-// Hardware Rev 2 uses an Arduino Nano, a 74155, and a 74240
+// Hardware Rev 2 uses an Arduino Nano, a 74155, and a 74240  // Note some Nano boards may run as Duemillaove
+
 // Hardware Rev 3 uses Arduino Mega & V3 board
-#define BALLY_STERN_OS_HARDWARE_REV   3
+#define BALLY_STERN_OS_HARDWARE_REV   3     // Be sure to enable in Arduino Software: Arduino AVR Boards : Arduino Mega or Mega 2560
+
+
 
 
 //#define BALLY_STERN_OS_USE_DIP_SWITCHES 

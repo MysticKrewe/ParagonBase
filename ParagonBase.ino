@@ -9,16 +9,17 @@
   0.0.1 - 4-7-21 - Slightly modified version of bsos/pinballbase.ino that compiles with Paragon definitions
   
   version
-  0.002 - stable version with 3 attract modes
-  1.004 - now with delay on ball 3
-  1.005 - new animation to show right drops in sequence
-  1.006 - fixed start game after ball 1, added drop sequence blink increase
-  1.007 08/07/21 - fixed credit sounds, added 2s delay at game start up for  mega2560
+  0.02          - stable version with 3 attract modes
+  1.04          - now with delay on ball 3
+  1.05          - new animation to show right drops in sequence
+  1.06          - fixed start game after ball 1, added drop sequence blink increase
+  1.07 08/07/21 - fixed credit sounds, added 2s delay at game start up for  mega2560
 
 
 Things to do:
 
-  add sound for: no credit, add game player 2,3,4
+  tilt will cause game to freeze and not restart next ball/game
+  
   update sounds: tilt/warning, attract, beast, beast move
 
 */
