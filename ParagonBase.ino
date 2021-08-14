@@ -14,7 +14,7 @@
   1.05          - new animation to show right drops in sequence
   1.06          - fixed start game after ball 1, added drop sequence blink increase
   1.07 08/07/21 - fixed credit sounds, added 2s delay at game start up for  mega2560
-
+  1.08          - trying to fix tilt issue
 
 Things to do:
 
@@ -2499,7 +2499,7 @@ void EjectHoles(boolean disableStack=true) {
       CoilFireTime=CurrentTime;    
 
     }
-  } else if (CurrentTime-CoilFireTime>200) { // minimum time has passed to fire coils
+  } else if (CurrentTime-CoilFireTime>200) { // wait 200ms then disable again
       if (disableStack) BSOS_DisableSolenoidStack();  
   }
 }
@@ -2517,11 +2517,13 @@ int TiltMode(){
     PlaySoundEffect(SFX_TILT,SFXC_TILT);
     TiltModeStart=CurrentTime;
   } 
-//  while (BSOS_PullFirstFromSwitchStack()!=SWITCH_STACK_EMPTY ) { } // empty switch stack  
-//  if (BallNotInTrough()) { // maybe also add timeout here
+  // uncommented below
+  while (BSOS_PullFirstFromSwitchStack()!=SWITCH_STACK_EMPTY ) { } // empty switch stack  // new 1.0.8
+
   if (BSOS_PullFirstFromSwitchStack()!=SW_OUTHOLE ) { // empty switch stack  
   
-    EjectHoles();
+    EjectHoles(); // this contains code to not fire more than once every 2 secs
+    
   } else {
     if ((CurrentTime-TiltModeStart)>TILT_TIMEOUT) return MACHINE_STATE_BALL_OVER;
   }
@@ -2558,6 +2560,7 @@ int RunGamePlayMode(int curState, boolean curStateChanged) {
   } else if (curState==MACHINE_STATE_TILT) {
 
     return(TiltMode());  
+ //   returnState=return(TiltMode());  // ?
 
     
   } else if (curState==MACHINE_STATE_BALL_OVER) {    
