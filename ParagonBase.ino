@@ -2518,15 +2518,16 @@ int TiltMode(){
     TiltModeStart=CurrentTime;
   } 
   // uncommented below
-  while (BSOS_PullFirstFromSwitchStack()!=SWITCH_STACK_EMPTY ) { } // empty switch stack  // new 1.0.8
+  while (BSOS_PullFirstFromSwitchStack()!=SWITCH_STACK_EMPTY ) {   } // empty switch stack  // new 1.0.8
 
   if (BSOS_PullFirstFromSwitchStack()!=SW_OUTHOLE ) { // empty switch stack  
-  
+//    if (BSOS_ReadSingleSwitchState(SW_OUTHOLE)) {
     EjectHoles(); // this contains code to not fire more than once every 2 secs
     
-  } else {
+  } 
+  //else {
     if ((CurrentTime-TiltModeStart)>TILT_TIMEOUT) return MACHINE_STATE_BALL_OVER;
-  }
+  //}
   return MACHINE_STATE_TILT;   // stay in tilt until timed out
 }
 //====================================================
